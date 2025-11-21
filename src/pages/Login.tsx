@@ -331,7 +331,7 @@ export default function Login() {
           <p className="text-sm text-gray-500">
             Chưa có tài khoản?{" "}
             <Link
-              to={path.register}
+              to={path.resetPassword}
               className="font-semibold text-orange-600 hover:text-orange-700 hover:underline"
             >
               Đăng ký ngay

@@ -5,6 +5,8 @@ import path from "@/constants/path";
 import AuthLayout from "@/layouts/AuthLayout";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+
 import AdminLayout from "@/layouts/AdminLayout";
 
 // 2. ĐỔI TÊN BIẾN "router" THÀNH "AppRouter" VÀ "EXPORT" NÓ RA
@@ -24,9 +26,14 @@ export const AppRouter = createBrowserRouter([
         path: path.login,
         element: <Login />,
       },
+
       {
         path: path.forgotPassword,
         element: <ForgotPassword />,
+      },
+      {
+        path: path.resetPassword,
+        element: <ResetPassword />,
       },
     ],
   },

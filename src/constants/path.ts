@@ -5,7 +5,7 @@ const path = {
   home: "/",
   login: "/login",
   forgotPassword: "/forgot-password",
-  register: "/register",
+  resetPassword: "/reset-password",
 
   // --- Admin (Quản lý 3 vai trò)
   admin: "/admin",
