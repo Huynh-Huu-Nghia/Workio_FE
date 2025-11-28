@@ -9,10 +9,12 @@ const path = {
 
   // --- Admin (Quản lý 3 vai trò)
   admin: "/admin",
-  adminUserManagement: "/admin/users", // Quản lý User (Candidate, Recruiter, Edu Manager)
-  adminUserCreate: "/admin/users/create",
+  ADMIN_USER_MANAGEMENT: "/admin/users", // Quản lý User (Candidate, Recruiter, Edu Manager)
+  adminCreateCandidate: "/admin/candidates/create",
   adminUserEdit: "/admin/users/edit/:id",
   adminUserView: "/admin/users/view/:id",
+  ADMIN_USER_CANDIDATE_CREATE: "/admin/candidates/create",
+  ADMIN_USER_RECRUITER_CREATE: "/admin/recruiters/create",
 
   // (Mình sẽ thêm (add) "Job Management" (Quản lý Job) sau)
 } as const;

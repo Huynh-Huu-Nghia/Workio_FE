@@ -1,0 +1,168 @@
+import { useEffect, useState } from "react";
+import type {
+  UseFormRegister,
+  FieldErrors,
+  UseFormSetValue,
+  UseFormWatch,
+} from "react-hook-form";
+import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
+
+interface Props {
+  register: UseFormRegister<CreateCandidateSchema>;
+  errors: FieldErrors<CreateCandidateSchema>;
+  setValue: UseFormSetValue<CreateCandidateSchema>;
+  watch: UseFormWatch<CreateCandidateSchema>;
+}
+
+export default function AddressSection({
+  register,
+  errors,
+  watch,
+  setValue,
+}: Props) {
+  const [provinces, setProvinces] = useState<any[]>([]);
+  const [districts, setDistricts] = useState<any[]>([]);
+  const [wards, setWards] = useState<any[]>([]);
+
+  // Lấy giá trị hiện tại (Đây là CODE đối với Tỉnh/Huyện, là NAME đối với Xã)
+  const provinceCode = watch("addressInfo.province_code");
+  const districtCode = watch("addressInfo.district_code");
+
+  /** 1. Load danh sách Tỉnh */
+  useEffect(() => {
+    fetch("https://provinces.open-api.vn/api/p/")
+      .then((res) => res.json())
+      .then(setProvinces)
+      .catch((err) => console.error("Lỗi load tỉnh:", err));
+  }, []);
+
+  /** 2. Khi chọn Tỉnh (có Code) -> Load Huyện */
+  useEffect(() => {
+    if (!provinceCode) {
+      setDistricts([]);
+      setWards([]);
+      return;
+    }
+
+    // provinceCode lúc này là số (VD: 79) nên gọi API chạy ngon lành
+    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDistricts(data?.districts || []);
+      })
+      .catch(() => setDistricts([]));
+  }, [provinceCode]);
+
+  /** 3. Khi chọn Huyện (có Code) -> Load Xã */
+  useEffect(() => {
+    if (!districtCode) {
+      setWards([]);
+      return;
+    }
+
+    fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
+      .then((res) => res.json())
+      .then((data) => {
+        setWards(data?.wards || []);
+      })
+      .catch(() => setWards([]));
+  }, [districtCode]);
+
+  return (
+    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+      {/* 🏠 Số nhà + Đường */}
+      <div className="md:col-span-2">
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Số nhà, tên đường <span className="text-red-500">*</span>
+        </label>
+        <input
+          {...register("addressInfo.street")}
+          placeholder="VD: 123 Lê Lợi"
+          className="w-full rounded-lg border border-gray-300 p-2.5 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+        />
+        <p className="text-xs text-red-500 mt-1">
+          {errors.addressInfo?.street?.message}
+        </p>
+      </div>
+
+      {/* 🏙 Tỉnh / Thành phố */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Tỉnh / Thành phố <span className="text-red-500">*</span>
+        </label>
+        <select
+          {...register("addressInfo.province_code", {
+            onChange: () => {
+              // Khi đổi tỉnh -> Reset huyện và xã
+              setValue("addressInfo.district_code", "");
+              setValue("addressInfo.ward", "");
+            },
+          })}
+          className="w-full rounded-lg border border-gray-300 p-2.5 bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+        >
+          <option value="">-- Chọn Tỉnh/Thành --</option>
+          {provinces.map((p) => (
+            // 🔥 MẤU CHỐT Ở ĐÂY:
+            // value={p.code} -> Form lưu Mã (VD: 79)
+            // {p.name} -> Người dùng thấy Chữ (VD: Hồ Chí Minh)
+            <option key={p.code} value={p.code}>
+              {p.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-red-500 mt-1">
+          {errors.addressInfo?.province_code?.message}
+        </p>
+      </div>
+
+      {/* 📍 Quận / Huyện */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Quận / Huyện <span className="text-red-500">*</span>
+        </label>
+        <select
+          {...register("addressInfo.district_code", {
+            onChange: () => setValue("addressInfo.ward", ""),
+          })}
+          disabled={!provinceCode}
+          className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+        >
+          <option value="">-- Chọn Quận/Huyện --</option>
+          {districts.map((d) => (
+            // 🔥 value={d.code} -> Form lưu Mã (VD: 760)
+            <option key={d.code} value={d.code}>
+              {d.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-red-500 mt-1">
+          {errors.addressInfo?.district_code?.message}
+        </p>
+      </div>
+
+      {/* 🏡 Phường / Xã */}
+      <div>
+        <label className="mb-1 block text-sm font-medium text-gray-700">
+          Phường / Xã <span className="text-red-500">*</span>
+        </label>
+        <select
+          {...register("addressInfo.ward")}
+          disabled={!districtCode}
+          className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
+        >
+          <option value="">-- Chọn Phường/Xã --</option>
+          {wards.map((w) => (
+            // 🔥 RIÊNG CÁI NÀY: JSON BE ghi "ward": "Bến Thành"
+            // Nên ta để value={w.name} luôn để lưu tên.
+            <option key={w.code} value={w.name}>
+              {w.name}
+            </option>
+          ))}
+        </select>
+        <p className="text-xs text-red-500 mt-1">
+          {errors.addressInfo?.ward?.message}
+        </p>
+      </div>
+    </div>
+  );
+}

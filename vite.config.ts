@@ -26,6 +26,17 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
+      // 👇 THÊM ĐOẠN NÀY ĐỂ API "/admin/..." CHẠY ĐƯỢC
+      "/admin/create-candidate": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
+      "/admin/create-recruiter": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
       "/admin-auth": {
         target: "http://localhost:3000",
         changeOrigin: true,

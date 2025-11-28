@@ -1,52 +1,65 @@
-// src/layouts/AdminLayout.tsx
+import React, { useState, useEffect } from "react";
+// ✅ Import đúng đường dẫn
+import Sidebar from "./Sidebar";
+import MainHeader from "./MainHeader";
+import { pathtotitle } from "@/configs/pagetitle"; // Import map URL → title
+import { useLocation } from "react-router-dom";
 
-import { Outlet } from "react-router-dom";
+interface AdminLayoutProps {
+  children: React.ReactNode;
+  section?: string; // Tên phân hệ (VD: Quản lý Ứng Viên)
+  title?: string; // Tên trang (VD: Thêm Mới)
+  activeMenu?: string; // ID menu để highlight (VD: candidates)
+  activeSubmenu?: string; // ID submenu để highlight (VD: add-candidate)
+}
 
-// (Mình "sẽ" (sẽ) "thêm" (thêm) "link" (link) "xịn" (xịn) "vào" (vào) "Sidebar" (thanh bên) "sau" (sau))
-const AdminLayout = () => {
+const AdminLayout: React.FC<AdminLayoutProps> = ({
+  children,
+  section,
+  title,
+  activeMenu,
+  activeSubmenu,
+}) => {
+  const location = useLocation(); // Lấy URL hiện tại
+
+  const [isSidebarOpen, setIsSidebarOpen] = useState(() => {
+    const saved = localStorage.getItem("sidebarOpen");
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("sidebarOpen", JSON.stringify(isSidebarOpen));
+  }, [isSidebarOpen]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen((prev: boolean) => !prev);
+  };
+
+  // Lấy pageTitle dựa vào URL, nếu không có thì dùng title truyền vào, nếu vẫn không có thì "Trang chủ"
+  const pageTitle = pathtotitle[location.pathname] || title || "Trang chủ";
+
   return (
-    <div className="flex h-screen bg-gray-100">
-      {/* --- 1. Sidebar (Thanh bên) --- */}
-      <aside className="w-64 bg-gray-800 text-white">
-        <div className="p-5 text-center text-2xl font-bold">Workio Admin</div>
-        <nav className="mt-10">
-          <a
-            href="#" // (Link "giả" (giả))
-            className="block bg-gray-700 px-6 py-3 text-white" // (Đây là "link" (link) "đang" (đang) "active" (active))
-          >
-            Quản lý Người dùng
-          </a>
-          <a
-            href="#" // (Link "giã" (giả))
-            className="block px-6 py-3 text-gray-400 transition-colors hover:bg-gray-700 hover:text-white"
-          >
-            Quản lý Việc làm
-          </a>
-          {/* (Thêm "các" (các) "link" (link) "khác" (khác) "sau" (sau)...) */}
-        </nav>
-      </aside>
+    <div className="min-h-screen flex bg-[#f5f7fb] text-gray-700 font-sans">
+      <Sidebar
+        isOpen={isSidebarOpen}
+        activeMenu={activeMenu}
+        activeSubmenu={activeSubmenu}
+      />
 
-      {/* --- 2. Main Content (Nội dung chính) --- */}
-      <div className="flex flex-1 flex-col">
-        {/* --- 2.1 Header (Tiêu đề) --- */}
-        <header className="flex h-16 items-center justify-between bg-white px-6 shadow">
-          <div className="text-lg font-semibold">Chào mừng, Admin!</div>
-          <div>
-            <button className="text-red-500 hover:text-red-700">
-              Đăng xuất
-            </button>
+      <main className="flex-1 flex flex-col min-w-0 transition-all duration-300 h-screen overflow-hidden">
+        {/* Truyền pageTitle tự động xuống MainHeader */}
+        <MainHeader
+          sectionTitle={section}
+          pageTitle={pageTitle}
+          onMenuToggle={toggleSidebar}
+        />
+
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300">
+          <div className="animate-fade-in-up pb-10 w-full max-w-7xl mx-auto">
+            {children}
           </div>
-        </header>
-
-        {/* --- 2.2 Page Content (Nội dung trang) --- */}
-        <main className="flex-1 overflow-y-auto p-6">
-          {/* <Outlet /> là "lỗ" (lỗ)
-            "Nơi" (Nơi) "bộ điều hướng" (router) "sẽ" (sẽ) "nhét" (nhét) 
-            "trang" (trang) "UserManagement.tsx" (Quản lý Người dùng) "vào" (vào) "đây" (đây)
-          */}
-          <Outlet />
-        </main>
-      </div>
+        </div>
+      </main>
     </div>
   );
 };
