@@ -61,7 +61,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
             {
               id: "all-candidates",
               label: "Danh sách Ứng viên",
-              link: "/admin/candidates",
+              link: "/admin/candidates/list",
             },
             {
               id: "add-candidate",

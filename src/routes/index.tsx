@@ -10,6 +10,7 @@ import ResetPassword from "@/pages/auth/ResetPassword";
 import UserManagementPage from "@/pages/admin/UserManagement";
 import CreateCandidate from "@/pages/admin/candidate/CreateCandidate";
 import CreateRecruiter from "@/pages/admin/recruiter/CreateRecruiter";
+import CandidateList from "@/pages/admin/candidate/CandidateList";
 
 // 2. ĐỔI TÊN BIẾN "router" THÀNH "AppRouter" VÀ "EXPORT" NÓ RA
 export const AppRouter = createBrowserRouter([
@@ -63,6 +64,11 @@ export const AppRouter = createBrowserRouter([
         // Khi truy cập /admin/users
         path: path.ADMIN_USER_RECRUITER_CREATE,
         element: <CreateRecruiter />,
+      },
+      {
+        // Khi truy cập /admin/users
+        path: path.ADMIN_USER_CANDIDATE_LIST,
+        element: <CandidateList />,
       },
       // Thêm các routes Admin khác tại đây
     ],

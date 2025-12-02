@@ -15,6 +15,7 @@ const path = {
   adminUserView: "/admin/users/view/:id",
   ADMIN_USER_CANDIDATE_CREATE: "/admin/candidates/create",
   ADMIN_USER_RECRUITER_CREATE: "/admin/recruiters/create",
+  ADMIN_USER_CANDIDATE_LIST: "/admin/candidates/list",
 
   // (Mình sẽ thêm (add) "Job Management" (Quản lý Job) sau)
 } as const;
