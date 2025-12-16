@@ -5,11 +5,13 @@ import {
   Briefcase,
   UserCheck,
   Building2,
+  BarChart3,
   ChevronDown,
   LogOut,
   Settings,
   List,
   MessageSquare,
+  ShieldCheck,
 } from "lucide-react";
 
 import LOGO_SRC from "@/assets/networking.png";
@@ -47,6 +49,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
           icon: <LayoutDashboard size={20} />,
           link: "/admin/dashboard",
         },
+        {
+          id: "reports",
+          label: "Báo cáo",
+          icon: <BarChart3 size={20} />,
+          link: "/admin/reports",
+        },
       ],
     },
     {
@@ -67,6 +75,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               id: "add-candidate",
               label: "Thêm Ứng viên",
               link: "/admin/candidates/create",
+            },
+            {
+              id: "candidate-jobs",
+              label: "Tin ứng tuyển",
+              link: "/admin/candidates/jobs",
             },
           ],
         },
@@ -110,6 +123,31 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               label: "Tin chờ duyệt",
               link: "/admin/jobs/pending",
             },
+            {
+              id: "interviews",
+              label: "Lịch phỏng vấn",
+              link: "/admin/interviews",
+            },
+            {
+              id: "interviews-recruiter",
+              label: "PV theo NTD",
+              link: "/admin/interviews/recruiter",
+            },
+            {
+              id: "interviews-candidate",
+              label: "PV theo ứng viên",
+              link: "/admin/interviews/candidate",
+            },
+            {
+              id: "job-candidates",
+              label: "Ứng viên theo tin",
+              link: "/admin/jobs/candidates",
+            },
+            {
+              id: "suggested-jobs",
+              label: "Gợi ý việc làm",
+              link: "/admin/jobs/suggested",
+            },
           ],
         },
       ],
@@ -140,6 +178,12 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               link: "/admin/categories/skills",
             },
           ],
+        },
+        {
+          id: "social",
+          label: "Tra cứu BHXH",
+          icon: <ShieldCheck size={20} />,
+          link: "/admin/social-insurances",
         },
         {
           id: "settings",

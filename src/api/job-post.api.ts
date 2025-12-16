@@ -1,0 +1,116 @@
+import { useQuery } from "@tanstack/react-query";
+import { axiosInstance } from "@/utils/axios";
+
+interface ApiResponse<T> {
+  err: number;
+  mes: string;
+  data: T;
+}
+
+export interface JobPost {
+  id: string;
+  position: string;
+  recruiter_id?: string;
+  available_quantity?: number | null;
+  requirements?: string | null;
+  duration?: string | null;
+  monthly_salary?: number | string | null;
+  recruitment_type?: string | null;
+  languguages?: string[] | string | null;
+  application_deadline_from?: string | null;
+  application_deadline_to?: string | null;
+  support_info?: string | null;
+  benefits?: string | null;
+  fields?: string[] | string | null;
+  applied_candidates?: string[] | null;
+  graduation_rank?: string | null;
+  computer_skill?: string | null;
+  job_type?: string | null;
+  working_time?: string | null;
+  other_requirements?: string | null;
+  status?: string | null;
+}
+
+const getAdminJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/admin/job-posts");
+  return response.data;
+};
+
+export const useGetAdminJobPostsQuery = () =>
+  useQuery({
+    queryKey: ["admin-job-posts"],
+    queryFn: getAdminJobPostsRequest,
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: ứng viên của tin ---
+const getAdminCandidatesOfJobRequest = async (
+  jobPostId: string
+): Promise<ApiResponse<any[]>> => {
+  const response = await axiosInstance.get("/admin/candidates-of-job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data;
+};
+
+export const useAdminCandidatesOfJobQuery = (jobPostId: string) =>
+  useQuery({
+    queryKey: ["admin-candidates-of-job", jobPostId],
+    queryFn: () => getAdminCandidatesOfJobRequest(jobPostId),
+    enabled: Boolean(jobPostId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: tin mà ứng viên đã ứng tuyển ---
+const getAdminPostsOfCandidateRequest = async (
+  candidateId: string
+): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/admin/job-posts-of-candidate", {
+    params: { candidate_id: candidateId },
+  });
+  return response.data;
+};
+
+export const useAdminPostsOfCandidateQuery = (candidateId: string) =>
+  useQuery({
+    queryKey: ["admin-posts-of-candidate", candidateId],
+    queryFn: () => getAdminPostsOfCandidateRequest(candidateId),
+    enabled: Boolean(candidateId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: gợi ý jobs cho ứng viên ---
+const getAdminSuggestedJobsRequest = async (
+  candidateId: string
+): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/admin/suggested-jobs", {
+    params: { candidate_id: candidateId },
+  });
+  return response.data;
+};
+
+export const useAdminSuggestedJobsQuery = (candidateId: string) =>
+  useQuery({
+    queryKey: ["admin-suggested-jobs", candidateId],
+    queryFn: () => getAdminSuggestedJobsRequest(candidateId),
+    enabled: Boolean(candidateId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: gợi ý ứng viên cho bài đăng ---
+const getAdminSuggestedCandidatesRequest = async (
+  jobPostId: string
+): Promise<ApiResponse<any[]>> => {
+  const response = await axiosInstance.get("/admin/suggested-candidates", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data;
+};
+
+export const useAdminSuggestedCandidatesQuery = (jobPostId: string) =>
+  useQuery({
+    queryKey: ["admin-suggested-candidates", jobPostId],
+    queryFn: () => getAdminSuggestedCandidatesRequest(jobPostId),
+    enabled: Boolean(jobPostId),
+    staleTime: 1000 * 60 * 5,
+  });

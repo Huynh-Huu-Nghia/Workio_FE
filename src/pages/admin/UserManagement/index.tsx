@@ -1,4 +1,3 @@
-import React from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import FilterSection from "./FilterSection";
 import UserTable from "./UseTable";

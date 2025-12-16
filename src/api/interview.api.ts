@@ -1,0 +1,67 @@
+import { useQuery } from "@tanstack/react-query";
+import { axiosInstance } from "@/utils/axios";
+
+interface ApiResponse<T> {
+  err: number;
+  mes: string;
+  data: T;
+}
+
+export interface Interview {
+  id: string;
+  candidate_id: string;
+  job_post_id?: string | null;
+  scheduled_time: string;
+  location?: string | null;
+  interview_type?: string | null;
+  status?: string | null;
+  notes?: string | null;
+}
+
+const getAllInterviewsRequest = async (): Promise<ApiResponse<Interview[]>> => {
+  const response = await axiosInstance.get("/admin/all-interviews");
+  return response.data;
+};
+
+export const useGetAdminInterviewsQuery = () =>
+  useQuery({
+    queryKey: ["admin-interviews"],
+    queryFn: getAllInterviewsRequest,
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: interview theo recruiter ---
+const getInterviewsOfRecruiterRequest = async (
+  recruiterId: string
+): Promise<ApiResponse<Interview[]>> => {
+  const response = await axiosInstance.get("/admin/interviews-of-recruiter", {
+    params: { recruiter_id: recruiterId },
+  });
+  return response.data;
+};
+
+export const useAdminInterviewsOfRecruiterQuery = (recruiterId: string) =>
+  useQuery({
+    queryKey: ["admin-interviews-recruiter", recruiterId],
+    queryFn: () => getInterviewsOfRecruiterRequest(recruiterId),
+    enabled: Boolean(recruiterId),
+    staleTime: 1000 * 60 * 5,
+  });
+
+// --- Admin: interview theo candidate ---
+const getInterviewsOfCandidateRequest = async (
+  candidateId: string
+): Promise<ApiResponse<Interview[]>> => {
+  const response = await axiosInstance.get("/admin/interviews-of-candidate", {
+    params: { candidate_id: candidateId },
+  });
+  return response.data;
+};
+
+export const useAdminInterviewsOfCandidateQuery = (candidateId: string) =>
+  useQuery({
+    queryKey: ["admin-interviews-candidate", candidateId],
+    queryFn: () => getInterviewsOfCandidateRequest(candidateId),
+    enabled: Boolean(candidateId),
+    staleTime: 1000 * 60 * 5,
+  });

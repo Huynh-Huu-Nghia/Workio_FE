@@ -1,5 +1,5 @@
 import path from "@/constants/path";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -15,8 +15,6 @@ import { useState } from "react";
 type FormData = ForgotPasswordFormSchema;
 
 export default function ForgotPassword() {
-  const navigate = useNavigate();
-
   // 1. State kiểm soát: false = hiện form nhập liệu, true = hiện giao diện check mail
   const [isEmailSent, setIsEmailSent] = useState(false);
 

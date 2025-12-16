@@ -19,7 +19,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
 
   // Chúng ta sẽ tạm để `loading` là false
   // Chúng ta sẽ thêm logic "tự động đăng nhập" (giống FreshFarm) sau
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   const logout = () => {
     localStorage.removeItem("access_token"); // Xóa token khi logout

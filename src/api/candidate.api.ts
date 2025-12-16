@@ -1,5 +1,6 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
+import type { JobPost } from "@/api/job-post.api";
 
 // ==========================================
 // 1. CÁC INTERFACE CHO PAYLOAD (GỬI ĐI)
@@ -125,3 +126,74 @@ export const useGetAllCandidatesQuery = () => {
     retry: 1, // Thử lại 1 lần nếu lỗi mạng
   });
 };
+
+// --- C. Candidate tự xem tin tuyển dụng ---
+const getCandidateJobPostsRequest = async (): Promise<
+  ApiResponse<JobPost[]>
+> => {
+  const response = await axiosInstance.get("/candidate/job-posts");
+  return response.data;
+};
+
+export const useCandidateJobPostsQuery = () =>
+  useQuery({
+    queryKey: ["candidate-job-posts"],
+    queryFn: getCandidateJobPostsRequest,
+    staleTime: 1000 * 60 * 3,
+  });
+
+// --- D. Candidate xem lịch phỏng vấn ---
+const getCandidateInterviewsRequest = async (): Promise<
+  ApiResponse<any[]>
+> => {
+  const response = await axiosInstance.get("/candidate/interviews-of-candidate");
+  return response.data;
+};
+
+export const useCandidateInterviewsQuery = () =>
+  useQuery({
+    queryKey: ["candidate-interviews"],
+    queryFn: getCandidateInterviewsRequest,
+    staleTime: 1000 * 60 * 3,
+  });
+
+// --- E. Candidate: danh sách tin đã ứng tuyển ---
+const getAppliedJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/candidate/job-posts-of-candidate");
+  return response.data;
+};
+
+export const useCandidateAppliedJobsQuery = () =>
+  useQuery({
+    queryKey: ["candidate-applied-jobs"],
+    queryFn: getAppliedJobPostsRequest,
+    staleTime: 1000 * 60 * 3,
+  });
+
+// --- F. Candidate: lọc theo ngành nghề ---
+const filterJobsByFieldsRequest = async (fields: string[]) => {
+  const response = await axiosInstance.get("/candidate/filter-by-fields", {
+    params: { fields },
+  });
+  return response.data as ApiResponse<JobPost[]>;
+};
+
+export const useCandidateFilterJobsQuery = (fields: string[]) =>
+  useQuery({
+    queryKey: ["candidate-filter-jobs", fields],
+    queryFn: () => filterJobsByFieldsRequest(fields),
+    enabled: fields.length > 0,
+  });
+
+// --- G. Candidate: gợi ý việc làm ---
+const getSuggestedJobsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/candidate/suggested-jobs");
+  return response.data;
+};
+
+export const useCandidateSuggestedJobsQuery = () =>
+  useQuery({
+    queryKey: ["candidate-suggested-jobs"],
+    queryFn: getSuggestedJobsRequest,
+    staleTime: 1000 * 60 * 3,
+  });
