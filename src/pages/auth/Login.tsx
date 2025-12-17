@@ -38,7 +38,6 @@ export default function Login() {
 
   const onSubmit = handleSubmit((data) => {
     console.log(">>> Gửi yêu cầu đăng nhập:", data);
-
     loginMutation.mutate(data as any, {
       onSuccess: (response) => {
         const accessToken = response.data.access_token;
@@ -240,7 +239,7 @@ export default function Login() {
                 Mật khẩu
               </label>
               <Link
-                to={path.FORGOTPASSWORD}
+                to={path.forgotPassword}
                 className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline"
               >
                 Quên mật khẩu?
@@ -331,7 +330,7 @@ export default function Login() {
           <p className="text-sm text-gray-500">
             Chưa có tài khoản?{" "}
             <Link
-              to={path.RESETPASSWORD}
+              to={path.resetPassword}
               className="font-semibold text-orange-600 hover:text-orange-700 hover:underline"
             >
               Đăng ký ngay
