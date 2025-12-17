@@ -19,6 +19,7 @@ export const axiosInstance = axios.create({
   headers: { "Content-Type": "application/json" },
 });*/
 import axios from "axios";
+import { getAccessToken } from "./authStorage";
 
 // 1. Tạo instance Axios với cấu hình cơ bản
 export const axiosInstance = axios.create({
@@ -34,7 +35,7 @@ export const axiosInstance = axios.create({
 axiosInstance.interceptors.request.use(
   (config) => {
     // Lấy token từ LocalStorage
-    const token = localStorage.getItem("access_token");
+    const token = getAccessToken();
 
     if (token) {
       // 🛠 FIX LỖI 400 BAD REQUEST Ở ĐÂY:

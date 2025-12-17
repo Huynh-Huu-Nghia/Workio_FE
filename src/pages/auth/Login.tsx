@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import logoImg from "@/assets/networking.png";
 import { useState } from "react"; // ✅ Thêm useState để quản lý hiện/ẩn password
+import { setAuthTokens } from "@/utils/authStorage";
 
 type FormData = LoginFormSchema;
 
@@ -42,6 +43,7 @@ export default function Login() {
     loginMutation.mutate(data as any, {
       onSuccess: (response) => {
         const accessToken = response.data.access_token;
+        const refreshToken = response.data.refresh_token;
         const user = response.data.data;
 
         const realRole = (user as any).role?.value || "";
@@ -61,7 +63,8 @@ export default function Login() {
           );
         }
 
-        localStorage.setItem("access_token", accessToken);
+        // BE đã trả về `access_token` kèm sẵn "Bearer ...", lưu nguyên xi để dùng về sau
+        setAuthTokens({ accessToken, refreshToken });
         setUser(user);
 
         const displayName = user.name || user.email || "bạn";

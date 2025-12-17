@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from "react";
 import type { User } from "./user.type.ts"; // Import kiểu User bạn vừa tạo
+import { clearAuthTokens } from "@/utils/authStorage";
 
 interface UserContextType {
   user: User | null;
@@ -22,7 +23,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading] = useState(false);
 
   const logout = () => {
-    localStorage.removeItem("access_token"); // Xóa token khi logout
+    clearAuthTokens();
     setUser(null); // Xóa thông tin user trong state
   };
 
