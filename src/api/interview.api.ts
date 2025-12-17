@@ -1,4 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
 
 interface ApiResponse<T> {
@@ -11,6 +12,7 @@ export interface Interview {
   id: string;
   candidate_id: string;
   job_post_id?: string | null;
+  recruiter_id?: string | null;
   scheduled_time: string;
   location?: string | null;
   interview_type?: string | null;
@@ -27,24 +29,6 @@ export const useGetAdminInterviewsQuery = () =>
   useQuery({
     queryKey: ["admin-interviews"],
     queryFn: getAllInterviewsRequest,
-    staleTime: 1000 * 60 * 5,
-  });
-
-// --- Admin: interview theo recruiter ---
-const getInterviewsOfRecruiterRequest = async (
-  recruiterId: string
-): Promise<ApiResponse<Interview[]>> => {
-  const response = await axiosInstance.get("/admin/interviews-of-recruiter", {
-    params: { recruiter_id: recruiterId },
-  });
-  return response.data;
-};
-
-export const useAdminInterviewsOfRecruiterQuery = (recruiterId: string) =>
-  useQuery({
-    queryKey: ["admin-interviews-recruiter", recruiterId],
-    queryFn: () => getInterviewsOfRecruiterRequest(recruiterId),
-    enabled: Boolean(recruiterId),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -65,3 +49,42 @@ export const useAdminInterviewsOfCandidateQuery = (candidateId: string) =>
     enabled: Boolean(candidateId),
     staleTime: 1000 * 60 * 5,
   });
+
+// --- Admin: CRUD interview ---
+export type AdminInterviewPayload = Omit<Interview, "id"> & {
+  id?: string;
+};
+
+const createAdminInterviewRequest = async (payload: AdminInterviewPayload) => {
+  const response = await axiosInstance.post("/admin/interview", payload);
+  return response.data as ApiResponse<Interview>;
+};
+
+export const useCreateAdminInterviewMutation = () =>
+  useMutation({ mutationFn: createAdminInterviewRequest });
+
+const updateAdminInterviewRequest = async ({
+  interviewId,
+  payload,
+}: {
+  interviewId: string;
+  payload: AdminInterviewPayload;
+}) => {
+  const response = await axiosInstance.patch("/admin/interview", payload, {
+    params: { interview_id: interviewId },
+  });
+  return response.data as ApiResponse<Interview>;
+};
+
+export const useUpdateAdminInterviewMutation = () =>
+  useMutation({ mutationFn: updateAdminInterviewRequest });
+
+const deleteAdminInterviewRequest = async (interviewId: string) => {
+  const response = await axiosInstance.delete("/admin/interview", {
+    params: { interview_id: interviewId },
+  });
+  return response.data as ApiResponse<null>;
+};
+
+export const useDeleteAdminInterviewMutation = () =>
+  useMutation({ mutationFn: deleteAdminInterviewRequest });

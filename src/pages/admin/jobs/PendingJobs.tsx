@@ -1,7 +1,11 @@
 import React from "react";
-import { AlertCircle, Loader2 } from "lucide-react";
+import { AlertCircle, Download, Loader2 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useGetAdminJobPostsQuery } from "@/api/job-post.api";
+import {
+  ADMIN_APPLICATION_FORM_DOC_URL,
+  ADMIN_RECRUITMENT_NOTICE_PDF_URL,
+} from "@/constants/documents";
 
 const PendingJobs: React.FC = () => {
   const { data, isLoading, isError } = useGetAdminJobPostsQuery();
@@ -17,17 +21,39 @@ const PendingJobs: React.FC = () => {
       activeSubmenu="pending-jobs"
     >
       <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50 text-yellow-700">
-            <AlertCircle className="h-5 w-5" />
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-yellow-50 text-yellow-700">
+              <AlertCircle className="h-5 w-5" />
+            </div>
+            <div>
+              <h1 className="text-lg font-semibold text-gray-800">
+                Tin tuyển dụng đang chờ xét duyệt
+              </h1>
+            </div>
           </div>
-          <div>
-            <h1 className="text-lg font-semibold text-gray-800">
-              Tin tuyển dụng đang chờ xét duyệt
-            </h1>
-            <p className="text-sm text-gray-500">
-              Lấy từ API /admin/job-posts với status = "Đang xem xét".
-            </p>
+
+          <div className="flex flex-wrap gap-2">
+            <a
+              href={ADMIN_RECRUITMENT_NOTICE_PDF_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              title="Tải Thông báo tuyển dụng"
+            >
+              <Download className="h-4 w-4" />
+              Thông báo tuyển dụng
+            </a>
+            <a
+              href={ADMIN_APPLICATION_FORM_DOC_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              title="Tải Phiếu đăng ký dự tuyển"
+            >
+              <Download className="h-4 w-4" />
+              Phiếu đăng ký dự tuyển
+            </a>
           </div>
         </div>
 

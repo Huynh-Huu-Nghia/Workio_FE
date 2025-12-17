@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
 
 interface ApiResponse<T> {
@@ -114,3 +114,72 @@ export const useAdminSuggestedCandidatesQuery = (jobPostId: string) =>
     enabled: Boolean(jobPostId),
     staleTime: 1000 * 60 * 5,
   });
+
+// --- Admin: CRUD job post + apply ---
+export const createAdminJobPostRequest = async ({
+  recruiterId,
+  payload,
+}: {
+  recruiterId: string;
+  payload: Partial<JobPost>;
+}) => {
+  const response = await axiosInstance.post("/admin/job-post", payload, {
+    params: { recruiter_id: recruiterId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useCreateAdminJobPostMutation = () =>
+  useMutation({ mutationFn: createAdminJobPostRequest });
+
+export const updateAdminJobPostRequest = async ({
+  jobPostId,
+  payload,
+}: {
+  jobPostId: string;
+  payload: Partial<JobPost>;
+}) => {
+  const response = await axiosInstance.patch("/admin/job-post", payload, {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useUpdateAdminJobPostMutation = () =>
+  useMutation({ mutationFn: updateAdminJobPostRequest });
+
+export const deleteAdminJobPostRequest = async (jobPostId: string) => {
+  const response = await axiosInstance.delete("/admin/job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useDeleteAdminJobPostMutation = () =>
+  useMutation({ mutationFn: deleteAdminJobPostRequest });
+
+export const applyAdminJobPostRequest = async ({
+  jobPostId,
+  candidateId,
+}: {
+  jobPostId: string;
+  candidateId: string;
+}) => {
+  const response = await axiosInstance.patch(
+    "/admin/apply-job-post",
+    {},
+    { params: { job_post_id: jobPostId, candidate_id: candidateId } }
+  );
+  return response.data as ApiResponse<any>;
+};
+
+export const useApplyAdminJobPostMutation = () =>
+  useMutation({ mutationFn: applyAdminJobPostRequest });
+
+// --- Admin: filter jobs by fields (Backend: GET /admin/filter-by-fields) ---
+export const filterAdminJobsByFieldsRequest = async (fields: string[]) => {
+  const response = await axiosInstance.get("/admin/filter-by-fields", {
+    params: { fields },
+  });
+  return response.data as ApiResponse<JobPost[]>;
+};

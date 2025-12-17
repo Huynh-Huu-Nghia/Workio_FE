@@ -76,16 +76,16 @@ export default function Login() {
 
         switch (realRole.toLowerCase()) {
           case "admin":
-            navigate("/admin/dashboard");
+            navigate(path.ADMIN_DASHBOARD);
             break;
           case "recruiter":
-            navigate("/recruiter/dashboard");
+            navigate(path.RECRUITER_JOBS);
             break;
           case "center":
-            navigate("/center");
+            navigate(path.CENTER_HOME);
             break;
           default:
-            navigate("/");
+            navigate(path.CANDIDATE_JOBS);
             break;
         }
       },

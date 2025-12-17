@@ -22,7 +22,6 @@ const InterviewsByCandidate: React.FC = () => {
             Lịch PV theo ứng viên
           </h1>
           <p className="text-sm text-gray-500">
-            Gọi /admin/interviews-of-candidate với candidate_id.
           </p>
         </div>
         <form

@@ -20,7 +20,6 @@ const InterviewList: React.FC = () => {
               Tất cả lịch phỏng vấn
             </h1>
             <p className="text-sm text-gray-500">
-              Đồng bộ với API /admin/all-interviews.
             </p>
           </div>
         </div>

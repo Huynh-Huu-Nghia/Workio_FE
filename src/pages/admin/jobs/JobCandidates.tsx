@@ -22,7 +22,6 @@ const JobCandidates: React.FC = () => {
             Ứng viên ứng tuyển tin
           </h1>
           <p className="text-sm text-gray-500">
-            Gọi /admin/candidates-of-job-post với job_post_id.
           </p>
         </div>
         <form

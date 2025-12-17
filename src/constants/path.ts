@@ -17,15 +17,17 @@ const path = {
   ADMIN_USER_CANDIDATE_CREATE: "/admin/candidates/create",
   ADMIN_USER_RECRUITER_CREATE: "/admin/recruiters/create",
   ADMIN_USER_CANDIDATE_LIST: "/admin/candidates/list",
+  ADMIN_CANDIDATE_VIEW: "/admin/candidates/view/:id",
+  ADMIN_CANDIDATE_EDIT: "/admin/candidates/edit/:id",
   ADMIN_RECRUITER_LIST: "/admin/recruiters",
   ADMIN_RECRUITER_PENDING: "/admin/recruiters/pending",
   ADMIN_JOB_LIST: "/admin/jobs",
   ADMIN_JOB_PENDING: "/admin/jobs/pending",
   ADMIN_JOB_CANDIDATES: "/admin/jobs/candidates",
   ADMIN_JOB_SUGGESTED: "/admin/jobs/suggested",
+  ADMIN_JOB_SUGGESTED_CANDIDATES: "/admin/jobs/suggested-candidates",
   ADMIN_CANDIDATE_JOBS: "/admin/candidates/jobs",
   ADMIN_INTERVIEWS: "/admin/interviews",
-  ADMIN_INTERVIEWS_RECRUITER: "/admin/interviews/recruiter",
   ADMIN_INTERVIEWS_CANDIDATE: "/admin/interviews/candidate",
   ADMIN_REPORT: "/admin/reports",
   ADMIN_SOCIAL: "/admin/social-insurances",
@@ -41,6 +43,8 @@ const path = {
   CANDIDATE_SUGGESTED_JOBS: "/candidate/jobs/suggested",
   CANDIDATE_INTERVIEWS: "/candidate/interviews",
   CANDIDATE_PROFILE: "/candidate/profile",
+  CANDIDATE_SETTINGS: "/candidate/settings",
+  CANDIDATE_SUPPORT: "/candidate/support",
 
   // --- Recruiter ---
   RECRUITER_HOME: "/recruiter",
@@ -49,9 +53,13 @@ const path = {
   RECRUITER_SUGGESTED_CANDIDATES: "/recruiter/jobs/suggested-candidates",
   RECRUITER_INTERVIEWS: "/recruiter/interviews",
   RECRUITER_PROFILE: "/recruiter/profile",
+  RECRUITER_SETTINGS: "/recruiter/settings",
+  RECRUITER_SUPPORT: "/recruiter/support",
 
   // --- Center (placeholder vì chưa có API) ---
   CENTER_HOME: "/center",
+  CENTER_SETTINGS: "/center/settings",
+  CENTER_SUPPORT: "/center/support",
 } as const;
 
 export default path;

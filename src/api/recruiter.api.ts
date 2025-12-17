@@ -130,3 +130,75 @@ export const useSuggestedCandidatesQuery = (jobPostId: string) =>
     enabled: Boolean(jobPostId),
     staleTime: 1000 * 60 * 3,
   });
+
+// --- Recruiter: CRUD job post ---
+export const createRecruiterJobPostRequest = async (payload: Partial<JobPost>) => {
+  const response = await axiosInstance.post("/recruiter/job-post", payload);
+  return response.data as ApiResponse<any>;
+};
+
+export const useCreateRecruiterJobPostMutation = () =>
+  useMutation({ mutationFn: createRecruiterJobPostRequest });
+
+export const updateRecruiterJobPostRequest = async ({
+  jobPostId,
+  payload,
+}: {
+  jobPostId: string;
+  payload: Partial<JobPost>;
+}) => {
+  const response = await axiosInstance.patch("/recruiter/job-post", payload, {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useUpdateRecruiterJobPostMutation = () =>
+  useMutation({ mutationFn: updateRecruiterJobPostRequest });
+
+export const deleteRecruiterJobPostRequest = async (jobPostId: string) => {
+  const response = await axiosInstance.delete("/recruiter/job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useDeleteRecruiterJobPostMutation = () =>
+  useMutation({ mutationFn: deleteRecruiterJobPostRequest });
+
+// --- Recruiter: CRUD interview ---
+export const createRecruiterInterviewRequest = async (payload: any) => {
+  const response = await axiosInstance.post("/recruiter/interview", payload, {
+    params: { job_post_id: payload?.job_post_id },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useCreateRecruiterInterviewMutation = () =>
+  useMutation({ mutationFn: createRecruiterInterviewRequest });
+
+export const updateRecruiterInterviewRequest = async ({
+  interviewId,
+  payload,
+}: {
+  interviewId: string;
+  payload: any;
+}) => {
+  const response = await axiosInstance.patch("/recruiter/interview", payload, {
+    params: { interview_id: interviewId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useUpdateRecruiterInterviewMutation = () =>
+  useMutation({ mutationFn: updateRecruiterInterviewRequest });
+
+export const deleteRecruiterInterviewRequest = async (interviewId: string) => {
+  const response = await axiosInstance.delete("/recruiter/interview", {
+    params: { interview_id: interviewId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useDeleteRecruiterInterviewMutation = () =>
+  useMutation({ mutationFn: deleteRecruiterInterviewRequest });

@@ -1,5 +1,5 @@
 import React from "react";
-import { Lightbulb } from "lucide-react";
+import { Lightbulb, RefreshCcw } from "lucide-react";
 import { useCandidateSuggestedJobsQuery } from "@/api/candidate.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
@@ -7,16 +7,29 @@ import { useLocation } from "react-router-dom";
 const CandidateSuggestedJobs: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Việc làm gợi ý";
-  const { data, isLoading, isError } = useCandidateSuggestedJobsQuery();
+  const { data, isLoading, isError, refetch, isFetching } =
+    useCandidateSuggestedJobsQuery();
   const jobs = data?.data ?? [];
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-5xl px-4 py-6">
         <header className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
+              title="Làm mới gợi ý"
+            >
+              <RefreshCcw className="h-4 w-4" />
+              Làm mới
+            </button>
+          </div>
           <p className="text-sm text-gray-500">
-            Gọi /candidate/suggested-jobs từ backend.
+            Danh sách việc làm phù hợp được hệ thống gợi ý theo hồ sơ của bạn.
           </p>
         </header>
 

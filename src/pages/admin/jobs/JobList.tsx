@@ -2,7 +2,9 @@ import React, { useMemo, useState } from "react";
 import {
   Briefcase,
   Calendar,
+  Download,
   Loader2,
+  Sparkles,
   Search,
   Tags,
   XCircle,
@@ -10,6 +12,11 @@ import {
 import AdminLayout from "@/layouts/AdminLayout";
 import type { JobPost } from "@/api/job-post.api";
 import { useGetAdminJobPostsQuery } from "@/api/job-post.api";
+import { Link } from "react-router-dom";
+import {
+  ADMIN_APPLICATION_FORM_DOC_URL,
+  ADMIN_RECRUITMENT_NOTICE_PDF_URL,
+} from "@/constants/documents";
 
 const JobList: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -50,10 +57,29 @@ const JobList: React.FC = () => {
               Quản lý tin đăng
             </h1>
             <p className="text-sm text-gray-500">
-              Đồng bộ với API /admin/job-posts.
             </p>
           </div>
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <a
+              href={ADMIN_RECRUITMENT_NOTICE_PDF_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              title="Tải Thông báo tuyển dụng"
+            >
+              <Download className="h-4 w-4" />
+              Thông báo tuyển dụng
+            </a>
+            <a
+              href={ADMIN_APPLICATION_FORM_DOC_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              title="Tải Phiếu đăng ký dự tuyển"
+            >
+              <Download className="h-4 w-4" />
+              Phiếu đăng ký dự tuyển
+            </a>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -149,6 +175,17 @@ const JobList: React.FC = () => {
                       {job.requirements}
                     </p>
                   )}
+
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <Link
+                      to={`/admin/jobs/suggested-candidates?job_post_id=${job.id}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      title="Gợi ý ứng viên phù hợp"
+                    >
+                      <Sparkles className="h-4 w-4 text-orange-500" />
+                      Gợi ý ứng viên
+                    </Link>
+                  </div>
                 </article>
               ))
             )}

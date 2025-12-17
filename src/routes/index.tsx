@@ -11,25 +11,38 @@ import UserManagementPage from "@/pages/admin/UserManagement";
 import CreateCandidate from "@/pages/admin/candidate/CreateCandidate";
 import CreateRecruiter from "@/pages/admin/recruiter/CreateRecruiter";
 import CandidateList from "@/pages/admin/candidate/CandidateList";
+import CandidateView from "@/pages/admin/candidate/CandidateView";
+import CandidateEdit from "@/pages/admin/candidate/CandidateEdit";
 import RecruiterList from "@/pages/admin/recruiter/RecruiterList";
 import PendingRecruiters from "@/pages/admin/recruiter/PendingRecruiters";
 import JobList from "@/pages/admin/jobs/JobList";
 import PendingJobs from "@/pages/admin/jobs/PendingJobs";
 import InterviewList from "@/pages/admin/interview/InterviewList";
+import InterviewsByCandidate from "@/pages/admin/interview/InterviewsByCandidate";
 import SocialInsuranceLookup from "@/pages/admin/social/SocialInsuranceLookup";
 import ReportOverview from "@/pages/admin/report/ReportOverview";
 import Dashboard from "@/pages/admin/Dashboard";
-import PlaceholderPage from "@/pages/admin/PlaceholderPage";
+import SupportRequests from "@/pages/admin/requests/SupportRequests";
+import Industries from "@/pages/admin/categories/Industries";
+import Skills from "@/pages/admin/categories/Skills";
+import Settings from "@/pages/admin/settings/Settings";
 import CandidateJobBoard from "@/pages/candidate/JobBoard";
 import CandidateInterviews from "@/pages/candidate/Interviews";
 import CandidateProfile from "@/pages/candidate/Profile";
+import CandidateAccountSettings from "@/pages/candidate/AccountSettings";
+import CandidateSupportRequests from "@/pages/candidate/SupportRequests";
 import RecruiterJobPosts from "@/pages/recruiter/JobPosts";
 import RecruiterInterviews from "@/pages/recruiter/Interviews";
 import RecruiterProfile from "@/pages/recruiter/Profile";
+import RecruiterAccountSettings from "@/pages/recruiter/AccountSettings";
+import RecruiterSupportRequests from "@/pages/recruiter/SupportRequests";
 import CenterDashboard from "@/pages/center/CenterDashboard";
+import CenterAccountSettings from "@/pages/center/AccountSettings";
+import CenterSupportRequests from "@/pages/center/SupportRequests";
 import JobCandidates from "@/pages/admin/jobs/JobCandidates";
 import CandidateJobs from "@/pages/admin/candidate/CandidateJobs";
 import SuggestedJobs from "@/pages/admin/jobs/SuggestedJobs";
+import AdminSuggestedCandidates from "@/pages/admin/jobs/SuggestedCandidates";
 import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
 import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
@@ -106,6 +119,14 @@ export const AppRouter = createBrowserRouter([
         element: <CandidateList />,
       },
       {
+        path: path.ADMIN_CANDIDATE_VIEW,
+        element: <CandidateView />,
+      },
+      {
+        path: path.ADMIN_CANDIDATE_EDIT,
+        element: <CandidateEdit />,
+      },
+      {
         path: path.ADMIN_JOB_LIST,
         element: <JobList />,
       },
@@ -126,8 +147,16 @@ export const AppRouter = createBrowserRouter([
         element: <SuggestedJobs />,
       },
       {
+        path: path.ADMIN_JOB_SUGGESTED_CANDIDATES,
+        element: <AdminSuggestedCandidates />,
+      },
+      {
         path: path.ADMIN_INTERVIEWS,
         element: <InterviewList />,
+      },
+      {
+        path: path.ADMIN_INTERVIEWS_CANDIDATE,
+        element: <InterviewsByCandidate />,
       },
       {
         path: path.ADMIN_SOCIAL,
@@ -139,39 +168,19 @@ export const AppRouter = createBrowserRouter([
       },
       {
         path: path.ADMIN_REQUESTS,
-        element: (
-          <PlaceholderPage
-            title="Yêu cầu hỗ trợ"
-            description="Màn này chưa có API. Hiển thị placeholder để tránh 404."
-          />
-        ),
+        element: <SupportRequests />,
       },
       {
         path: path.ADMIN_CATEGORIES_INDUSTRIES,
-        element: (
-          <PlaceholderPage
-            title="Ngành nghề"
-            description="Chưa có endpoints từ backend. Bổ sung sau."
-          />
-        ),
+        element: <Industries />,
       },
       {
         path: path.ADMIN_CATEGORIES_SKILLS,
-        element: (
-          <PlaceholderPage
-            title="Kỹ năng"
-            description="Chưa có endpoints từ backend. Bổ sung sau."
-          />
-        ),
+        element: <Skills />,
       },
       {
         path: path.ADMIN_SETTINGS,
-        element: (
-          <PlaceholderPage
-            title="Cài đặt hệ thống"
-            description="Cấu hình hệ thống sẽ gắn khi backend sẵn sàng."
-          />
-        ),
+        element: <Settings />,
       },
       // Thêm các routes Admin khác tại đây
     ],
@@ -190,6 +199,8 @@ export const AppRouter = createBrowserRouter([
       },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },
+      { path: path.CANDIDATE_SETTINGS, element: <CandidateAccountSettings /> },
+      { path: path.CANDIDATE_SUPPORT, element: <CandidateSupportRequests /> },
     ],
   },
 
@@ -206,13 +217,20 @@ export const AppRouter = createBrowserRouter([
       },
       { path: path.RECRUITER_INTERVIEWS, element: <RecruiterInterviews /> },
       { path: path.RECRUITER_PROFILE, element: <RecruiterProfile /> },
+      { path: path.RECRUITER_SETTINGS, element: <RecruiterAccountSettings /> },
+      { path: path.RECRUITER_SUPPORT, element: <RecruiterSupportRequests /> },
     ],
   },
 
   // --- Luồng Center (placeholder) ---
   {
     path: path.CENTER_HOME,
-    element: <CenterDashboard />,
+    element: <Outlet />,
+    children: [
+      { path: path.CENTER_HOME, element: <CenterDashboard /> },
+      { path: path.CENTER_SETTINGS, element: <CenterAccountSettings /> },
+      { path: path.CENTER_SUPPORT, element: <CenterSupportRequests /> },
+    ],
   },
 ]);
 

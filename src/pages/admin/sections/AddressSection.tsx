@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type {
   UseFormRegister,
   FieldErrors,
@@ -6,6 +6,7 @@ import type {
   UseFormWatch,
 } from "react-hook-form";
 import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
+import { useProvinceByCodeQuery, useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 
 interface Props {
   register: UseFormRegister<CreateCandidateSchema>;
@@ -20,53 +21,39 @@ export default function AddressSection({
   watch,
   setValue,
 }: Props) {
-  const [provinces, setProvinces] = useState<any[]>([]);
   const [districts, setDistricts] = useState<any[]>([]);
-  const [wards, setWards] = useState<any[]>([]);
 
   // Lấy giá trị hiện tại (Đây là CODE đối với Tỉnh/Huyện, là NAME đối với Xã)
   const provinceCode = watch("addressInfo.province_code");
   const districtCode = watch("addressInfo.district_code");
 
-  /** 1. Load danh sách Tỉnh */
-  useEffect(() => {
-    fetch("https://provinces.open-api.vn/api/p/")
-      .then((res) => res.json())
-      .then(setProvinces)
-      .catch((err) => console.error("Lỗi load tỉnh:", err));
-  }, []);
+  const { data: provinces = [] } = useProvincesQuery();
+  const { data: provinceDetail } = useProvinceByCodeQuery(provinceCode);
+
+  const shouldFetchAllWards = useMemo(() => {
+    if (!districtCode) return false;
+    const firstDistrict = (provinceDetail as any)?.districts?.[0];
+    return !firstDistrict || !("wards" in firstDistrict);
+  }, [districtCode, provinceDetail]);
+
+  const { data: allWards = [] } = useWardsQuery(shouldFetchAllWards);
 
   /** 2. Khi chọn Tỉnh (có Code) -> Load Huyện */
   useEffect(() => {
     if (!provinceCode) {
       setDistricts([]);
-      setWards([]);
       return;
     }
 
-    // provinceCode lúc này là số (VD: 79) nên gọi API chạy ngon lành
-    fetch(`https://provinces.open-api.vn/api/p/${provinceCode}?depth=2`)
-      .then((res) => res.json())
-      .then((data) => {
-        setDistricts(data?.districts || []);
-      })
-      .catch(() => setDistricts([]));
-  }, [provinceCode]);
+    setDistricts((provinceDetail as any)?.districts || []);
+  }, [provinceCode, provinceDetail]);
 
-  /** 3. Khi chọn Huyện (có Code) -> Load Xã */
-  useEffect(() => {
-    if (!districtCode) {
-      setWards([]);
-      return;
-    }
-
-    fetch(`https://provinces.open-api.vn/api/d/${districtCode}?depth=2`)
-      .then((res) => res.json())
-      .then((data) => {
-        setWards(data?.wards || []);
-      })
-      .catch(() => setWards([]));
-  }, [districtCode]);
+  const wards = useMemo(() => {
+    if (!districtCode) return [];
+    const district = districts.find((d) => String(d.code) === String(districtCode));
+    if (district?.wards) return district.wards;
+    return allWards.filter((w) => String((w as any).district_code) === String(districtCode));
+  }, [allWards, districtCode, districts]);
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -151,7 +138,7 @@ export default function AddressSection({
           className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
         >
           <option value="">-- Chọn Phường/Xã --</option>
-          {wards.map((w) => (
+          {wards.map((w: any) => (
             // 🔥 RIÊNG CÁI NÀY: JSON BE ghi "ward": "Bến Thành"
             // Nên ta để value={w.name} luôn để lưu tên.
             <option key={w.code} value={w.name}>

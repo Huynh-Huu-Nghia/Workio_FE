@@ -16,20 +16,13 @@ const RecruiterJobPosts: React.FC = () => {
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
           <p className="text-sm text-gray-500">
-            Gọi API /recruiter/job-posts theo backend.
           </p>
-          <div className="mt-3 flex gap-2 text-sm">
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <Link
               to="/recruiter/jobs/candidates"
               className="rounded-full bg-white px-3 py-1 font-semibold text-orange-600 shadow-sm border border-orange-100"
             >
               Ứng viên cho tin
-            </Link>
-            <Link
-              to="/recruiter/jobs/suggested-candidates"
-              className="rounded-full bg-white px-3 py-1 font-semibold text-gray-700 shadow-sm border border-gray-200"
-            >
-              Gợi ý ứng viên
             </Link>
           </div>
         </header>

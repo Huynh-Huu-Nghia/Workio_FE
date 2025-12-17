@@ -49,3 +49,12 @@ export const useMonthlyReportQuery = (month: number, year: number) =>
     enabled: Boolean(month && year),
     staleTime: 1000 * 60 * 5,
   });
+
+// --- Download report DOCX (Backend: GET /admin/report-doc) ---
+export const downloadMonthlyReportDoc = async (month: number, year: number) => {
+  const response = await axiosInstance.get("/admin/report-doc", {
+    params: { month, year },
+    responseType: "blob",
+  });
+  return response.data as Blob;
+};
