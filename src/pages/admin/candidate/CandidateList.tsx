@@ -1,3 +1,5 @@
+// src/pages/admin/candidate/CandidateList.tsx
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -10,14 +12,21 @@ import {
   CheckCircle2,
   XCircle,
   Briefcase,
+  Sparkles,
   Loader2,
   X,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { useGetAllCandidatesQuery } from "@/api/candidate.api";
+import {
+  useDeleteCandidateAdminMutation,
+  useGetAllCandidatesQuery,
+} from "@/api/candidate.api";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "react-toastify";
 
 export default function CandidateList() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
 
   // --- STATE CHO BỘ LỌC ---
@@ -30,8 +39,12 @@ export default function CandidateList() {
     skill: "", // Từ khóa kỹ năng (React, Java...)
   });
 
-  // Gọi API
+  // Gọi API lấy danh sách
   const { data: apiResponse, isLoading, isError } = useGetAllCandidatesQuery();
+  // Gọi API xóa
+  const deleteMutation = useDeleteCandidateAdminMutation();
+
+  // Lấy mảng ứng viên từ cục data trả về
   const candidates = apiResponse?.data || [];
 
   // --- LOGIC LỌC DỮ LIỆU (ADVANCED FILTER) ---
@@ -106,6 +119,44 @@ export default function CandidateList() {
     setSearchTerm("");
   };
 
+  const handleDeleteOne = async (candidateId: string) => {
+    const ok = window.confirm("Bạn có chắc muốn xóa ứng viên này không?");
+    if (!ok) return;
+
+    try {
+      const res = await deleteMutation.mutateAsync(candidateId);
+      if (res?.err === 0) {
+        toast.info(res?.mes || "Đã xóa ứng viên.");
+        setSelectedRows((prev) => prev.filter((id) => id !== candidateId));
+        await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+        return;
+      }
+      toast.error(res?.mes || "Xóa thất bại.");
+    } catch (e: any) {
+      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedRows.length === 0) return;
+    const ok = window.confirm(
+      `Bạn có chắc muốn xóa ${selectedRows.length} ứng viên đã chọn không?`
+    );
+    if (!ok) return;
+
+    try {
+      const ids = [...selectedRows];
+      for (const id of ids) {
+        await deleteMutation.mutateAsync(id);
+      }
+      toast.info("Đã xóa các ứng viên đã chọn.");
+      setSelectedRows([]);
+      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+    } catch (e: any) {
+      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+    }
+  };
+
   return (
     <AdminLayout
       title="DANH SÁCH ỨNG VIÊN"
@@ -155,8 +206,17 @@ export default function CandidateList() {
                 </button>
               </div>
 
-              {/* Actions Button */}
+              {/* Actions Button (Gộp cả Xóa nhiều và Thêm mới) */}
               <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                {selectedRows.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={deleteMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors animate-in fade-in disabled:opacity-60"
+                  >
+                    <Trash2 size={16} /> Xóa ({selectedRows.length})
+                  </button>
+                )}
                 <Link
                   to="/admin/candidates/create"
                   className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md shadow-orange-200 hover:shadow-lg transform active:scale-95"
@@ -403,8 +463,21 @@ export default function CandidateList() {
                               <Pencil className="w-4 h-4" />
                             </button>
                             <button
+                              onClick={() =>
+                                navigate(
+                                  `/admin/jobs/suggested?candidate_id=${user.candidate_id}`
+                                )
+                              }
+                              className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
+                              title="Gợi ý việc làm"
+                            >
+                              <Sparkles className="w-4 h-4" />
+                            </button>
+                            <button
                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Xóa"
+                              disabled={deleteMutation.isPending}
+                              onClick={() => handleDeleteOne(user.candidate_id)}
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>

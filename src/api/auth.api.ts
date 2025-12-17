@@ -28,6 +28,9 @@ const loginRequest = (payload: LoginRequestPayload) => {
     case "Recruiter":
       apiUrl = "/recruiter/auth/login";
       break;
+    case "Center":
+      apiUrl = "/center/auth/login";
+      break;
     default:
       apiUrl = "/candidate/auth/login";
       break;
@@ -49,6 +52,9 @@ const forgotPasswordRequest = (payload: ForgotPasswordFormSchema) => {
 
   // 2. Chọn đường dẫn API dựa trên Role
   switch (role) {
+    case "Admin":
+      apiUrl = "/admin-auth/forgot-password";
+      break;
     case "Recruiter":
       apiUrl = "/recruiter/auth/forgot-password";
       break;
@@ -71,9 +77,12 @@ export const useForgotPasswordMutation = () => {
 // --- PHẦN RESET PASSWORD (Giữ nguyên) ---
 const resetPasswordRequest = (payload: ResetPasswordFormSchema) => {
   // Tách role và confirm_password ra, chỉ gửi password và token đi
-  const { role, confirm_password, ...resetData } = payload;
+  const { role, confirm_password: _confirm_password, ...resetData } = payload;
   let apiUrl = "";
   switch (role) {
+    case "Admin":
+      apiUrl = "/admin-auth/create-new-password";
+      break;
     case "Recruiter":
       apiUrl = "/recruiter/auth/create-new-password";
       break;
@@ -91,4 +100,82 @@ export const useResetPasswordMutation = () => {
   return useMutation({
     mutationFn: resetPasswordRequest,
   });
+};
+
+// --- ✅ Refresh token + Logout (Candidate/Recruiter/Admin) ---
+export type AuthRole = "Admin" | "Recruiter" | "Candidate" | "Center";
+
+export const refreshTokenRequest = async ({
+  role,
+  refresh_token,
+}: {
+  role: Exclude<AuthRole, "Center">;
+  refresh_token: string;
+}) => {
+  let apiUrl = "";
+  switch (role) {
+    case "Admin":
+      apiUrl = "/admin-auth/refresh-token";
+      break;
+    case "Recruiter":
+      apiUrl = "/recruiter/auth/refresh-token";
+      break;
+    default:
+      apiUrl = "/candidate/auth/refresh-token";
+      break;
+  }
+  return axiosInstance.post(apiUrl, { refresh_token });
+};
+
+export const useRefreshTokenMutation = () =>
+  useMutation({ mutationFn: refreshTokenRequest });
+
+export const logoutRequest = async ({
+  role,
+}: {
+  role: Exclude<AuthRole, "Center">;
+}) => {
+  let apiUrl = "";
+  switch (role) {
+    case "Admin":
+      apiUrl = "/admin-auth/logout";
+      break;
+    case "Recruiter":
+      apiUrl = "/recruiter/auth/logout";
+      break;
+    default:
+      apiUrl = "/candidate/auth/logout";
+      break;
+  }
+  return axiosInstance.post(apiUrl, {});
+};
+
+export const useLogoutMutation = () =>
+  useMutation({ mutationFn: logoutRequest });
+
+// --- Optional: verify email / verify reset token (used by email links) ---
+export const verifyEmailRequest = async ({
+  role,
+  token,
+}: {
+  role: "Recruiter" | "Candidate";
+  token: string;
+}) => {
+  const apiUrl =
+    role === "Recruiter" ? "/recruiter/auth/verified" : "/candidate/auth/verified";
+  return axiosInstance.get(apiUrl, { params: { token } });
+};
+
+export const verifyResetPasswordTokenRequest = async ({
+  role,
+  token,
+}: {
+  role: "Recruiter" | "Candidate";
+  token: string;
+}) => {
+  const apiUrl =
+    role === "Recruiter"
+      ? "/recruiter/auth/reset-password"
+      : "/candidate/auth/reset-password";
+  return axiosInstance.get(apiUrl, { params: { token } });
 };

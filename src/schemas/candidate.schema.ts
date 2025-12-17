@@ -69,4 +69,13 @@ export const createCandidateSchema = z.object({
   workExperiences: z.array(workExperienceSchema),
 });
 
+export const updateCandidateSchema = createCandidateSchema.extend({
+  password: z
+    .string()
+    .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
+    .optional()
+    .or(z.literal("")),
+});
+
 export type CreateCandidateSchema = z.infer<typeof createCandidateSchema>;
+export type UpdateCandidateSchema = z.infer<typeof updateCandidateSchema>;

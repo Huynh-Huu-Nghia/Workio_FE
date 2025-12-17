@@ -1,12 +1,14 @@
-import type { UseFormRegister, FieldErrors } from "react-hook-form";
-import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
-
 interface Props {
-  register: UseFormRegister<CreateCandidateSchema>;
-  errors: FieldErrors<CreateCandidateSchema>;
+  register: any;
+  errors: any;
+  passwordRequired?: boolean;
 }
 
-export default function AccountSection({ register, errors }: Props) {
+export default function AccountSection({
+  register,
+  errors,
+  passwordRequired = true,
+}: Props) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
       {/* Email */}
@@ -30,7 +32,8 @@ export default function AccountSection({ register, errors }: Props) {
       {/* Password */}
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
-          Mật khẩu <span className="text-red-500">*</span>
+          Mật khẩu{" "}
+          {passwordRequired && <span className="text-red-500">*</span>}
         </label>
         <input
           type="password"

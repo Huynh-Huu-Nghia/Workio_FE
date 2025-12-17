@@ -16,7 +16,7 @@ const CandidateAppliedJobs: React.FC = () => {
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
           <p className="text-sm text-gray-500">
-            Đồng bộ với API /candidate/job-posts-of-candidate.
+            Danh sách các tin tuyển dụng bạn đã nộp đơn/ứng tuyển để được tuyển.
           </p>
         </header>
 

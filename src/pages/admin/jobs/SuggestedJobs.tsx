@@ -1,13 +1,22 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Lightbulb, Search } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useAdminSuggestedJobsQuery } from "@/api/job-post.api";
+import { useSearchParams } from "react-router-dom";
 
 const SuggestedJobs: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [candidateId, setCandidateId] = useState("");
   const [submittedId, setSubmittedId] = useState("");
   const { data, isFetching } = useAdminSuggestedJobsQuery(submittedId);
   const jobs = data?.data ?? [];
+
+  useEffect(() => {
+    const candidateFromQuery = searchParams.get("candidate_id") || "";
+    if (!candidateFromQuery) return;
+    setCandidateId(candidateFromQuery);
+    setSubmittedId(candidateFromQuery);
+  }, [searchParams]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,7 +31,6 @@ const SuggestedJobs: React.FC = () => {
             Gợi ý việc làm cho ứng viên
           </h1>
           <p className="text-sm text-gray-500">
-            Gọi /admin/suggested-jobs với candidate_id.
           </p>
         </div>
         <form

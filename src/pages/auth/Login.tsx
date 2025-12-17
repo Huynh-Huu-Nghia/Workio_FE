@@ -9,6 +9,7 @@ import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 import logoImg from "@/assets/networking.png";
 import { useState } from "react"; // ✅ Thêm useState để quản lý hiện/ẩn password
+import { setAuthTokens } from "@/utils/authStorage";
 
 type FormData = LoginFormSchema;
 
@@ -41,6 +42,7 @@ export default function Login() {
     loginMutation.mutate(data as any, {
       onSuccess: (response) => {
         const accessToken = response.data.access_token;
+        const refreshToken = response.data.refresh_token;
         const user = response.data.data;
 
         const realRole = (user as any).role?.value || "";
@@ -60,7 +62,8 @@ export default function Login() {
           );
         }
 
-        localStorage.setItem("access_token", accessToken);
+        // BE đã trả về `access_token` kèm sẵn "Bearer ...", lưu nguyên xi để dùng về sau
+        setAuthTokens({ accessToken, refreshToken });
         setUser(user);
 
         const displayName = user.name || user.email || "bạn";
@@ -72,13 +75,16 @@ export default function Login() {
 
         switch (realRole.toLowerCase()) {
           case "admin":
-            navigate("/admin/dashboard");
+            navigate(path.ADMIN_DASHBOARD);
             break;
           case "recruiter":
-            navigate("/recruiter/dashboard");
+            navigate(path.RECRUITER_JOBS);
+            break;
+          case "center":
+            navigate(path.CENTER_HOME);
             break;
           default:
-            navigate("/");
+            navigate(path.CANDIDATE_JOBS);
             break;
         }
       },
@@ -157,7 +163,7 @@ export default function Login() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-400">
               Cổng đăng nhập <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <RoleCard
                 id="role-candidate"
                 value="Candidate"
@@ -171,6 +177,14 @@ export default function Login() {
                 value="Recruiter"
                 label="Tuyển dụng"
                 icon="🏢"
+                register={register}
+                currentRole={currentRole}
+              />
+              <RoleCard
+                id="role-center"
+                value="Center"
+                label="Trung tâm"
+                icon="🏫"
                 register={register}
                 currentRole={currentRole}
               />

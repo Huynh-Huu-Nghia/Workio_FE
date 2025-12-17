@@ -1,16 +1,24 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Lightbulb, Search } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
-import { useLocation } from "react-router-dom";
+import { useLocation, useSearchParams } from "react-router-dom";
 import { useSuggestedCandidatesQuery } from "@/api/recruiter.api";
 
 const SuggestedCandidates: React.FC = () => {
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const title = pathtotitle[location.pathname] || "Gợi ý ứng viên";
   const [jobId, setJobId] = useState("");
   const [submittedId, setSubmittedId] = useState("");
   const { data, isFetching } = useSuggestedCandidatesQuery(submittedId);
   const candidates = data?.data ?? [];
+
+  useEffect(() => {
+    const jobPostId = searchParams.get("job_post_id") || "";
+    if (!jobPostId) return;
+    setJobId(jobPostId);
+    setSubmittedId(jobPostId);
+  }, [searchParams]);
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -23,7 +31,7 @@ const SuggestedCandidates: React.FC = () => {
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
           <p className="text-sm text-gray-500">
-            Gọi /recruiter/suggested-candidates với job_post_id.
+            Nhập `job_post_id` để lấy danh sách ứng viên được gợi ý cho tin.
           </p>
         </header>
 

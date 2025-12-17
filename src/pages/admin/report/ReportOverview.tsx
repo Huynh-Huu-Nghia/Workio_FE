@@ -1,12 +1,15 @@
 import React, { useMemo, useState } from "react";
 import { BarChart3, FileText, RefreshCw } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { useMonthlyReportQuery } from "@/api/report.api";
+import { downloadMonthlyReportDoc, useMonthlyReportQuery } from "@/api/report.api";
+import { toast } from "react-toastify";
+import { AxiosError } from "axios";
 
 const ReportOverview: React.FC = () => {
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth() + 1);
   const [year, setYear] = useState(now.getFullYear());
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data, isFetching, refetch } = useMonthlyReportQuery(month, year);
   const report = data?.data;
@@ -36,6 +39,26 @@ const ReportOverview: React.FC = () => {
     ],
     [report]
   );
+
+  const onDownloadDocx = async () => {
+    if (isDownloading) return;
+
+    setIsDownloading(true);
+    try {
+      const blob = await downloadMonthlyReportDoc(month, year);
+      const filename = `MonthlyReport_${year}_${month}.docx`;
+      downloadBlob(blob, filename);
+      toast.success("Đã tạo báo cáo, tải xuống bắt đầu.");
+    } catch (error) {
+      if (error instanceof AxiosError && error.response) {
+        toast.error(error.response.data?.mes || "Tải báo cáo thất bại.");
+      } else {
+        toast.error("Tải báo cáo thất bại.");
+      }
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   return (
     <AdminLayout title="Báo cáo tuyển dụng" activeMenu="reports">
@@ -144,13 +167,21 @@ const ReportOverview: React.FC = () => {
                 Xuất báo cáo
               </h2>
               <p className="text-sm text-gray-500">
-                Gọi API /admin/report-doc để tải file .docx (cần BE bật).
               </p>
             </div>
           </div>
-          <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-gray-50 px-4 py-2 text-sm text-gray-600">
-            <FileText className="h-4 w-4" />
-            Chưa triển khai nút tải, thêm khi BE sẵn sàng.
+          <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <button
+              type="button"
+              onClick={onDownloadDocx}
+              disabled={isDownloading}
+              className="inline-flex items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-200"
+            >
+              <FileText className="h-4 w-4" />
+              {isDownloading ? "Đang tạo file..." : "Tải báo cáo .docx"}
+            </button>
+            <p className="text-xs text-gray-500">
+            </p>
           </div>
         </div>
       </div>
@@ -185,5 +216,16 @@ const StatBlock: React.FC<{
     </div>
   </div>
 );
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  window.URL.revokeObjectURL(url);
+};
 
 export default ReportOverview;

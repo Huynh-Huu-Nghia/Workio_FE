@@ -44,7 +44,6 @@ const SocialInsuranceLookup: React.FC = () => {
             Tra cứu bảo hiểm xã hội
           </h1>
           <p className="text-sm text-gray-500">
-            Dựa trên API /admin/social-insurances và /admin/unemployed-benefits.
           </p>
         </div>
 

@@ -78,7 +78,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
             },
             {
               id: "candidate-jobs",
-              label: "Tin ứng tuyển",
+              label: "Tin tuyển dụng đã ứng tuyển",
               link: "/admin/candidates/jobs",
             },
           ],
@@ -129,11 +129,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               link: "/admin/interviews",
             },
             {
-              id: "interviews-recruiter",
-              label: "PV theo NTD",
-              link: "/admin/interviews/recruiter",
-            },
-            {
               id: "interviews-candidate",
               label: "PV theo ứng viên",
               link: "/admin/interviews/candidate",
@@ -147,6 +142,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               id: "suggested-jobs",
               label: "Gợi ý việc làm",
               link: "/admin/jobs/suggested",
+            },
+            {
+              id: "suggested-candidates",
+              label: "Gợi ý ứng viên",
+              link: "/admin/jobs/suggested-candidates",
             },
           ],
         },
@@ -187,7 +187,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
         },
         {
           id: "settings",
-          label: "Cài đặt hệ thống",
+          label: "Cài đặt tài khoản",
           icon: <Settings size={20} />,
           link: "/admin/settings",
         },
