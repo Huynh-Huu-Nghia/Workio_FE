@@ -81,6 +81,9 @@ export default function Login() {
           case "recruiter":
             navigate("/recruiter/dashboard");
             break;
+          case "center":
+            navigate("/center");
+            break;
           default:
             navigate("/");
             break;
@@ -161,7 +164,7 @@ export default function Login() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-400">
               Cổng đăng nhập <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <RoleCard
                 id="role-candidate"
                 value="Candidate"
@@ -175,6 +178,14 @@ export default function Login() {
                 value="Recruiter"
                 label="Tuyển dụng"
                 icon="🏢"
+                register={register}
+                currentRole={currentRole}
+              />
+              <RoleCard
+                id="role-center"
+                value="Center"
+                label="Trung tâm"
+                icon="🏫"
                 register={register}
                 currentRole={currentRole}
               />

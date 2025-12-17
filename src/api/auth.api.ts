@@ -28,6 +28,9 @@ const loginRequest = (payload: LoginRequestPayload) => {
     case "Recruiter":
       apiUrl = "/recruiter/auth/login";
       break;
+    case "Center":
+      apiUrl = "/center/auth/login";
+      break;
     default:
       apiUrl = "/candidate/auth/login";
       break;
