@@ -15,8 +15,7 @@ const RecruiterJobPosts: React.FC = () => {
       <div className="mx-auto max-w-5xl px-4 py-6">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-          </p>
+          <p className="text-sm text-gray-500"></p>
           <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
             <Link
               to="/recruiter/jobs/candidates"

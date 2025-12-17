@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
+import {
+  useCreateSupportRequestMutation,
+  useMySupportRequestsQuery,
+} from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 
@@ -184,4 +187,3 @@ const RecruiterSupportRequests: React.FC = () => {
 };
 
 export default RecruiterSupportRequests;
-

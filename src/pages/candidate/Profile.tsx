@@ -1,57 +1,95 @@
 import React, { useEffect, useMemo, useState } from "react";
+
 import { Save, User } from "lucide-react";
+
 import { pathtotitle } from "@/configs/pagetitle";
+
 import { Link, useLocation } from "react-router-dom";
+
 import { useUser } from "@/context/user/user.context";
+
 import { useUpdateCandidateProfileMutation } from "@/api/profile.api";
+
 import { toast } from "react-toastify";
 
 const CandidateProfile: React.FC = () => {
   const location = useLocation();
+
   const title = pathtotitle[location.pathname] || "Hồ sơ";
+
   const { user } = useUser();
+
   const updateProfile = useUpdateCandidateProfileMutation();
 
   const storageKey = useMemo(
     () => `workio_candidate_profile_draft_${user?.id || "guest"}`,
+
     [user?.id]
   );
 
   const [candidateInfo, setCandidateInfo] = useState<any>({
     full_name: "",
+
     phone: "",
+
     place_of_birth: "",
+
     ethnicity: "Kinh",
+
     gender: "Nam",
+
     date_of_birth: "",
+
     graduation_rank: "",
+
     computer_skill: "",
+
     other_computer_skill: "",
+
     job_type: "",
+
     working_time: "",
+
     transport: "",
+
     minimum_income: 0,
+
     languguages: [],
+
     fields_wish: [],
   });
 
   const [addressInfo, setAddressInfo] = useState<any>({
     street: "",
+
     ward: "",
+
     district_code: "",
+
     province_code: "",
   });
 
   const [tagLanguage, setTagLanguage] = useState("");
+
   const [tagField, setTagField] = useState("");
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(storageKey);
+
       if (!raw) return;
+
       const parsed = JSON.parse(raw);
-      setCandidateInfo((prev: any) => ({ ...prev, ...(parsed.candidateInfo || {}) }));
-      setAddressInfo((prev: any) => ({ ...prev, ...(parsed.addressInfo || {}) }));
+
+      setCandidateInfo((prev: any) => ({
+        ...prev,
+        ...(parsed.candidateInfo || {}),
+      }));
+
+      setAddressInfo((prev: any) => ({
+        ...prev,
+        ...(parsed.addressInfo || {}),
+      }));
     } catch {
       // ignore
     }
@@ -60,8 +98,10 @@ const CandidateProfile: React.FC = () => {
   const saveDraft = () => {
     localStorage.setItem(
       storageKey,
+
       JSON.stringify({ candidateInfo, addressInfo })
     );
+
     toast.info("Đã lưu nháp trên máy.");
   };
 
@@ -69,14 +109,21 @@ const CandidateProfile: React.FC = () => {
     try {
       const payload = {
         candidateInfo,
+
         addressInfo,
+
         studyHistories: [],
+
         workExperiences: [],
       };
+
       await updateProfile.mutateAsync(payload);
+
       toast.success("Cập nhật hồ sơ thành công.");
+
       localStorage.setItem(
         storageKey,
+
         JSON.stringify({ candidateInfo, addressInfo })
       );
     } catch (e: any) {
@@ -91,12 +138,15 @@ const CandidateProfile: React.FC = () => {
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
             <User className="h-5 w-5" />
           </div>
+
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+
             <p className="text-sm text-gray-500">
               Cập nhật hồ sơ qua endpoint PUT `/candidate/profile`.
             </p>
           </div>
+
           <div className="ml-auto">
             <Link
               to="/candidate/settings"
@@ -113,10 +163,13 @@ const CandidateProfile: React.FC = () => {
               <p className="text-sm text-gray-600">
                 Tài khoản: <b className="text-gray-900">{user?.email || "—"}</b>
               </p>
+
               <p className="text-xs text-gray-400">
-                Backend hiện chưa có GET profile, form dùng nháp local để điền lại.
+                Backend hiện chưa có GET profile, form dùng nháp local để điền
+                lại.
               </p>
             </div>
+
             <div className="flex gap-2">
               <button
                 type="button"
@@ -125,6 +178,7 @@ const CandidateProfile: React.FC = () => {
               >
                 Lưu nháp
               </button>
+
               <button
                 type="button"
                 onClick={onSubmit}
@@ -132,6 +186,7 @@ const CandidateProfile: React.FC = () => {
                 className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:bg-orange-200"
               >
                 <Save className="h-4 w-4" />
+
                 {updateProfile.isPending ? "Đang lưu..." : "Lưu hồ sơ"}
               </button>
             </div>
@@ -142,22 +197,31 @@ const CandidateProfile: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Họ và tên
               </label>
+
               <input
                 value={candidateInfo.full_name}
                 onChange={(e) =>
-                  setCandidateInfo((p: any) => ({ ...p, full_name: e.target.value }))
+                  setCandidateInfo((p: any) => ({
+                    ...p,
+                    full_name: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />
             </div>
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Số điện thoại
               </label>
+
               <input
                 value={candidateInfo.phone}
                 onChange={(e) =>
-                  setCandidateInfo((p: any) => ({ ...p, phone: e.target.value }))
+                  setCandidateInfo((p: any) => ({
+                    ...p,
+                    phone: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                 placeholder="0901234567"
@@ -168,28 +232,37 @@ const CandidateProfile: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Giới tính
               </label>
+
               <select
                 value={candidateInfo.gender}
                 onChange={(e) =>
-                  setCandidateInfo((p: any) => ({ ...p, gender: e.target.value }))
+                  setCandidateInfo((p: any) => ({
+                    ...p,
+                    gender: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               >
                 <option value="Nam">Nam</option>
+
                 <option value="Nữ">Nữ</option>
+
                 <option value="Khác">Khác</option>
               </select>
             </div>
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Ngày sinh
               </label>
+
               <input
                 type="date"
                 value={candidateInfo.date_of_birth}
                 onChange={(e) =>
                   setCandidateInfo((p: any) => ({
                     ...p,
+
                     date_of_birth: e.target.value,
                   }))
                 }
@@ -202,10 +275,12 @@ const CandidateProfile: React.FC = () => {
             <div className="md:col-span-2">
               <h2 className="text-sm font-semibold text-gray-800">Địa chỉ</h2>
             </div>
+
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Số nhà, tên đường
               </label>
+
               <input
                 value={addressInfo.street}
                 onChange={(e) =>
@@ -214,15 +289,18 @@ const CandidateProfile: React.FC = () => {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />
             </div>
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Province code
               </label>
+
               <input
                 value={addressInfo.province_code}
                 onChange={(e) =>
                   setAddressInfo((p: any) => ({
                     ...p,
+
                     province_code: e.target.value,
                   }))
                 }
@@ -230,15 +308,18 @@ const CandidateProfile: React.FC = () => {
                 placeholder="VD: 79"
               />
             </div>
+
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 District code
               </label>
+
               <input
                 value={addressInfo.district_code}
                 onChange={(e) =>
                   setAddressInfo((p: any) => ({
                     ...p,
+
                     district_code: e.target.value,
                   }))
                 }
@@ -246,10 +327,12 @@ const CandidateProfile: React.FC = () => {
                 placeholder="VD: 760"
               />
             </div>
+
             <div className="md:col-span-2">
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Phường/Xã
               </label>
+
               <input
                 value={addressInfo.ward}
                 onChange={(e) =>
@@ -264,6 +347,7 @@ const CandidateProfile: React.FC = () => {
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
               <h2 className="text-sm font-semibold text-gray-800">Tags</h2>
+
               <p className="text-xs text-gray-500">
                 Backend dùng key `languguages` và `fields_wish` (mảng string).
               </p>
@@ -273,6 +357,7 @@ const CandidateProfile: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Ngôn ngữ
               </label>
+
               <div className="flex gap-2">
                 <input
                   value={tagLanguage}
@@ -280,15 +365,22 @@ const CandidateProfile: React.FC = () => {
                   className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                   placeholder="VD: Tiếng Anh"
                 />
+
                 <button
                   type="button"
                   onClick={() => {
                     const v = tagLanguage.trim();
+
                     if (!v) return;
+
                     setCandidateInfo((p: any) => ({
                       ...p,
-                      languguages: Array.from(new Set([...(p.languguages || []), v])),
+
+                      languguages: Array.from(
+                        new Set([...(p.languguages || []), v])
+                      ),
                     }));
+
                     setTagLanguage("");
                   }}
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
@@ -296,6 +388,7 @@ const CandidateProfile: React.FC = () => {
                   Thêm
                 </button>
               </div>
+
               <div className="mt-2 flex flex-wrap gap-2">
                 {(candidateInfo.languguages || []).map((t: string) => (
                   <button
@@ -304,7 +397,10 @@ const CandidateProfile: React.FC = () => {
                     onClick={() =>
                       setCandidateInfo((p: any) => ({
                         ...p,
-                        languguages: (p.languguages || []).filter((x: string) => x !== t),
+
+                        languguages: (p.languguages || []).filter(
+                          (x: string) => x !== t
+                        ),
                       }))
                     }
                     className="rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-700"
@@ -320,6 +416,7 @@ const CandidateProfile: React.FC = () => {
               <label className="mb-1 block text-sm font-medium text-gray-700">
                 Ngành nghề mong muốn
               </label>
+
               <div className="flex gap-2">
                 <input
                   value={tagField}
@@ -327,15 +424,22 @@ const CandidateProfile: React.FC = () => {
                   className="flex-1 rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                   placeholder="VD: IT Phần mềm"
                 />
+
                 <button
                   type="button"
                   onClick={() => {
                     const v = tagField.trim();
+
                     if (!v) return;
+
                     setCandidateInfo((p: any) => ({
                       ...p,
-                      fields_wish: Array.from(new Set([...(p.fields_wish || []), v])),
+
+                      fields_wish: Array.from(
+                        new Set([...(p.fields_wish || []), v])
+                      ),
                     }));
+
                     setTagField("");
                   }}
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
@@ -343,6 +447,7 @@ const CandidateProfile: React.FC = () => {
                   Thêm
                 </button>
               </div>
+
               <div className="mt-2 flex flex-wrap gap-2">
                 {(candidateInfo.fields_wish || []).map((t: string) => (
                   <button
@@ -351,7 +456,10 @@ const CandidateProfile: React.FC = () => {
                     onClick={() =>
                       setCandidateInfo((p: any) => ({
                         ...p,
-                        fields_wish: (p.fields_wish || []).filter((x: string) => x !== t),
+
+                        fields_wish: (p.fields_wish || []).filter(
+                          (x: string) => x !== t
+                        ),
                       }))
                     }
                     className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700"

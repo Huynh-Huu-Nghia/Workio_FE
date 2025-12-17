@@ -6,7 +6,12 @@ import type {
   UseFormWatch,
 } from "react-hook-form";
 import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
-import { useProvinceByCodeQuery, useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+// Sử dụng Hook chuẩn của dự án
+import {
+  useProvinceByCodeQuery,
+  useProvincesQuery,
+  useWardsQuery,
+} from "@/api/provinces.api";
 
 interface Props {
   register: UseFormRegister<CreateCandidateSchema>;
@@ -23,13 +28,17 @@ export default function AddressSection({
 }: Props) {
   const [districts, setDistricts] = useState<any[]>([]);
 
-  // Lấy giá trị hiện tại (Đây là CODE đối với Tỉnh/Huyện, là NAME đối với Xã)
+  // Lấy giá trị hiện tại từ Form
   const provinceCode = watch("addressInfo.province_code");
   const districtCode = watch("addressInfo.district_code");
 
+  // 1. Load danh sách Tỉnh (Dùng Hook API dự án)
   const { data: provinces = [] } = useProvincesQuery();
+
+  // 2. Load chi tiết Tỉnh (để lấy Huyện) khi provinceCode thay đổi
   const { data: provinceDetail } = useProvinceByCodeQuery(provinceCode);
 
+  // Logic kiểm tra xem có cần fetch tất cả xã không (nếu huyện không có sẵn xã)
   const shouldFetchAllWards = useMemo(() => {
     if (!districtCode) return false;
     const firstDistrict = (provinceDetail as any)?.districts?.[0];
@@ -38,21 +47,31 @@ export default function AddressSection({
 
   const { data: allWards = [] } = useWardsQuery(shouldFetchAllWards);
 
-  /** 2. Khi chọn Tỉnh (có Code) -> Load Huyện */
+  // Cập nhật danh sách Huyện khi chọn Tỉnh
   useEffect(() => {
     if (!provinceCode) {
       setDistricts([]);
       return;
     }
-
     setDistricts((provinceDetail as any)?.districts || []);
   }, [provinceCode, provinceDetail]);
 
+  // 3. Tính toán danh sách Xã dựa trên Huyện đã chọn
   const wards = useMemo(() => {
     if (!districtCode) return [];
-    const district = districts.find((d) => String(d.code) === String(districtCode));
+
+    // Tìm huyện hiện tại trong list
+    const district = districts.find(
+      (d) => String(d.code) === String(districtCode)
+    );
+
+    // Nếu huyện đó đã có sẵn wards thì dùng luôn
     if (district?.wards) return district.wards;
-    return allWards.filter((w) => String((w as any).district_code) === String(districtCode));
+
+    // Nếu không thì lọc từ danh sách allWards
+    return allWards.filter(
+      (w) => String((w as any).district_code) === String(districtCode)
+    );
   }, [allWards, districtCode, districts]);
 
   return (
@@ -88,10 +107,8 @@ export default function AddressSection({
           className="w-full rounded-lg border border-gray-300 p-2.5 bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
         >
           <option value="">-- Chọn Tỉnh/Thành --</option>
-          {provinces.map((p) => (
-            // 🔥 MẤU CHỐT Ở ĐÂY:
-            // value={p.code} -> Form lưu Mã (VD: 79)
-            // {p.name} -> Người dùng thấy Chữ (VD: Hồ Chí Minh)
+          {provinces.map((p: any) => (
+            // Lưu ý: API nội bộ thường dùng 'code' và 'name'
             <option key={p.code} value={p.code}>
               {p.name}
             </option>
@@ -115,8 +132,7 @@ export default function AddressSection({
           className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
         >
           <option value="">-- Chọn Quận/Huyện --</option>
-          {districts.map((d) => (
-            // 🔥 value={d.code} -> Form lưu Mã (VD: 760)
+          {districts.map((d: any) => (
             <option key={d.code} value={d.code}>
               {d.name}
             </option>
@@ -139,8 +155,7 @@ export default function AddressSection({
         >
           <option value="">-- Chọn Phường/Xã --</option>
           {wards.map((w: any) => (
-            // 🔥 RIÊNG CÁI NÀY: JSON BE ghi "ward": "Bến Thành"
-            // Nên ta để value={w.name} luôn để lưu tên.
+            // BE thường lưu tên xã thẳng vào DB thay vì code xã
             <option key={w.code} value={w.name}>
               {w.name}
             </option>

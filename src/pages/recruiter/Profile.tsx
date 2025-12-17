@@ -39,8 +39,14 @@ const RecruiterProfile: React.FC = () => {
       const raw = localStorage.getItem(storageKey);
       if (!raw) return;
       const parsed = JSON.parse(raw);
-      setRecruiterInfo((prev: any) => ({ ...prev, ...(parsed.recruiterInfo || {}) }));
-      setAddressInfo((prev: any) => ({ ...prev, ...(parsed.addressInfo || {}) }));
+      setRecruiterInfo((prev: any) => ({
+        ...prev,
+        ...(parsed.recruiterInfo || {}),
+      }));
+      setAddressInfo((prev: any) => ({
+        ...prev,
+        ...(parsed.addressInfo || {}),
+      }));
     } catch {
       // ignore
     }
@@ -98,7 +104,8 @@ const RecruiterProfile: React.FC = () => {
                 Tài khoản: <b className="text-gray-900">{user?.email || "—"}</b>
               </p>
               <p className="text-xs text-gray-400">
-                Backend hiện chưa có GET profile, form dùng nháp local để điền lại.
+                Backend hiện chưa có GET profile, form dùng nháp local để điền
+                lại.
               </p>
             </div>
             <div className="flex gap-2">
@@ -144,7 +151,10 @@ const RecruiterProfile: React.FC = () => {
               <input
                 value={recruiterInfo.tax_number}
                 onChange={(e) =>
-                  setRecruiterInfo((p: any) => ({ ...p, tax_number: e.target.value }))
+                  setRecruiterInfo((p: any) => ({
+                    ...p,
+                    tax_number: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />
@@ -156,7 +166,10 @@ const RecruiterProfile: React.FC = () => {
               <input
                 value={recruiterInfo.phone}
                 onChange={(e) =>
-                  setRecruiterInfo((p: any) => ({ ...p, phone: e.target.value }))
+                  setRecruiterInfo((p: any) => ({
+                    ...p,
+                    phone: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />
@@ -168,7 +181,10 @@ const RecruiterProfile: React.FC = () => {
               <input
                 value={recruiterInfo.website}
                 onChange={(e) =>
-                  setRecruiterInfo((p: any) => ({ ...p, website: e.target.value }))
+                  setRecruiterInfo((p: any) => ({
+                    ...p,
+                    website: e.target.value,
+                  }))
                 }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                 placeholder="https://..."
@@ -197,7 +213,10 @@ const RecruiterProfile: React.FC = () => {
               <textarea
                 value={recruiterInfo.description}
                 onChange={(e) =>
-                  setRecruiterInfo((p: any) => ({ ...p, description: e.target.value }))
+                  setRecruiterInfo((p: any) => ({
+                    ...p,
+                    description: e.target.value,
+                  }))
                 }
                 className="min-h-24 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />

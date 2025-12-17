@@ -1,13 +1,20 @@
 import React from "react";
+
 import { CalendarClock, Loader2, MapPin, XCircle } from "lucide-react";
+
 import { useCandidateInterviewsQuery } from "@/api/candidate.api";
+
 import { pathtotitle } from "@/configs/pagetitle";
+
 import { useLocation } from "react-router-dom";
 
 const CandidateInterviews: React.FC = () => {
   const location = useLocation();
+
   const title = pathtotitle[location.pathname] || "Lịch phỏng vấn";
+
   const { data, isLoading, isError } = useCandidateInterviewsQuery();
+
   const interviews = data?.data ?? [];
 
   return (
@@ -15,6 +22,7 @@ const CandidateInterviews: React.FC = () => {
       <div className="mx-auto max-w-5xl px-4 py-6">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+
           <p className="text-sm text-gray-500">
             Lấy từ API /candidate/interviews-of-candidate.
           </p>
@@ -51,25 +59,32 @@ const CandidateInterviews: React.FC = () => {
                       <p className="text-xs uppercase text-gray-400">
                         Bài đăng: {itv.job_post_id || "—"}
                       </p>
+
                       <h3 className="text-lg font-semibold text-gray-800">
                         Lịch phỏng vấn
                       </h3>
+
                       {itv.notes && (
                         <p className="text-sm text-gray-600">{itv.notes}</p>
                       )}
                     </div>
+
                     <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                       {itv.status || "Đang diễn ra"}
                     </span>
                   </div>
+
                   <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
                     <span className="inline-flex items-center gap-2">
                       <CalendarClock className="h-4 w-4 text-gray-400" />
+
                       {formatDateTime(itv.scheduled_time)}
                     </span>
+
                     {itv.location && (
                       <span className="inline-flex items-center gap-2">
                         <MapPin className="h-4 w-4 text-gray-400" />
+
                         {itv.location}
                       </span>
                     )}
@@ -88,7 +103,9 @@ const formatDateTime = (value?: string) =>
   value
     ? new Date(value).toLocaleString("vi-VN", {
         hour12: false,
+
         dateStyle: "medium",
+
         timeStyle: "short",
       })
     : "Chưa đặt lịch";

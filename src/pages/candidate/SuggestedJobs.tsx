@@ -1,14 +1,21 @@
 import React from "react";
+
 import { Lightbulb, RefreshCcw } from "lucide-react";
+
 import { useCandidateSuggestedJobsQuery } from "@/api/candidate.api";
+
 import { pathtotitle } from "@/configs/pagetitle";
+
 import { useLocation } from "react-router-dom";
 
 const CandidateSuggestedJobs: React.FC = () => {
   const location = useLocation();
+
   const title = pathtotitle[location.pathname] || "Việc làm gợi ý";
+
   const { data, isLoading, isError, refetch, isFetching } =
     useCandidateSuggestedJobsQuery();
+
   const jobs = data?.data ?? [];
 
   return (
@@ -17,6 +24,7 @@ const CandidateSuggestedJobs: React.FC = () => {
         <header className="mb-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+
             <button
               type="button"
               onClick={() => refetch()}
@@ -28,6 +36,7 @@ const CandidateSuggestedJobs: React.FC = () => {
               Làm mới
             </button>
           </div>
+
           <p className="text-sm text-gray-500">
             Danh sách việc làm phù hợp được hệ thống gợi ý theo hồ sơ của bạn.
           </p>
@@ -36,6 +45,7 @@ const CandidateSuggestedJobs: React.FC = () => {
         {isLoading && (
           <div className="text-center text-gray-500">Đang tải...</div>
         )}
+
         {isError && (
           <div className="text-center text-red-500">
             Không thể tải danh sách.
@@ -58,10 +68,12 @@ const CandidateSuggestedJobs: React.FC = () => {
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
                       <Lightbulb className="h-5 w-5" />
                     </div>
+
                     <div>
                       <h3 className="text-lg font-semibold text-gray-800">
                         {job.position}
                       </h3>
+
                       <p className="text-sm text-gray-500">
                         Trạng thái: {job.status || "—"}
                       </p>

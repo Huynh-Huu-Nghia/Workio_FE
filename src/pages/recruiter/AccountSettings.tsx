@@ -37,7 +37,9 @@ const RecruiterAccountSettings: React.FC = () => {
       <div className="mx-auto max-w-3xl px-4 py-6">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Cài đặt tài khoản</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Cài đặt tài khoản
+            </h1>
             <p className="mt-1 text-sm text-gray-500">
               Cập nhật thông tin tài khoản (API `/me`).
             </p>
