@@ -10,24 +10,60 @@ import {
   CheckCircle2,
   XCircle,
   Briefcase,
-  Loader2, // Icon xoay xoay khi loading
+  Loader2,
+  X,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { useGetAllCandidatesQuery } from "@/api/candidate.api"; // 👈 Import Hook
+import { useGetAllCandidatesQuery } from "@/api/candidate.api";
 
 export default function CandidateList() {
   const navigate = useNavigate();
   const [selectedRows, setSelectedRows] = useState<string[]>([]);
+
+  // --- STATE CHO BỘ LỌC ---
+  const [showFilter, setShowFilter] = useState(false); // Bật/tắt khung lọc
   const [searchTerm, setSearchTerm] = useState("");
+  const [filters, setFilters] = useState({
+    rank: "", // Xếp loại (Giỏi/Khá...)
+    jobType: "", // Loại công việc (Fulltime...)
+    minSalary: "", // Lương tối thiểu
+    skill: "", // Từ khóa kỹ năng (React, Java...)
+  });
 
-  // 🔥 GỌI API LẤY DANH SÁCH
+  // Gọi API
   const { data: apiResponse, isLoading, isError } = useGetAllCandidatesQuery();
-
-  // Lấy mảng ứng viên từ cục data trả về (cấu trúc { err, mes, data: [] })
   const candidates = apiResponse?.data || [];
 
-  // --- HELPER FUNCTIONS ---
+  // --- LOGIC LỌC DỮ LIỆU (ADVANCED FILTER) ---
+  const filteredCandidates = candidates.filter((c) => {
+    // 1. Lọc theo Keyword (Tên, Email, SĐT)
+    const matchKeyword =
+      c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.phone?.includes(searchTerm);
 
+    if (!matchKeyword) return false;
+
+    // 2. Lọc theo Xếp loại (Rank)
+    if (filters.rank && c.graduation_rank !== filters.rank) return false;
+
+    // 3. Lọc theo Lương (Lớn hơn hoặc bằng mức chọn)
+    if (
+      filters.minSalary &&
+      Number(c.minimum_income) < Number(filters.minSalary)
+    )
+      return false;
+
+    // 4. Lọc theo Kỹ năng/Ngành nghề (JSON fields_wish)
+    if (filters.skill) {
+      const skillsStr = JSON.stringify(c.fields_wish || []).toLowerCase();
+      if (!skillsStr.includes(filters.skill.toLowerCase())) return false;
+    }
+
+    return true;
+  });
+
+  // --- HELPER FUNCTIONS ---
   const formatCurrency = (value: string | number | null) => {
     if (!value) return "Thỏa thuận";
     return new Intl.NumberFormat("vi-VN", {
@@ -36,7 +72,6 @@ export default function CandidateList() {
     }).format(Number(value));
   };
 
-  // Helper parse JSON field_wish (Vì MySQL lưu mảng dưới dạng chuỗi JSON)
   const parseTags = (tags: any): string[] => {
     if (Array.isArray(tags)) return tags;
     if (typeof tags === "string") {
@@ -65,13 +100,11 @@ export default function CandidateList() {
     }
   };
 
-  // Lọc theo search term
-  const filteredCandidates = candidates.filter(
-    (c) =>
-      c.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.phone?.includes(searchTerm)
-  );
+  // Hàm Reset bộ lọc
+  const clearFilters = () => {
+    setFilters({ rank: "", jobType: "", minSalary: "", skill: "" });
+    setSearchTerm("");
+  };
 
   return (
     <AdminLayout
@@ -91,46 +124,125 @@ export default function CandidateList() {
         </div>
 
         <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
-          {/* TOOLBAR */}
-          <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-100">
-            <div className="flex flex-1 w-full md:w-auto items-center gap-3">
-              <div className="relative flex-1 max-w-md">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm theo tên, email, SĐT..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-500 text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
+          {/* --- TOOLBAR --- */}
+          <div className="p-5 border-b border-gray-100">
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              {/* Search & Toggle Filter */}
+              <div className="flex flex-1 w-full md:w-auto items-center gap-3">
+                <div className="relative flex-1 max-w-md">
+                  <Search
+                    className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                    size={18}
+                  />
+                  <input
+                    type="text"
+                    placeholder="Tìm theo tên, email, SĐT..."
+                    className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-500 text-sm transition-all"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+                <button
+                  onClick={() => setShowFilter(!showFilter)}
+                  className={`flex items-center gap-2 px-3 py-2 border rounded-lg text-sm font-medium transition-colors ${
+                    showFilter
+                      ? "bg-orange-50 border-orange-200 text-orange-600"
+                      : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  <Filter size={16} />{" "}
+                  <span className="hidden sm:inline">Bộ lọc</span>
+                </button>
               </div>
-              <button className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors">
-                <Filter size={16} />{" "}
-                <span className="hidden sm:inline">Bộ lọc</span>
-              </button>
+
+              {/* Actions Button */}
+              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                <Link
+                  to="/admin/candidates/create"
+                  className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md shadow-orange-200 hover:shadow-lg transform active:scale-95"
+                >
+                  <Plus size={18} /> Thêm mới
+                </Link>
+              </div>
             </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-              {selectedRows.length > 0 && (
-                <button className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors animate-in fade-in">
-                  <Trash2 size={16} /> Xóa ({selectedRows.length})
-                </button>
-              )}
-              <Link
-                to="/admin/candidates/create"
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md shadow-orange-200 hover:shadow-lg transform active:scale-95"
-              >
-                <Plus size={18} /> Thêm mới
-              </Link>
-            </div>
+            {/* --- 🔥 KHUNG BỘ LỌC NÂNG CAO (Hiện ra khi bấm nút) --- */}
+            {showFilter && (
+              <div className="mt-4 p-4 bg-gray-50 rounded-xl border border-gray-200 animate-in slide-in-from-top-2">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-700">
+                    Lọc theo tiêu chí:
+                  </h3>
+                  <button
+                    onClick={clearFilters}
+                    className="text-xs text-red-500 hover:underline"
+                  >
+                    Xóa bộ lọc
+                  </button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                  {/* Lọc Rank */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Trình độ văn hóa/chuyên môn
+                    </label>
+                    <select
+                      className="w-full p-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-500"
+                      value={filters.rank}
+                      onChange={(e) =>
+                        setFilters({ ...filters, rank: e.target.value })
+                      }
+                    >
+                      <option value="">Tất cả</option>
+                      <option value="Cấp 1">Cấp 1</option>
+                      <option value="Cấp 2">Cấp 2</option>
+                      <option value="Cấp 3">Cấp 3</option>
+                      <option value="Đại học">Đại học</option>
+                    </select>
+                  </div>
+
+                  {/* Lọc Lương */}
+                  <div>
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Mức lương tối thiểu
+                    </label>
+                    <select
+                      className="w-full p-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-500"
+                      value={filters.minSalary}
+                      onChange={(e) =>
+                        setFilters({ ...filters, minSalary: e.target.value })
+                      }
+                    >
+                      <option value="">Tất cả</option>
+                      <option value="5000000">&gt; 5 triệu</option>
+                      <option value="10000000">&gt; 10 triệu</option>
+                      <option value="15000000">&gt; 15 triệu</option>
+                      <option value="20000000">&gt; 20 triệu</option>
+                    </select>
+                  </div>
+
+                  {/* Lọc Kỹ năng */}
+                  <div className="md:col-span-2">
+                    <label className="block text-xs font-medium text-gray-500 mb-1">
+                      Kỹ năng / Ngành nghề
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="VD: ReactJS, Marketing..."
+                      className="w-full p-2 text-sm border border-gray-300 rounded-lg outline-none focus:border-orange-500"
+                      value={filters.skill}
+                      onChange={(e) =>
+                        setFilters({ ...filters, skill: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* TABLE CONTENT */}
           <div className="overflow-x-auto min-h-[400px]">
-            {/* 1. TRƯỜNG HỢP LOADING */}
             {isLoading && (
               <div className="flex flex-col items-center justify-center h-64 text-gray-500">
                 <Loader2
@@ -141,7 +253,6 @@ export default function CandidateList() {
               </div>
             )}
 
-            {/* 2. TRƯỜNG HỢP LỖI */}
             {isError && (
               <div className="flex flex-col items-center justify-center h-64 text-red-500">
                 <XCircle size={40} className="mb-2" />
@@ -149,7 +260,6 @@ export default function CandidateList() {
               </div>
             )}
 
-            {/* 3. TRƯỜNG HỢP CÓ DỮ LIỆU */}
             {!isLoading && !isError && (
               <table className="w-full text-left border-collapse">
                 <thead>
@@ -178,7 +288,16 @@ export default function CandidateList() {
                         colSpan={5}
                         className="text-center py-10 text-gray-500"
                       >
-                        Không tìm thấy ứng viên nào.
+                        <div className="flex flex-col items-center">
+                          <Search size={40} className="text-gray-200 mb-2" />
+                          <p>Không tìm thấy ứng viên nào phù hợp với bộ lọc.</p>
+                          <button
+                            onClick={clearFilters}
+                            className="text-orange-500 hover:underline mt-2 text-xs"
+                          >
+                            Xóa bộ lọc
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ) : (
@@ -191,7 +310,6 @@ export default function CandidateList() {
                             : ""
                         }`}
                       >
-                        {/* Checkbox */}
                         <td className="p-4 text-center">
                           <input
                             type="checkbox"
@@ -200,8 +318,6 @@ export default function CandidateList() {
                             onChange={() => toggleRow(user.candidate_id)}
                           />
                         </td>
-
-                        {/* Info Column */}
                         <td className="p-4">
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600 flex items-center justify-center font-bold text-lg border border-orange-100 shadow-sm shrink-0">
@@ -224,8 +340,6 @@ export default function CandidateList() {
                             </div>
                           </div>
                         </td>
-
-                        {/* Career/Wish Column */}
                         <td className="p-4 max-w-xs">
                           <div className="mb-1 font-bold text-orange-600">
                             {formatCurrency(user.minimum_income)}
@@ -248,8 +362,6 @@ export default function CandidateList() {
                             )}
                           </div>
                         </td>
-
-                        {/* Status Column */}
                         <td className="p-4 space-y-2">
                           {user.is_verified ? (
                             <div className="flex items-center gap-1.5 text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded-full w-fit border border-green-100">
@@ -260,15 +372,12 @@ export default function CandidateList() {
                               <XCircle size={12} /> Chưa xác thực
                             </div>
                           )}
-
                           {user.is_employed && (
                             <div className="flex items-center gap-1.5 text-xs font-medium text-purple-600 bg-purple-50 px-2 py-1 rounded-full w-fit border border-purple-100">
                               <Briefcase size={12} /> Đã có việc
                             </div>
                           )}
                         </td>
-
-                        {/* Action Column */}
                         <td className="p-4">
                           <div className="flex items-center justify-center gap-1">
                             <button
@@ -309,10 +418,10 @@ export default function CandidateList() {
             )}
           </div>
 
-          {/* PAGINATION (Giữ nguyên hoặc làm sau) */}
+          {/* PAGINATION */}
           <div className="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between text-sm text-gray-500 gap-4 bg-gray-50/50">
             <span className="font-medium">
-              Tổng số: {filteredCandidates.length} ứng viên
+              Tổng số: {filteredCandidates.length} kết quả phù hợp
             </span>
           </div>
         </div>

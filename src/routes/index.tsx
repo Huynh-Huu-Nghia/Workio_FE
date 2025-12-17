@@ -11,6 +11,7 @@ import UserManagementPage from "@/pages/admin/UserManagement";
 import CreateCandidate from "@/pages/admin/candidate/CreateCandidate";
 import CreateRecruiter from "@/pages/admin/recruiter/CreateRecruiter";
 import CandidateList from "@/pages/admin/candidate/CandidateList";
+<<<<<<< Updated upstream
 import RecruiterList from "@/pages/admin/recruiter/RecruiterList";
 import PendingRecruiters from "@/pages/admin/recruiter/PendingRecruiters";
 import JobList from "@/pages/admin/jobs/JobList";
@@ -34,12 +35,15 @@ import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
 import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
 import SuggestedCandidates from "@/pages/recruiter/SuggestedCandidates";
+=======
+import CandidateDetail from "@/pages/admin/candidate/CandidateDetail";
+>>>>>>> Stashed changes
 
 // 2. ĐỔI TÊN BIẾN "router" THÀNH "AppRouter" VÀ "EXPORT" NÓ RA
 export const AppRouter = createBrowserRouter([
   // --- Luồng Trang Chủ (Home) ---
   {
-    path: path.home,
+    path: path.HOME,
     element: <div>Trang CHỦ - Móng (Router) OK!</div>,
   },
 
@@ -49,16 +53,16 @@ export const AppRouter = createBrowserRouter([
     element: <AuthLayout />,
     children: [
       {
-        path: path.login,
+        path: path.LOGIN,
         element: <Login />,
       },
 
       {
-        path: path.forgotPassword,
+        path: path.FORGOTPASSWORD,
         element: <ForgotPassword />,
       },
       {
-        path: path.resetPassword,
+        path: path.RESETPASSWORD,
         element: <ResetPassword />,
       },
     ],
@@ -66,7 +70,7 @@ export const AppRouter = createBrowserRouter([
 
   // --- Luồng Admin ---
   {
-    path: path.admin,
+    path: path.ADMIN,
     // Lưu ý: AdminLayout cần title và activeMenu props. Ta sẽ đặt giá trị mặc định ở đây
     // và để trang con (UserManagementPage) tự cung cấp props qua HOC (nếu cần),
     // hoặc đơn giản là dùng AdminLayout component trực tiếp trong trang con (như đã làm).
@@ -106,6 +110,7 @@ export const AppRouter = createBrowserRouter([
         element: <CandidateList />,
       },
       {
+<<<<<<< Updated upstream
         path: path.ADMIN_JOB_LIST,
         element: <JobList />,
       },
@@ -172,6 +177,11 @@ export const AppRouter = createBrowserRouter([
             description="Cấu hình hệ thống sẽ gắn khi backend sẵn sàng."
           />
         ),
+=======
+        // Khi truy cập /admin/users
+        path: path.ADMIN_USER_CANDIDATE_DETAIL,
+        element: <CandidateDetail />,
+>>>>>>> Stashed changes
       },
       // Thêm các routes Admin khác tại đây
     ],

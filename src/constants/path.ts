@@ -2,14 +2,18 @@
 
 const path = {
   // --- Public
-  home: "/",
-  login: "/login",
-  forgotPassword: "/forgot-password",
-  resetPassword: "/reset-password",
+  HOME: "/",
+  LOGIN: "/login",
+  FORGOTPASSWORD: "/forgot-password",
+  RESETPASSWORD: "/reset-password",
 
   // --- Admin (Quản lý 3 vai trò)
+<<<<<<< Updated upstream
   admin: "/admin",
   ADMIN_DASHBOARD: "/admin/dashboard",
+=======
+  ADMIN: "/admin",
+>>>>>>> Stashed changes
   ADMIN_USER_MANAGEMENT: "/admin/users", // Quản lý User (Candidate, Recruiter, Edu Manager)
   adminCreateCandidate: "/admin/candidates/create",
   adminUserEdit: "/admin/users/edit/:id",
@@ -17,6 +21,7 @@ const path = {
   ADMIN_USER_CANDIDATE_CREATE: "/admin/candidates/create",
   ADMIN_USER_RECRUITER_CREATE: "/admin/recruiters/create",
   ADMIN_USER_CANDIDATE_LIST: "/admin/candidates/list",
+<<<<<<< Updated upstream
   ADMIN_RECRUITER_LIST: "/admin/recruiters",
   ADMIN_RECRUITER_PENDING: "/admin/recruiters/pending",
   ADMIN_JOB_LIST: "/admin/jobs",
@@ -33,6 +38,9 @@ const path = {
   ADMIN_CATEGORIES_INDUSTRIES: "/admin/categories/industries",
   ADMIN_CATEGORIES_SKILLS: "/admin/categories/skills",
   ADMIN_SETTINGS: "/admin/settings",
+=======
+  ADMIN_USER_CANDIDATE_DETAIL: "/admin/candidates/view/:id",
+>>>>>>> Stashed changes
 
   // --- Candidate ---
   CANDIDATE_HOME: "/candidate",

@@ -240,7 +240,7 @@ export default function Login() {
                 Mật khẩu
               </label>
               <Link
-                to={path.forgotPassword}
+                to={path.FORGOTPASSWORD}
                 className="text-xs font-medium text-orange-600 hover:text-orange-700 hover:underline"
               >
                 Quên mật khẩu?
@@ -331,7 +331,7 @@ export default function Login() {
           <p className="text-sm text-gray-500">
             Chưa có tài khoản?{" "}
             <Link
-              to={path.resetPassword}
+              to={path.RESETPASSWORD}
               className="font-semibold text-orange-600 hover:text-orange-700 hover:underline"
             >
               Đăng ký ngay

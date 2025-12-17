@@ -201,7 +201,7 @@ export default function PersonalSection({
         {/* --- CÁC TRƯỜNG SELECT --- */}
         <div>
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Xếp loại tốt nghiệp
+            Trình độ văn hóa/ chuyên môn
           </label>
           <select
             {...register("candidateInfo.graduation_rank")}

@@ -91,7 +91,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
           subItems: [
             {
               id: "all-recruiters",
-              label: "Danh sách NTD",
+              label: "Danh sách nhà tuyển dụng",
               link: "/admin/recruiters",
             },
             {
@@ -101,7 +101,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
             },
             {
               id: "add-recruiter",
-              label: "Thêm NTD",
+              label: "Thêm nhà tuyển dụng",
               link: "/admin/recruiters/create",
             },
           ],
