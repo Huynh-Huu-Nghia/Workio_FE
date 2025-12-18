@@ -18,7 +18,8 @@ const RecruiterList: React.FC = () => {
   const navigate = useNavigate();
 
   const { data, isLoading, isError } = useGetAllRecruitersQuery();
-  const recruiters = data?.data ?? [];
+  const apiErr = data && (data as any).err !== 0;
+  const recruiters = !apiErr ? data?.data ?? [] : [];
 
   const filtered = useMemo(() => {
     return recruiters.filter((rec) => {
@@ -105,10 +106,19 @@ const RecruiterList: React.FC = () => {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {filtered.length === 0 ? (
+                {apiErr ? (
                   <tr>
                     <td
-                      colSpan={4}
+                      colSpan={5}
+                      className="px-4 py-6 text-center text-red-600 bg-red-50"
+                    >
+                      {(data as any)?.mes || "Không tải được danh sách NTD."}
+                    </td>
+                  </tr>
+                ) : filtered.length === 0 ? (
+                  <tr>
+                    <td
+                      colSpan={5}
                       className="px-4 py-6 text-center text-gray-500"
                     >
                       Không có nhà tuyển dụng nào.

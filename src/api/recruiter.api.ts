@@ -60,6 +60,8 @@ const getAllRecruitersRequest = async (): Promise<
   ApiResponse<RecruiterResponse[]>
 > => {
   const response = await axiosInstance.get("/admin/recruiters");
+  console.log(response);
+  
   return response.data;
 };
 

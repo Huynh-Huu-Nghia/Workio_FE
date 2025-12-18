@@ -8,7 +8,8 @@ export default function RecruiterView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useAdminRecruiterDetailQuery(id);
-  const recruiter = data?.data as any;
+  const apiErr = data && (data as any).err !== 0;
+  const recruiter = !apiErr ? (data?.data as any) : null;
 
   return (
     <AdminLayout
@@ -35,6 +36,12 @@ export default function RecruiterView() {
         {isError && (
           <div className="rounded-xl border border-red-100 bg-red-50 p-6 shadow-sm text-red-700">
             Không thể tải dữ liệu NTD.
+          </div>
+        )}
+
+        {!isLoading && !isError && apiErr && (
+          <div className="rounded-xl border border-red-100 bg-red-50 p-6 shadow-sm text-red-700">
+            {(data as any)?.mes || "Không tìm thấy nhà tuyển dụng."}
           </div>
         )}
 
@@ -118,4 +125,3 @@ export default function RecruiterView() {
     </AdminLayout>
   );
 }
-
