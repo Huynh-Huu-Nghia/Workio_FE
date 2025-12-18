@@ -1,9 +1,11 @@
 import React from "react";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import { AlertTriangle, Eye, Loader2 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useGetAllRecruitersQuery } from "@/api/recruiter.api";
+import { useNavigate } from "react-router-dom";
 
 const PendingRecruiters: React.FC = () => {
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useGetAllRecruitersQuery();
   const recruiters = data?.data ?? [];
   const pending = recruiters.filter((rec) => !rec.is_verified);
@@ -70,6 +72,17 @@ const PendingRecruiters: React.FC = () => {
                   <div className="mt-3 text-sm text-gray-500">
                     Email: {rec.user?.email || "N/A"} | Điện thoại:{" "}
                     {rec.phone || "N/A"}
+                  </div>
+                  <div className="mt-3">
+                    <button
+                      onClick={() =>
+                        navigate(`/admin/recruiters/view/${rec.recruiter_id}`)
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Xem chi tiết
+                    </button>
                   </div>
                 </div>
               ))

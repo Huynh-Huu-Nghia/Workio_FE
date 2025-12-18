@@ -59,9 +59,7 @@ export const createCandidateSchema = z.object({
 
   addressInfo: z.object({
     street: z.string().min(1, "Địa chỉ đường không được để trống"),
-    ward: z.string().min(1, "Phường/Xã không được để trống"),
-    // Trong thực tế sẽ là mã code (string), ta validate không rỗng
-    district_code: z.string().min(1, "Chưa chọn Quận/Huyện"),
+    ward_code: z.string().min(1, "Phường/Xã không được để trống"),
     province_code: z.string().min(1, "Chưa chọn Tỉnh/Thành"),
   }),
 

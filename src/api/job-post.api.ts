@@ -36,10 +36,27 @@ const getAdminJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
   return response.data;
 };
 
+const getAdminJobPostDetailRequest = async (
+  jobPostId: string
+): Promise<ApiResponse<JobPost>> => {
+  const response = await axiosInstance.get("/admin/job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data;
+};
+
 export const useGetAdminJobPostsQuery = () =>
   useQuery({
     queryKey: ["admin-job-posts"],
     queryFn: getAdminJobPostsRequest,
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useAdminJobPostDetailQuery = (jobPostId?: string) =>
+  useQuery({
+    queryKey: ["admin-job-post", jobPostId],
+    queryFn: () => getAdminJobPostDetailRequest(jobPostId as string),
+    enabled: Boolean(jobPostId),
     staleTime: 1000 * 60 * 5,
   });
 

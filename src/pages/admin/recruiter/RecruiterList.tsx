@@ -4,15 +4,18 @@ import {
   CheckCircle2,
   Loader2,
   Mail,
+  Eye,
   Search,
   XCircle,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useGetAllRecruitersQuery } from "@/api/recruiter.api";
+import { useNavigate } from "react-router-dom";
 
 const RecruiterList: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [showVerified, setShowVerified] = useState<"all" | "verified" | "pending">("all");
+  const navigate = useNavigate();
 
   const { data, isLoading, isError } = useGetAllRecruitersQuery();
   const recruiters = data?.data ?? [];
@@ -98,6 +101,7 @@ const RecruiterList: React.FC = () => {
                   <th className="px-4 py-3">Liên hệ</th>
                   <th className="px-4 py-3">Mã số thuế</th>
                   <th className="px-4 py-3">Trạng thái</th>
+                  <th className="px-4 py-3 text-center">Hành động</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -153,6 +157,17 @@ const RecruiterList: React.FC = () => {
                           <CheckCircle2 className="h-4 w-4" />
                           {rec.is_verified ? "Đã xác thực" : "Chờ xác thực"}
                         </span>
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        <button
+                          onClick={() =>
+                            navigate(`/admin/recruiters/view/${rec.recruiter_id}`)
+                          }
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                          <Eye className="h-4 w-4" />
+                          Chi tiết
+                        </button>
                       </td>
                     </tr>
                   ))

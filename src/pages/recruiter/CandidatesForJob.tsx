@@ -1,16 +1,22 @@
 import React, { useState } from "react";
-import { Users, Search } from "lucide-react";
+import { Users, Search, CalendarPlus } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
-import { useLocation } from "react-router-dom";
-import { useCandidatesOfJobQuery } from "@/api/recruiter.api";
+import { useLocation, useSearchParams } from "react-router-dom";
+import {
+  useCandidatesOfJobQuery,
+  useCreateRecruiterInterviewMutation,
+} from "@/api/recruiter.api";
+import { toast } from "react-toastify";
 
 const CandidatesForJob: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Ứng viên cho tin";
-  const [jobId, setJobId] = useState("");
-  const [submittedId, setSubmittedId] = useState("");
+  const [searchParams] = useSearchParams();
+  const [jobId, setJobId] = useState(() => searchParams.get("job_post_id") || "");
+  const [submittedId, setSubmittedId] = useState(() => searchParams.get("job_post_id") || "");
   const { data, isFetching } = useCandidatesOfJobQuery(submittedId);
   const candidates = data?.data ?? [];
+  const createInterview = useCreateRecruiterInterviewMutation();
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,18 +70,66 @@ const CandidatesForJob: React.FC = () => {
               candidates.map((c: any) => (
                 <div
                   key={c.candidate_id || c.id}
-                  className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                  className="flex flex-col gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:flex-row sm:items-center sm:justify-between"
                 >
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                    <Users className="h-5 w-5" />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-gray-800">
+                        {c.full_name || "Chưa có tên"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Email: {c.email || c.user?.email || "—"}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">
-                      {c.full_name || "Chưa có tên"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Email: {c.email || c.user?.email || "—"}
-                    </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!submittedId) {
+                          toast.info("Chưa có job_post_id.");
+                          return;
+                        }
+                        const when = window.prompt(
+                          "Nhập thời gian phỏng vấn (YYYY-MM-DD HH:mm)",
+                          ""
+                        );
+                        if (!when) return;
+                        const location =
+                          window.prompt("Địa điểm (Online/Offline)", "Online") ||
+                          "Online";
+                        try {
+                          const res = await createInterview.mutateAsync({
+                            job_post_id: submittedId,
+                            payload: {
+                              candidate_id: c.candidate_id || c.id,
+                              scheduled_time: when,
+                              location,
+                              interview_type: "Online",
+                              notes: "",
+                            },
+                          });
+                          if ((res as any)?.err === 0) {
+                            toast.success(
+                              (res as any)?.mes || "Đã tạo lịch phỏng vấn."
+                            );
+                          } else {
+                            toast.error((res as any)?.mes || "Tạo phỏng vấn thất bại.");
+                          }
+                        } catch (e: any) {
+                          toast.error(
+                            e?.response?.data?.mes || "Tạo phỏng vấn thất bại."
+                          );
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      <CalendarPlus className="h-4 w-4" />
+                      Tạo phỏng vấn
+                    </button>
                   </div>
                 </div>
               ))

@@ -37,9 +37,8 @@ export interface RecruiterPayload {
   };
   addressInfo: {
     street: string;
-    district_code: string;
     province_code: string;
-    ward?: string; // Optional tùy BE có lưu ward ko, nhưng cứ gửi lên
+    ward_code: string;
   };
 }
 
@@ -71,6 +70,21 @@ export const useGetAllRecruitersQuery = () =>
     staleTime: 1000 * 60 * 5,
   });
 
+// --- ADMIN: LẤY CHI TIẾT NTD ---
+const getAdminRecruiterDetailRequest = async (recruiterId: string) => {
+  const response = await axiosInstance.get("/admin/recruiter", {
+    params: { recruiter_id: recruiterId },
+  });
+  return response.data as ApiResponse<RecruiterResponse>;
+};
+
+export const useAdminRecruiterDetailQuery = (recruiterId?: string) =>
+  useQuery({
+    queryKey: ["admin-recruiter", recruiterId],
+    queryFn: () => getAdminRecruiterDetailRequest(recruiterId as string),
+    enabled: Boolean(recruiterId),
+  });
+
 // --- LẤY TIN ĐĂNG CỦA RECRUITER ---
 const getRecruiterJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
   const response = await axiosInstance.get("/recruiter/job-posts");
@@ -81,6 +95,24 @@ export const useRecruiterJobPostsQuery = () =>
   useQuery({
     queryKey: ["recruiter-job-posts"],
     queryFn: getRecruiterJobPostsRequest,
+    staleTime: 1000 * 60 * 3,
+  });
+
+// --- LẤY CHI TIẾT TIN CỦA RECRUITER ---
+const getRecruiterJobPostDetailRequest = async (
+  jobPostId: string
+): Promise<ApiResponse<JobPost>> => {
+  const response = await axiosInstance.get("/recruiter/job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data;
+};
+
+export const useRecruiterJobPostDetailQuery = (jobPostId?: string) =>
+  useQuery({
+    queryKey: ["recruiter-job-post", jobPostId],
+    queryFn: () => getRecruiterJobPostDetailRequest(jobPostId as string),
+    enabled: Boolean(jobPostId),
     staleTime: 1000 * 60 * 3,
   });
 

@@ -15,8 +15,11 @@ import CandidateView from "@/pages/admin/candidate/CandidateView";
 import CandidateEdit from "@/pages/admin/candidate/CandidateEdit";
 import RecruiterList from "@/pages/admin/recruiter/RecruiterList";
 import PendingRecruiters from "@/pages/admin/recruiter/PendingRecruiters";
+import RecruiterView from "@/pages/admin/recruiter/RecruiterView";
 import JobList from "@/pages/admin/jobs/JobList";
+import JobFormAdmin from "@/pages/admin/jobs/JobForm";
 import PendingJobs from "@/pages/admin/jobs/PendingJobs";
+import JobView from "@/pages/admin/jobs/JobView";
 import InterviewList from "@/pages/admin/interview/InterviewList";
 import InterviewsByCandidate from "@/pages/admin/interview/InterviewsByCandidate";
 import SocialInsuranceLookup from "@/pages/admin/social/SocialInsuranceLookup";
@@ -39,14 +42,19 @@ import RecruiterSupportRequests from "@/pages/recruiter/SupportRequests";
 import CenterDashboard from "@/pages/center/CenterDashboard";
 import CenterAccountSettings from "@/pages/center/AccountSettings";
 import CenterSupportRequests from "@/pages/center/SupportRequests";
+import CenterList from "@/pages/admin/center/CenterList";
+import CenterCreate from "@/pages/admin/center/CenterCreate";
 import JobCandidates from "@/pages/admin/jobs/JobCandidates";
 import CandidateJobs from "@/pages/admin/candidate/CandidateJobs";
 import SuggestedJobs from "@/pages/admin/jobs/SuggestedJobs";
 import AdminSuggestedCandidates from "@/pages/admin/jobs/SuggestedCandidates";
+import CenterView from "@/pages/admin/center/CenterView";
 import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
 import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
 import SuggestedCandidates from "@/pages/recruiter/SuggestedCandidates";
+import RecruiterJobForm from "@/pages/recruiter/JobForm";
+import CenterCourses from "@/pages/center/Courses";
 
 // 2. ĐỔI TÊN BIẾN "router" THÀNH "AppRouter" VÀ "EXPORT" NÓ RA
 export const AppRouter = createBrowserRouter([
@@ -114,6 +122,10 @@ export const AppRouter = createBrowserRouter([
         element: <PendingRecruiters />,
       },
       {
+        path: path.ADMIN_RECRUITER_VIEW,
+        element: <RecruiterView />,
+      },
+      {
         // Khi truy cập /admin/users
         path: path.ADMIN_USER_CANDIDATE_LIST,
         element: <CandidateList />,
@@ -131,8 +143,20 @@ export const AppRouter = createBrowserRouter([
         element: <JobList />,
       },
       {
+        path: path.ADMIN_JOB_CREATE,
+        element: <JobFormAdmin />,
+      },
+      {
+        path: path.ADMIN_JOB_EDIT,
+        element: <JobFormAdmin />,
+      },
+      {
         path: path.ADMIN_JOB_PENDING,
         element: <PendingJobs />,
+      },
+      {
+        path: path.ADMIN_JOB_VIEW,
+        element: <JobView />,
       },
       {
         path: path.ADMIN_JOB_CANDIDATES,
@@ -149,6 +173,18 @@ export const AppRouter = createBrowserRouter([
       {
         path: path.ADMIN_JOB_SUGGESTED_CANDIDATES,
         element: <AdminSuggestedCandidates />,
+      },
+      {
+        path: path.ADMIN_CENTER_VIEW,
+        element: <CenterView />,
+      },
+      {
+        path: path.ADMIN_CENTER_LIST,
+        element: <CenterList />,
+      },
+      {
+        path: path.ADMIN_CENTER_CREATE,
+        element: <CenterCreate />,
       },
       {
         path: path.ADMIN_INTERVIEWS,
@@ -210,6 +246,8 @@ export const AppRouter = createBrowserRouter([
     element: <Outlet />,
     children: [
       { path: path.RECRUITER_JOBS, element: <RecruiterJobPosts /> },
+      { path: path.RECRUITER_JOB_CREATE, element: <RecruiterJobForm /> },
+      { path: path.RECRUITER_JOB_EDIT, element: <RecruiterJobForm /> },
       { path: path.RECRUITER_JOB_CANDIDATES, element: <CandidatesForJob /> },
       {
         path: path.RECRUITER_SUGGESTED_CANDIDATES,
@@ -228,6 +266,7 @@ export const AppRouter = createBrowserRouter([
     element: <Outlet />,
     children: [
       { path: path.CENTER_HOME, element: <CenterDashboard /> },
+      { path: path.CENTER_COURSES, element: <CenterCourses /> },
       { path: path.CENTER_SETTINGS, element: <CenterAccountSettings /> },
       { path: path.CENTER_SUPPORT, element: <CenterSupportRequests /> },
     ],

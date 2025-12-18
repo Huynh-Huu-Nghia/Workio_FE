@@ -68,8 +68,7 @@ export default function CreateCandidate() {
       },
       addressInfo: {
         street: "",
-        ward: "",
-        district_code: "",
+        ward_code: "",
         province_code: "",
       },
     },
@@ -98,8 +97,7 @@ export default function CreateCandidate() {
 
         addressInfo: {
           street: formData.addressInfo.street,
-          ward: formData.addressInfo.ward,
-          district_code: formData.addressInfo.district_code,
+          ward_code: formData.addressInfo.ward_code,
           province_code: formData.addressInfo.province_code,
         },
 

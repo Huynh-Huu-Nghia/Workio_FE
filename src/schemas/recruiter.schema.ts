@@ -32,8 +32,7 @@ export const createRecruiterSchema = z.object({
   addressInfo: z.object({
     street: z.string().min(1, "Số nhà, tên đường là bắt buộc"),
     province_code: z.string().min(1, "Vui lòng chọn Tỉnh/Thành"),
-    district_code: z.string().min(1, "Vui lòng chọn Quận/Huyện"),
-    ward: z.string().min(1, "Vui lòng chọn Phường/Xã"), // Thêm Ward cho đồng bộ AddressSection
+    ward_code: z.string().min(1, "Vui lòng chọn Phường/Xã"), // Lấy từ API v2
   }),
 });
 

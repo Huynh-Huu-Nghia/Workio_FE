@@ -5,6 +5,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
 import { useUpdateCandidateProfileMutation } from "@/api/profile.api";
 import { toast } from "react-toastify";
+import ProvinceWardSelect from "@/components/ProvinceWardSelect";
 
 const CandidateProfile: React.FC = () => {
   const location = useLocation();
@@ -37,8 +38,7 @@ const CandidateProfile: React.FC = () => {
 
   const [addressInfo, setAddressInfo] = useState<any>({
     street: "",
-    ward: "",
-    district_code: "",
+    ward_code: "",
     province_code: "",
   });
 
@@ -69,7 +69,11 @@ const CandidateProfile: React.FC = () => {
     try {
       const payload = {
         candidateInfo,
-        addressInfo,
+        addressInfo: {
+          street: addressInfo.street,
+          ward_code: addressInfo.ward_code,
+          province_code: addressInfo.province_code,
+        },
         studyHistories: [],
         workExperiences: [],
       };
@@ -214,49 +218,21 @@ const CandidateProfile: React.FC = () => {
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               />
             </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Province code
-              </label>
-              <input
-                value={addressInfo.province_code}
-                onChange={(e) =>
+            <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+              <ProvinceWardSelect
+                provinceCode={addressInfo.province_code}
+                wardCode={addressInfo.ward_code}
+                onProvinceChange={(code) =>
                   setAddressInfo((p: any) => ({
                     ...p,
-                    province_code: e.target.value,
+                    province_code: code,
+                    ward_code: "",
                   }))
                 }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="VD: 79"
-              />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                District code
-              </label>
-              <input
-                value={addressInfo.district_code}
-                onChange={(e) =>
-                  setAddressInfo((p: any) => ({
-                    ...p,
-                    district_code: e.target.value,
-                  }))
+                onWardChange={(code) =>
+                  setAddressInfo((p: any) => ({ ...p, ward_code: code }))
                 }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="VD: 760"
-              />
-            </div>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Phường/Xã
-              </label>
-              <input
-                value={addressInfo.ward}
-                onChange={(e) =>
-                  setAddressInfo((p: any) => ({ ...p, ward: e.target.value }))
-                }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="VD: Bến Thành"
+                required
               />
             </div>
           </div>

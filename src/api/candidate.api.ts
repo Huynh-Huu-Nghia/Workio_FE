@@ -28,8 +28,7 @@ export interface CandidatePayload {
   };
   addressInfo: {
     street: string;
-    ward: string;
-    district_code: string;
+    ward_code: string;
     province_code: string;
   };
   studyHistories: {

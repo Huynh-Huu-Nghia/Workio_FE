@@ -53,8 +53,7 @@ export default function CreateRecruiter() {
       },
       addressInfo: {
         street: "",
-        ward: "",
-        district_code: "",
+        ward_code: "",
         province_code: "",
       },
     },
@@ -86,9 +85,7 @@ export default function CreateRecruiter() {
 
         addressInfo: {
           street: formData.addressInfo.street,
-          // AddressSection trả về Name (Xã) và Code (Huyện/Tỉnh) như cũ
-          ward: formData.addressInfo.ward,
-          district_code: formData.addressInfo.district_code,
+          ward_code: formData.addressInfo.ward_code,
           province_code: formData.addressInfo.province_code,
         },
       };

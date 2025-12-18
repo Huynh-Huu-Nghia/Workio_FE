@@ -81,6 +81,12 @@ export default function CandidateView() {
           </div>
         )}
 
+        {!isLoading && !isError && apiResponse?.err !== 0 && (
+          <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-700">
+            {apiResponse?.mes || "Không tìm thấy ứng viên."}
+          </div>
+        )}
+
         {!isLoading && !isError && candidate && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <div className="lg:col-span-1 rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">

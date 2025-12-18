@@ -21,3 +21,28 @@ export const createAdminAccountRequest = async (payload: CreateAdminPayload) => 
 export const useCreateAdminAccountMutation = () =>
   useMutation({ mutationFn: createAdminAccountRequest });
 
+// --- CENTER (ADMIN) ---
+export interface CenterPayload {
+  email: string;
+  password: string;
+  centerInfo: {
+    name: string;
+    code?: string;
+    phone?: string;
+    website?: string;
+    description?: string;
+  };
+  addressInfo?: {
+    street?: string;
+    ward_code?: string;
+    province_code?: string;
+  };
+}
+
+const createCenterRequest = async (payload: CenterPayload) => {
+  const response = await axiosInstance.post("/admin/center", payload);
+  return response.data as ApiResponse<any>;
+};
+
+export const useCreateCenterMutation = () =>
+  useMutation({ mutationFn: createCenterRequest });

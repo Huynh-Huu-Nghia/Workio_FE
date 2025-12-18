@@ -1,30 +1,43 @@
 import React from "react";
 import { Briefcase, Calendar, Loader2, XCircle } from "lucide-react";
-import { useRecruiterJobPostsQuery } from "@/api/recruiter.api";
+import {
+  useDeleteRecruiterJobPostMutation,
+  useRecruiterJobPostsQuery,
+} from "@/api/recruiter.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { Link, useLocation } from "react-router-dom";
+import path from "@/constants/path";
 
 const RecruiterJobPosts: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Tin tuyển dụng";
-  const { data, isLoading, isError } = useRecruiterJobPostsQuery();
+  const { data, isLoading, isError, refetch } = useRecruiterJobPostsQuery();
   const jobs = data?.data ?? [];
+  const deleteMutation = useDeleteRecruiterJobPostMutation();
 
   return (
     <div className="min-h-screen bg-slate-50">
       <div className="mx-auto max-w-5xl px-4 py-6">
-        <header className="mb-4">
-          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-          </p>
-          <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-            <Link
-              to="/recruiter/jobs/candidates"
-              className="rounded-full bg-white px-3 py-1 font-semibold text-orange-600 shadow-sm border border-orange-100"
-            >
-              Ứng viên cho tin
-            </Link>
+        <header className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+            <p className="text-sm text-gray-500">
+            </p>
+            <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
+              <Link
+                to="/recruiter/jobs/candidates"
+                className="rounded-full bg-white px-3 py-1 font-semibold text-orange-600 shadow-sm border border-orange-100"
+              >
+                Ứng viên cho tin
+              </Link>
+            </div>
           </div>
+          <Link
+            to={path.RECRUITER_JOB_CREATE}
+            className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
+          >
+            + Đăng tin mới
+          </Link>
         </header>
 
         {isLoading && (
@@ -86,6 +99,39 @@ const RecruiterJobPosts: React.FC = () => {
                       {job.requirements}
                     </p>
                   )}
+                  <div className="mt-3 flex flex-wrap gap-2 text-sm">
+                    <Link
+                      to={path.RECRUITER_JOB_EDIT.replace(":id", job.id)}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      Sửa
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm("Xóa tin tuyển dụng này?")) return;
+                        try {
+                          const res = await deleteMutation.mutateAsync(job.id);
+                          if ((res as any)?.err === 0) {
+                            await refetch();
+                          } else {
+                            window.alert((res as any)?.mes || "Xóa thất bại");
+                          }
+                        } catch (e: any) {
+                          window.alert(e?.response?.data?.mes || "Xóa thất bại");
+                        }
+                      }}
+                      className="rounded-lg border border-red-200 bg-white px-3 py-2 font-semibold text-red-600 hover:bg-red-50"
+                    >
+                      Xóa
+                    </button>
+                    <Link
+                      to={`${path.RECRUITER_JOB_CANDIDATES}?job_post_id=${job.id}`}
+                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      Xem ứng viên
+                    </Link>
+                  </div>
                 </article>
               ))
             )}

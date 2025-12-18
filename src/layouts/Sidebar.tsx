@@ -162,6 +162,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
           link: "/admin/requests",
         },
         {
+          id: "centers",
+          label: "Trung tâm",
+          icon: <Building2 size={20} />,
+          link: "#",
+          subItems: [
+            { id: "center-list", label: "Danh sách trung tâm", link: "/admin/centers" },
+            { id: "center-create", label: "Thêm trung tâm", link: "/admin/centers/create" },
+          ],
+        },
+        {
           id: "categories",
           label: "Danh mục chung",
           icon: <List size={20} />,

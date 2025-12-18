@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import type {
   UseFormRegister,
   FieldErrors,
@@ -6,7 +6,7 @@ import type {
   UseFormWatch,
 } from "react-hook-form";
 import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
-import { useProvinceByCodeQuery, useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 
 interface Props {
   register: UseFormRegister<CreateCandidateSchema>;
@@ -21,39 +21,18 @@ export default function AddressSection({
   watch,
   setValue,
 }: Props) {
-  const [districts, setDistricts] = useState<any[]>([]);
-
   // Lấy giá trị hiện tại (Đây là CODE đối với Tỉnh/Huyện, là NAME đối với Xã)
   const provinceCode = watch("addressInfo.province_code");
-  const districtCode = watch("addressInfo.district_code");
 
   const { data: provinces = [] } = useProvincesQuery();
-  const { data: provinceDetail } = useProvinceByCodeQuery(provinceCode);
-
-  const shouldFetchAllWards = useMemo(() => {
-    if (!districtCode) return false;
-    const firstDistrict = (provinceDetail as any)?.districts?.[0];
-    return !firstDistrict || !("wards" in firstDistrict);
-  }, [districtCode, provinceDetail]);
-
-  const { data: allWards = [] } = useWardsQuery(shouldFetchAllWards);
-
-  /** 2. Khi chọn Tỉnh (có Code) -> Load Huyện */
-  useEffect(() => {
-    if (!provinceCode) {
-      setDistricts([]);
-      return;
-    }
-
-    setDistricts((provinceDetail as any)?.districts || []);
-  }, [provinceCode, provinceDetail]);
+  const { data: allWards = [] } = useWardsQuery(true);
 
   const wards = useMemo(() => {
-    if (!districtCode) return [];
-    const district = districts.find((d) => String(d.code) === String(districtCode));
-    if (district?.wards) return district.wards;
-    return allWards.filter((w) => String((w as any).district_code) === String(districtCode));
-  }, [allWards, districtCode, districts]);
+    if (!provinceCode) return [];
+    return allWards.filter(
+      (w: any) => String((w as any).province_code) === String(provinceCode)
+    );
+  }, [allWards, provinceCode]);
 
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
@@ -80,9 +59,8 @@ export default function AddressSection({
         <select
           {...register("addressInfo.province_code", {
             onChange: () => {
-              // Khi đổi tỉnh -> Reset huyện và xã
-              setValue("addressInfo.district_code", "");
-              setValue("addressInfo.ward", "");
+              // Khi đổi tỉnh -> Reset phường
+              setValue("addressInfo.ward_code", "");
             },
           })}
           className="w-full rounded-lg border border-gray-300 p-2.5 bg-white focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
@@ -102,52 +80,25 @@ export default function AddressSection({
         </p>
       </div>
 
-      {/* 📍 Quận / Huyện */}
-      <div>
-        <label className="mb-1 block text-sm font-medium text-gray-700">
-          Quận / Huyện <span className="text-red-500">*</span>
-        </label>
-        <select
-          {...register("addressInfo.district_code", {
-            onChange: () => setValue("addressInfo.ward", ""),
-          })}
-          disabled={!provinceCode}
-          className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
-        >
-          <option value="">-- Chọn Quận/Huyện --</option>
-          {districts.map((d) => (
-            // 🔥 value={d.code} -> Form lưu Mã (VD: 760)
-            <option key={d.code} value={d.code}>
-              {d.name}
-            </option>
-          ))}
-        </select>
-        <p className="text-xs text-red-500 mt-1">
-          {errors.addressInfo?.district_code?.message}
-        </p>
-      </div>
-
       {/* 🏡 Phường / Xã */}
       <div>
         <label className="mb-1 block text-sm font-medium text-gray-700">
           Phường / Xã <span className="text-red-500">*</span>
         </label>
         <select
-          {...register("addressInfo.ward")}
-          disabled={!districtCode}
+          {...register("addressInfo.ward_code")}
+          disabled={!provinceCode}
           className="w-full rounded-lg border border-gray-300 p-2.5 bg-white disabled:bg-gray-100 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 outline-none"
         >
           <option value="">-- Chọn Phường/Xã --</option>
           {wards.map((w: any) => (
-            // 🔥 RIÊNG CÁI NÀY: JSON BE ghi "ward": "Bến Thành"
-            // Nên ta để value={w.name} luôn để lưu tên.
-            <option key={w.code} value={w.name}>
+            <option key={w.code} value={w.code}>
               {w.name}
             </option>
           ))}
         </select>
         <p className="text-xs text-red-500 mt-1">
-          {errors.addressInfo?.ward?.message}
+          {errors.addressInfo?.ward_code?.message}
         </p>
       </div>
     </div>

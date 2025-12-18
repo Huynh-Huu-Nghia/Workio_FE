@@ -3,6 +3,7 @@ import { Globe2 } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
+import path from "@/constants/path";
 
 const CenterDashboard: React.FC = () => {
   const location = useLocation();
@@ -46,10 +47,12 @@ const CenterDashboard: React.FC = () => {
             <p className="mt-1 text-xs text-gray-400">
               Email: {user?.email || "—"}
             </p>
-            <p className="mt-4 text-sm text-gray-600">
-              Gợi ý: Khi có endpoint Center (courses, trainees, ...), mình sẽ map
-              vào trang này tương ứng.
-            </p>
+            <Link
+              to={path.CENTER_COURSES}
+              className="mt-4 inline-flex items-center rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600"
+            >
+              Quản lý khóa học
+            </Link>
           </div>
 
           <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">

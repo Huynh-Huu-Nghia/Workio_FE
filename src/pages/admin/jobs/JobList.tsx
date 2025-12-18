@@ -11,12 +11,16 @@ import {
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import type { JobPost } from "@/api/job-post.api";
-import { useGetAdminJobPostsQuery } from "@/api/job-post.api";
+import {
+  useDeleteAdminJobPostMutation,
+  useGetAdminJobPostsQuery,
+} from "@/api/job-post.api";
 import { Link } from "react-router-dom";
 import {
   ADMIN_APPLICATION_FORM_DOC_URL,
   ADMIN_RECRUITMENT_NOTICE_PDF_URL,
 } from "@/constants/documents";
+import path from "@/constants/path";
 
 const JobList: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -24,7 +28,8 @@ const JobList: React.FC = () => {
     "all"
   );
 
-  const { data, isLoading, isError } = useGetAdminJobPostsQuery();
+  const { data, isLoading, isError, refetch } = useGetAdminJobPostsQuery();
+  const deleteMutation = useDeleteAdminJobPostMutation();
   const jobs = data?.data ?? [];
 
   const filtered = useMemo(() => {
@@ -80,6 +85,12 @@ const JobList: React.FC = () => {
               <Download className="h-4 w-4" />
               Phiếu đăng ký dự tuyển
             </a>
+            <Link
+              to={path.ADMIN_JOB_CREATE}
+              className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
+            >
+              + Thêm tin
+            </Link>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -185,6 +196,41 @@ const JobList: React.FC = () => {
                       <Sparkles className="h-4 w-4 text-orange-500" />
                       Gợi ý ứng viên
                     </Link>
+                    <Link
+                      to={`/admin/jobs/view/${job.id}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      title="Xem chi tiết tin"
+                    >
+                      <Briefcase className="h-4 w-4 text-gray-500" />
+                      Xem chi tiết
+                    </Link>
+                    <Link
+                      to={`/admin/jobs/edit/${job.id}`}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      title="Chỉnh sửa tin"
+                    >
+                      Sửa
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        if (!window.confirm("Xóa tin tuyển dụng này?")) return;
+                        try {
+                          const res = await deleteMutation.mutateAsync(job.id);
+                          if ((res as any)?.err === 0) {
+                            await refetch();
+                          } else {
+                            window.alert((res as any)?.mes || "Xóa thất bại");
+                          }
+                        } catch (e: any) {
+                          window.alert(e?.response?.data?.mes || "Xóa thất bại");
+                        }
+                      }}
+                      className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
+                      title="Xóa tin"
+                    >
+                      Xóa
+                    </button>
                   </div>
                 </article>
               ))

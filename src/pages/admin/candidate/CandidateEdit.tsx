@@ -76,8 +76,7 @@ export default function CandidateEdit() {
       },
       addressInfo: {
         street: "",
-        ward: "",
-        district_code: "",
+        ward_code: "",
         province_code: "",
       },
     },
@@ -119,8 +118,7 @@ export default function CandidateEdit() {
     setValue("candidateInfo.minimum_income", Number(candidate.minimum_income || 0));
 
     setValue("addressInfo.street", candidate?.address?.street || "");
-    setValue("addressInfo.ward", candidate?.address?.ward || "");
-    setValue("addressInfo.district_code", candidate?.address?.district_code || "");
+    setValue("addressInfo.ward_code", candidate?.address?.ward_code || candidate?.address?.ward || "");
     setValue("addressInfo.province_code", candidate?.address?.province_code || "");
 
     setValue(
@@ -159,8 +157,7 @@ export default function CandidateEdit() {
         },
         addressInfo: {
           street: formData.addressInfo.street,
-          ward: formData.addressInfo.ward,
-          district_code: formData.addressInfo.district_code,
+          ward_code: formData.addressInfo.ward_code,
           province_code: formData.addressInfo.province_code,
         },
         studyHistories: (formData.studyHistories || []).map((edu) => ({
