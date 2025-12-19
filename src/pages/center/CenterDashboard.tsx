@@ -16,31 +16,26 @@ const CenterDashboard: React.FC = () => {
   }, [user]);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <header className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-            <Globe2 className="h-5 w-5" />
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="mx-auto max-w-4xl px-6 py-8">
+        <header className="mb-6 flex items-center gap-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-orange-400 to-orange-600 shadow-lg">
+            <Globe2 className="h-7 w-7 text-white" />
+          </div>
+          <div className="flex-1">
+            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            <p className="text-sm text-gray-500">
-              Khu vực Center (đã có role + login). Các module sẽ gắn khi backend
-              mở API.
-            </p>
-          </div>
-          <div className="ml-auto">
             <Link
               to="/center/settings"
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:shadow-md"
             >
               Cài đặt tài khoản
             </Link>
           </div>
         </header>
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
-            <h2 className="text-sm font-semibold text-gray-800">Thông tin</h2>
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="rounded-2xl border border-gray-200 bg-white p-7 shadow-lg transition hover:shadow-xl">
             <p className="mt-2 text-sm text-gray-600">
               Xin chào <b className="text-gray-900">{displayName}</b>
             </p>

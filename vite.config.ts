@@ -47,6 +47,11 @@ export default defineConfig({
         changeOrigin: true,
         secure: false,
       },
+      "/center": {
+        target: "http://localhost:3000",
+        changeOrigin: true,
+        secure: false,
+      },
       "/api": {
         target: "http://localhost:3000",
         changeOrigin: true,

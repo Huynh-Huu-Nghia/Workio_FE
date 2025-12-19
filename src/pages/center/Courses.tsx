@@ -87,34 +87,34 @@ const CoursesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-6 space-y-5">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="mx-auto max-w-5xl px-6 py-8 space-y-6">
         <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-            Quản lý khóa học của Trung tâm. API: /center/courses, /center/courses/:id/students.
+          <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+          <p className="text-sm text-gray-600">
+            Quản lý khóa học của Trung tâm
           </p>
         </header>
 
         <form
           onSubmit={handleCreate}
-          className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm grid gap-3 md:grid-cols-2"
+          className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg grid gap-4 md:grid-cols-2"
         >
           <div>
-            <label className="block text-sm font-semibold text-gray-700">Tên khóa học *</label>
+            <label className="block text-sm font-bold text-gray-800">Tên khóa học *</label>
             <input
               value={courseName}
               onChange={(e) => setCourseName(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               placeholder="VD: Lập trình Frontend"
             />
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700">Mô tả</label>
+            <label className="block text-sm font-bold text-gray-800">Mô tả</label>
             <input
               value={courseDesc}
               onChange={(e) => setCourseDesc(e.target.value)}
-              className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+              className="mt-2 w-full rounded-lg border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               placeholder="Thông tin tóm tắt"
             />
           </div>
@@ -122,33 +122,33 @@ const CoursesPage = () => {
             <button
               type="submit"
               disabled={createCourse.isPending}
-              className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white hover:bg-orange-600 disabled:opacity-60"
+              className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-3 text-sm font-bold text-white shadow-md transition hover:shadow-lg hover:from-orange-600 hover:to-orange-700 disabled:opacity-60"
             >
               {createCourse.isPending ? "Đang tạo..." : "Tạo khóa học"}
             </button>
           </div>
         </form>
 
-        <section className="space-y-3">
-          <div className="flex items-center gap-2 text-sm text-gray-600">
-            <span className="font-semibold text-gray-800">Danh sách khóa học</span>
-            {isFetching && <span className="text-orange-600">Đang tải...</span>}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3 text-sm text-gray-600">
+            <span className="text-lg font-bold text-gray-900">Danh sách khóa học</span>
+            {isFetching && <span className="text-orange-600 font-medium">Đang tải...</span>}
           </div>
           {courses.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-gray-500">
+            <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-white p-12 text-center text-gray-500 shadow-sm">
               Chưa có khóa học.
             </div>
           ) : (
             courses.map((course: any) => (
               <div
                 key={course.id}
-                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm space-y-3"
+                className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg transition hover:shadow-xl space-y-4"
               >
-                <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                   <div>
-                    <p className="text-base font-semibold text-gray-800">{course.name}</p>
+                    <p className="text-lg font-bold text-gray-900">{course.name}</p>
                     {course.description && (
-                      <p className="text-sm text-gray-600">{course.description}</p>
+                      <p className="text-sm text-gray-600 mt-1">{course.description}</p>
                     )}
                   </div>
                   <div className="flex flex-wrap gap-2">
@@ -159,19 +159,19 @@ const CoursesPage = () => {
                         setCandidateId(e.target.value);
                       }}
                       placeholder="candidate_id"
-                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                      className="rounded-lg border border-gray-300 px-4 py-2 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                     />
                     <button
                       type="button"
                       onClick={() => handleAddStudent(course.id)}
-                      className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                      className="rounded-lg border-2 border-orange-500 bg-white px-4 py-2 text-sm font-semibold text-orange-600 shadow-sm transition hover:bg-orange-50"
                     >
                       Thêm học viên
                     </button>
                   </div>
                 </div>
-                <div className="rounded-lg border border-gray-100 bg-gray-50 p-3 text-sm text-gray-700">
-                  <p className="mb-2 font-semibold text-gray-800">Học viên</p>
+                <div className="rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-blue-50 p-4 text-sm text-gray-700">
+                  <p className="mb-3 font-bold text-gray-900">Học viên</p>
                   {course.candidates?.length ? (
                     <div className="space-y-2">
                       {course.candidates.map((c: any) => (

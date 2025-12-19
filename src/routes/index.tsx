@@ -265,7 +265,7 @@ export const AppRouter = createBrowserRouter([
     path: path.CENTER_HOME,
     element: <Outlet />,
     children: [
-      { path: path.CENTER_HOME, element: <CenterDashboard /> },
+      { index: true, element: <CenterDashboard /> },
       { path: path.CENTER_COURSES, element: <CenterCourses /> },
       { path: path.CENTER_SETTINGS, element: <CenterAccountSettings /> },
       { path: path.CENTER_SUPPORT, element: <CenterSupportRequests /> },

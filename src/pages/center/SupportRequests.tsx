@@ -49,27 +49,27 @@ const CenterSupportRequests: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="mx-auto max-w-5xl px-6 py-8">
+        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            <p className="text-sm text-gray-500">
-              Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
+            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
+            <p className="text-sm text-gray-600">
+              Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý
             </p>
           </div>
           <Link
             to="/center/settings"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:shadow-md"
           >
             Cài đặt tài khoản
           </Link>
         </div>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-1">
-            <h2 className="text-sm font-semibold text-gray-800">Tạo yêu cầu</h2>
-            <div className="mt-3 space-y-3">
+        <div className="grid gap-6 lg:grid-cols-3">
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-1">
+            <h2 className="text-base font-bold text-gray-900">Tạo yêu cầu</h2>
+            <div className="mt-4 space-y-4">
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-600">
                   Tiêu đề
@@ -117,57 +117,57 @@ const CenterSupportRequests: React.FC = () => {
             </div>
           </div>
 
-          <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-gray-600">
-                Tổng: <b className="text-gray-900">{items.length}</b>
+          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-2">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="text-sm font-medium text-gray-700">
+                Tổng: <b className="text-lg text-gray-900">{items.length}</b> yêu cầu
               </div>
               <input
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="w-full sm:w-80 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                className="w-full sm:w-80 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                 placeholder="Tìm theo tiêu đề/mô tả..."
               />
             </div>
 
-            <div className="mt-4 space-y-3">
+            <div className="mt-5 space-y-3">
               {isLoading ? (
-                <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-gray-500">
+                <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
                   Đang tải...
                 </div>
               ) : isError ? (
-                <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-red-600">
+                <div className="rounded-2xl border-2 border-dashed border-red-300 bg-red-50 p-12 text-center text-red-600">
                   Không thể tải danh sách. Kiểm tra token/backend.
                 </div>
               ) : filtered.length === 0 ? (
-                <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-gray-500">
+                <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
                   Chưa có yêu cầu nào.
                 </div>
               ) : (
                 filtered.map((it) => (
                   <article
                     key={it.id}
-                    className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                    className="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-5 shadow-md transition hover:shadow-lg"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div>
-                        <h3 className="text-sm font-semibold text-gray-900">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="text-base font-bold text-gray-900">
                           {it.title}
                         </h3>
                         {it.description && (
-                          <p className="mt-1 text-sm text-gray-600">
+                          <p className="mt-2 text-sm text-gray-600">
                             {it.description}
                           </p>
                         )}
-                        <p className="mt-1 text-xs text-gray-400">
+                        <p className="mt-2 text-xs text-gray-500">
                           {new Date(it.created_at).toLocaleString("vi-VN")}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                          Priority: {it.priority}
+                        <span className="rounded-full bg-gradient-to-r from-gray-100 to-gray-200 px-4 py-1.5 text-xs font-bold text-gray-800 shadow-sm">
+                          {it.priority}
                         </span>
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        <span className="rounded-full bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
                           {it.status}
                         </span>
                       </div>
