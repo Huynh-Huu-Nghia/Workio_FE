@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
+import CandidateLayout from "@/layouts/CandidateLayout";
 
 const CandidateSupportRequests: React.FC = () => {
   const location = useLocation();
@@ -49,8 +50,8 @@ const CandidateSupportRequests: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-6">
+    <CandidateLayout title={title}>
+      <div className="mx-auto max-w-4xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
@@ -58,13 +59,13 @@ const CandidateSupportRequests: React.FC = () => {
               Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
             </p>
           </div>
-          <Link
-            to="/candidate/settings"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Cài đặt tài khoản
-          </Link>
-        </div>
+        <Link
+          to="/candidate/profile"
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Hồ sơ của tôi
+        </Link>
+      </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-3">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-1">
@@ -179,9 +180,8 @@ const CandidateSupportRequests: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </CandidateLayout>
   );
 };
 
 export default CandidateSupportRequests;
-

@@ -3,7 +3,7 @@ import { Building2, Save } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
-import { useUpdateRecruiterProfileMutation } from "@/api/profile.api";
+import { useRecruiterProfileQuery, useUpdateRecruiterProfileMutation } from "@/api/profile.api";
 import { toast } from "react-toastify";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
 
@@ -12,6 +12,7 @@ const RecruiterProfile: React.FC = () => {
   const title = pathtotitle[location.pathname] || "Hồ sơ doanh nghiệp";
   const { user } = useUser();
   const updateProfile = useUpdateRecruiterProfileMutation();
+  const { data: profileRes } = useRecruiterProfileQuery();
 
   const storageKey = useMemo(
     () => `workio_recruiter_profile_draft_${user?.id || "guest"}`,
@@ -33,6 +34,7 @@ const RecruiterProfile: React.FC = () => {
     ward_code: "",
     province_code: "",
   });
+  const [prefilled, setPrefilled] = useState(false);
 
   useEffect(() => {
     try {
@@ -45,6 +47,28 @@ const RecruiterProfile: React.FC = () => {
       // ignore
     }
   }, [storageKey]);
+
+  useEffect(() => {
+    if (prefilled) return;
+    const profile = profileRes?.data;
+    if (!profile) return;
+    setPrefilled(true);
+    setRecruiterInfo((prev: any) => ({
+      ...prev,
+      company_name: profile.company_name || "",
+      description: profile.description || "",
+      tax_number: profile.tax_number || "",
+      phone: profile.phone || "",
+      website: profile.website || "",
+      established_at: profile.established_at || "",
+      is_verified: profile.is_verified || false,
+    }));
+    setAddressInfo({
+      street: profile.address?.street || "",
+      ward_code: profile.address?.ward_code || "",
+      province_code: profile.address?.province_code || "",
+    });
+  }, [profileRes, prefilled]);
 
   const saveDraft = () => {
     localStorage.setItem(

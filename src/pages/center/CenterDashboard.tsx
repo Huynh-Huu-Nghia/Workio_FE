@@ -1,8 +1,8 @@
 import React, { useMemo } from "react";
 import { Globe2, BookOpen, Users, Settings, GraduationCap, Award } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
-import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
+import CenterLayout from "@/layouts/CenterLayout";
 import path from "@/constants/path";
 
 const CenterDashboard: React.FC = () => {
@@ -140,7 +140,7 @@ const CenterDashboard: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </CenterLayout>
   );
 };
 

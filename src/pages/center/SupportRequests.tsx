@@ -3,6 +3,7 @@ import { toast } from "react-toastify";
 import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
+import CenterLayout from "@/layouts/CenterLayout";
 
 const CenterSupportRequests: React.FC = () => {
   const location = useLocation();
@@ -49,22 +50,21 @@ const CenterSupportRequests: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
-      <div className="mx-auto max-w-5xl px-6 py-8">
-        <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
-            <p className="text-sm text-gray-600">
-              Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý
-            </p>
-          </div>
-          <Link
-            to="/center/settings"
-            className="rounded-lg border border-gray-300 bg-white px-5 py-2.5 text-sm font-semibold text-gray-700 shadow-sm transition hover:bg-gray-50 hover:shadow-md"
-          >
-            Cài đặt tài khoản
-          </Link>
+    <CenterLayout title={title}>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
+          <p className="text-sm text-gray-500">
+            Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
+          </p>
         </div>
+        <Link
+          to="/center/settings"
+          className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+        >
+          Cài đặt tài khoản
+        </Link>
+      </div>
 
         <div className="grid gap-6 lg:grid-cols-3">
           <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-1">
@@ -178,10 +178,8 @@ const CenterSupportRequests: React.FC = () => {
             </div>
           </div>
         </div>
-      </div>
-    </div>
+    </CenterLayout>
   );
 };
 
 export default CenterSupportRequests;
-

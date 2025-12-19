@@ -8,6 +8,7 @@ import {
   useUpdateStudentStatusMutation,
 } from "@/api/center.api";
 import { toast } from "react-toastify";
+import CenterLayout from "@/layouts/CenterLayout";
 
 const CoursesPage = () => {
   const location = useLocation();
@@ -87,7 +88,7 @@ const CoursesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+    <CenterLayout title={title}>
       <div className="mx-auto max-w-5xl px-6 py-8 space-y-6">
         <header className="flex flex-col gap-2">
           <h1 className="text-3xl font-bold text-gray-900">{title}</h1>
@@ -211,7 +212,7 @@ const CoursesPage = () => {
           )}
         </section>
       </div>
-    </div>
+    </CenterLayout>
   );
 };
 

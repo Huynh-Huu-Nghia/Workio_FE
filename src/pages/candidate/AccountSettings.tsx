@@ -4,6 +4,7 @@ import AccountSettingsCard from "@/components/account/AccountSettingsCard";
 import { useUser } from "@/context/user/user.context";
 import { useLogoutMutation } from "@/api/auth.api";
 import { Link } from "react-router-dom";
+import CandidateLayout from "@/layouts/CandidateLayout";
 
 const CandidateAccountSettings: React.FC = () => {
   const { setUser } = useUser();
@@ -33,8 +34,8 @@ const CandidateAccountSettings: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-3xl px-4 py-6">
+    <CandidateLayout title="Cài đặt tài khoản">
+      <div className="mx-auto max-w-3xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">Cài đặt tài khoản</h1>
@@ -73,7 +74,7 @@ const CandidateAccountSettings: React.FC = () => {
           )}
         </div>
       </div>
-    </div>
+    </CandidateLayout>
   );
 };
 
