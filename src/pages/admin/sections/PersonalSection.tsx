@@ -8,6 +8,7 @@ import type {
 } from "react-hook-form";
 import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
 import { X } from "lucide-react";
+import { INDUSTRY_OPTIONS } from "@/constants/industries";
 
 interface Props {
   register: UseFormRegister<CreateCandidateSchema>;
@@ -325,19 +326,43 @@ export default function PersonalSection({
             label="Ngôn ngữ sử dụng"
             fieldName="candidateInfo.languguages"
             placeholder="VD: Tiếng Anh, Tiếng Nhật (Enter để thêm)"
-            // ✅ FIX: Truyền lỗi cụ thể vào đây
             errorMessage={errors.candidateInfo?.languguages?.message}
           />
         </div>
 
         <div className="md:col-span-2">
-          <TagInput
-            label="Ngành nghề mong muốn"
-            fieldName="candidateInfo.fields_wish"
-            placeholder="VD: IT Phần mềm, Thiết kế (Enter để thêm)"
-            // ✅ FIX: Truyền lỗi cụ thể vào đây
-            errorMessage={errors.candidateInfo?.fields_wish?.message}
-          />
+          <label className="mb-1 block text-sm font-medium text-gray-700">
+            Ngành nghề mong muốn <span className="text-red-500">*</span>
+          </label>
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2 rounded-lg border border-gray-200 p-3 bg-white">
+            {INDUSTRY_OPTIONS.map((opt) => {
+              const current = watch("candidateInfo.fields_wish") || [];
+              const checked = current.includes(opt);
+              return (
+                <label
+                  key={opt}
+                  className="flex items-center gap-2 text-sm text-gray-700"
+                >
+                  <input
+                    type="checkbox"
+                    checked={checked}
+                    onChange={(e) => {
+                      const next = e.target.checked
+                        ? [...current, opt]
+                        : current.filter((f: string) => f !== opt);
+                      setValue("candidateInfo.fields_wish", next, { shouldValidate: true });
+                    }}
+                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                  />
+                  {opt}
+                </label>
+              );
+            })}
+          </div>
+          <p className="text-xs text-gray-500 mt-1">Chọn một hoặc nhiều ngành (checkbox).</p>
+          <p className="text-xs text-red-500">
+            {errors.candidateInfo?.fields_wish?.message as string}
+          </p>
         </div>
 
         <div className="md:col-span-2">

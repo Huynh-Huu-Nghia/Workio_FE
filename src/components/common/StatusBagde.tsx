@@ -15,7 +15,7 @@ const StatusBadge: React.FC<StatusBadgeProps> = ({ status }) => {
   // Định nghĩa nhãn hiển thị tiếng Việt
   const labels: Record<string, string> = {
     active: "Hoạt động",
-    inactive: "Chờ duyệt",
+    inactive: "Chờ xác thực",
     blocked: "Đã khóa",
   };
 

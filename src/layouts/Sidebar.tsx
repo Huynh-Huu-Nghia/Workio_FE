@@ -76,11 +76,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               label: "Thêm Ứng viên",
               link: "/admin/candidates/create",
             },
-            {
-              id: "candidate-jobs",
-              label: "Tin tuyển dụng đã ứng tuyển",
-              link: "/admin/candidates/jobs",
-            },
+            // removed tin đã ứng tuyển per request
           ],
         },
         {
@@ -94,11 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               label: "Danh sách NTD",
               link: "/admin/recruiters",
             },
-            {
-              id: "pending-recruiters",
-              label: "Chờ duyệt",
-              link: "/admin/recruiters/pending",
-            },
+            // mục chờ xác thực đã bỏ theo yêu cầu
             {
               id: "add-recruiter",
               label: "Thêm NTD",
@@ -122,6 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
               id: "pending-jobs",
               label: "Tin chờ duyệt",
               link: "/admin/jobs/pending",
+              hidden: true,
             },
             {
               id: "interviews",

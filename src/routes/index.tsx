@@ -14,11 +14,11 @@ import CandidateList from "@/pages/admin/candidate/CandidateList";
 import CandidateView from "@/pages/admin/candidate/CandidateView";
 import CandidateEdit from "@/pages/admin/candidate/CandidateEdit";
 import RecruiterList from "@/pages/admin/recruiter/RecruiterList";
-import PendingRecruiters from "@/pages/admin/recruiter/PendingRecruiters";
 import RecruiterView from "@/pages/admin/recruiter/RecruiterView";
 import JobList from "@/pages/admin/jobs/JobList";
 import JobFormAdmin from "@/pages/admin/jobs/JobForm";
 import PendingJobs from "@/pages/admin/jobs/PendingJobs";
+// import PendingJobs from "@/pages/admin/jobs/PendingJobs";
 import JobView from "@/pages/admin/jobs/JobView";
 import InterviewList from "@/pages/admin/interview/InterviewList";
 import InterviewsByCandidate from "@/pages/admin/interview/InterviewsByCandidate";
@@ -50,6 +50,7 @@ import SuggestedJobs from "@/pages/admin/jobs/SuggestedJobs";
 import AdminSuggestedCandidates from "@/pages/admin/jobs/SuggestedCandidates";
 import CenterView from "@/pages/admin/center/CenterView";
 import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
+import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
 import SuggestedCandidates from "@/pages/recruiter/SuggestedCandidates";
 import RecruiterJobForm from "@/pages/recruiter/JobForm";
@@ -115,10 +116,6 @@ export const AppRouter = createBrowserRouter([
       {
         path: path.ADMIN_RECRUITER_LIST,
         element: <RecruiterList />,
-      },
-      {
-        path: path.ADMIN_RECRUITER_PENDING,
-        element: <PendingRecruiters />,
       },
       {
         path: path.ADMIN_RECRUITER_VIEW,
@@ -229,7 +226,8 @@ export const AppRouter = createBrowserRouter([
       { index: true, element: <CandidateHome /> },
       { path: path.CANDIDATE_HOME, element: <CandidateHome /> },
       { path: path.CANDIDATE_JOBS, element: <CandidateJobBoard /> },
-       { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
+      { path: path.CANDIDATE_SUGGESTED_JOBS, element: <CandidateSuggestedJobs /> },
+      { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },
       { path: path.CANDIDATE_SUPPORT, element: <CandidateSupportRequests /> },

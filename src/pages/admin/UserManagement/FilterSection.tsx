@@ -38,7 +38,7 @@ const FilterSection: React.FC = () => {
           <select className="w-full pl-4 pr-10 py-2.5 rounded-lg border border-gray-200 text-sm appearance-none focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 bg-white text-gray-600 cursor-pointer">
             <option value="">Tất cả trạng thái</option>
             <option value="active">Hoạt động</option>
-            <option value="inactive">Chờ duyệt</option>
+            <option value="inactive">Chờ xác thực</option>
             <option value="blocked">Đã khóa</option>
           </select>
           <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />

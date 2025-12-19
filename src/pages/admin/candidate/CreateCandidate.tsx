@@ -21,6 +21,7 @@ import {
   useCreateCandidateMutation,
   type CandidatePayload,
 } from "@/api/candidate.api";
+import { INDUSTRY_OPTIONS } from "@/constants/industries";
 
 import AdminLayout from "@/layouts/AdminLayout";
 
@@ -92,7 +93,9 @@ export default function CreateCandidate() {
           minimum_income: Number(formData.candidateInfo.minimum_income),
           date_of_birth: safeFormatDate(formData.candidateInfo.date_of_birth),
           languguages: formData.candidateInfo.languguages || [],
-          fields_wish: formData.candidateInfo.fields_wish || [],
+          fields_wish: (formData.candidateInfo.fields_wish || []).filter((f) =>
+            INDUSTRY_OPTIONS.includes(f)
+          ),
         },
 
         addressInfo: {

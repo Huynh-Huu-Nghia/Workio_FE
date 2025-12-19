@@ -259,6 +259,98 @@ export default function CandidateView() {
                   <div className="text-gray-500 text-sm">Chưa có dữ liệu.</div>
                 )}
               </div>
+
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-gray-800">
+                    Tin đã ứng tuyển
+                  </h3>
+                  <span className="text-xs text-gray-500">
+                    {candidate.applied_jobs?.length || 0} tin
+                  </span>
+                </div>
+                {Array.isArray(candidate.applied_jobs) &&
+                candidate.applied_jobs.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse text-sm">
+                      <thead>
+                        <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold tracking-wider">
+                          <th className="p-3">Vị trí</th>
+                          <th className="p-3">Nhà tuyển dụng</th>
+                          <th className="p-3">Trạng thái</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-50">
+                        {candidate.applied_jobs.map((job: any) => (
+                          <tr key={job.job_post_id} className="hover:bg-slate-50">
+                            <td className="p-3 font-semibold text-gray-800">
+                              {job.position || "—"}
+                            </td>
+                            <td className="p-3 text-gray-600">
+                              {job.employer || "—"}
+                            </td>
+                            <td className="p-3">
+                              <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                                {job.status || "—"}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-gray-500 text-sm">Chưa có dữ liệu.</div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">
+                  Thông tin bổ sung
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Ngành nghề mong muốn</div>
+                    <div className="font-medium text-gray-800">
+                      {Array.isArray(candidate.fields_wish)
+                        ? candidate.fields_wish.join(", ")
+                        : candidate.fields_wish || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Ngôn ngữ</div>
+                    <div className="font-medium text-gray-800">
+                      {Array.isArray(candidate.languguages)
+                        ? candidate.languguages.join(", ")
+                        : candidate.languguages || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Loại công việc</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.job_type || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Thời gian làm việc</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.working_time || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Xác thực</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.is_verified ? "Đã xác thực" : "Chưa xác thực"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Tình trạng việc làm</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.is_employed ? "Đã có việc" : "Đang tìm việc"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

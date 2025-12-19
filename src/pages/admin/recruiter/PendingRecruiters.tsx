@@ -12,7 +12,7 @@ const PendingRecruiters: React.FC = () => {
 
   return (
     <AdminLayout
-      title="NTD chờ duyệt"
+      title="NTD chờ xác thực"
       activeMenu="recruiters"
       activeSubmenu="pending-recruiters"
     >
@@ -45,7 +45,7 @@ const PendingRecruiters: React.FC = () => {
           <div className="mt-4 grid gap-4 md:grid-cols-2">
             {pending.length === 0 ? (
               <div className="col-span-full rounded-lg border border-dashed border-gray-200 p-6 text-center text-gray-500">
-                Không có nhà tuyển dụng nào đang chờ duyệt.
+                Không có nhà tuyển dụng nào đang chờ xác thực.
               </div>
             ) : (
               pending.map((rec) => (

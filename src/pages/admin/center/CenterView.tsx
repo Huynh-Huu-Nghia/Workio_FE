@@ -160,6 +160,37 @@ export default function CenterView() {
                   </div>
                 )}
               </div>
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">
+                  Thông tin chi tiết
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-gray-500">Email</div>
+                    <div className="font-medium text-gray-800">
+                      {center.center?.email || center.email || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Điện thoại</div>
+                    <div className="font-medium text-gray-800">
+                      {center.phone || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Website</div>
+                    <div className="font-medium text-gray-800">
+                      {center.website || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Trạng thái</div>
+                    <div className="font-medium text-gray-800">
+                      {center.is_active ? "Hoạt động" : "Đang khóa"}
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         )}

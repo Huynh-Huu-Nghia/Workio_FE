@@ -49,9 +49,35 @@ const CandidateSupportRequests: React.FC = () => {
     }
   };
 
+  const toViStatus = (status?: string) => {
+    switch (status) {
+      case "open":
+        return "Đang mở";
+      case "in_progress":
+        return "Đang xử lý";
+      case "resolved":
+        return "Đã giải quyết";
+      default:
+        return status || "Không rõ";
+    }
+  };
+
+  const toViPriority = (priority?: string) => {
+    switch (priority) {
+      case "low":
+        return "Thấp";
+      case "medium":
+        return "Trung bình";
+      case "high":
+        return "Cao";
+      default:
+        return priority || "Không rõ";
+    }
+  };
+
   return (
     <CandidateLayout title={title}>
-      <div className="mx-auto max-w-4xl">
+      <div className="mx-auto max-w-6xl">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
@@ -166,10 +192,10 @@ const CandidateSupportRequests: React.FC = () => {
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                          Priority: {it.priority}
+                          Ưu tiên: {toViPriority(it.priority)}
                         </span>
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                          {it.status}
+                          {toViStatus(it.status)}
                         </span>
                       </div>
                     </div>

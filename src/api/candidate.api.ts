@@ -144,11 +144,10 @@ const createCandidateRequest = async (
 };
 
 // --- B. LẤY DANH SÁCH ỨNG VIÊN ---
-const getAllCandidatesRequest = async (): Promise<
-  ApiResponse<CandidateResponse[]>
-> => {
-  // Dựa vào file router BE: router.get('/candidates')
-  const response = await axiosInstance.get("/admin/candidates");
+const getAllCandidatesRequest = async (
+  params: Record<string, any> = {}
+): Promise<ApiResponse<CandidateResponse[]>> => {
+  const response = await axiosInstance.get("/admin/candidates", { params });
   return response.data;
 };
 
@@ -198,10 +197,10 @@ export const useCreateCandidateMutation = () => {
 };
 
 // Hook cho trang "Danh sách" (Query)
-export const useGetAllCandidatesQuery = () => {
+export const useGetAllCandidatesQuery = (filters: Record<string, any> = {}) => {
   return useQuery({
-    queryKey: ["candidates"], // Key định danh cache
-    queryFn: getAllCandidatesRequest,
+    queryKey: ["candidates", filters], // Key định danh cache
+    queryFn: () => getAllCandidatesRequest(filters),
     staleTime: 1000 * 60 * 5, // Cache dữ liệu trong 5 phút
     retry: 1, // Thử lại 1 lần nếu lỗi mạng
   });

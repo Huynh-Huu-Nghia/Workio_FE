@@ -17,6 +17,7 @@ export interface RecruiterResponse {
   description?: string | null;
   is_verified?: boolean;
   address_id?: string | null;
+  hired_count?: number;
   user?: {
     email?: string;
   };
@@ -56,19 +57,17 @@ export const useCreateRecruiterMutation = () => {
 };
 
 // --- LẤY DANH SÁCH NTD (ADMIN) ---
-const getAllRecruitersRequest = async (): Promise<
-  ApiResponse<RecruiterResponse[]>
-> => {
-  const response = await axiosInstance.get("/admin/recruiters");
-  console.log(response);
-  
+const getAllRecruitersRequest = async (
+  params: Record<string, any> = {}
+): Promise<ApiResponse<RecruiterResponse[]>> => {
+  const response = await axiosInstance.get("/admin/recruiters", { params });
   return response.data;
 };
 
-export const useGetAllRecruitersQuery = () =>
+export const useGetAllRecruitersQuery = (filters: Record<string, any> = {}) =>
   useQuery({
-    queryKey: ["recruiters"],
-    queryFn: getAllRecruitersRequest,
+    queryKey: ["recruiters", filters],
+    queryFn: () => getAllRecruitersRequest(filters),
     staleTime: 1000 * 60 * 5,
   });
 

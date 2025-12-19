@@ -1,0 +1,15 @@
+export const INDUSTRY_OPTIONS: string[] = [
+  "Công nghệ thông tin",
+  "Kinh doanh",
+  "Marketing",
+  "Tài chính",
+  "Ngân hàng",
+  "Giáo dục",
+  "Y tế",
+  "Xây dựng",
+  "Sản xuất",
+  "Vận tải",
+  "Logistics",
+  "Thiết kế",
+  "Khác",
+];

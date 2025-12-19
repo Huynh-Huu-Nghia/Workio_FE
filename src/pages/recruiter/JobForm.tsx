@@ -168,7 +168,7 @@ export default function RecruiterJobForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Hạn nộp (application_deadline_to)
+              Hạn nộp 
             </label>
             <input
               type="date"

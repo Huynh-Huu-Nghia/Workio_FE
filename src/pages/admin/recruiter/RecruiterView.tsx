@@ -80,6 +80,12 @@ export default function RecruiterView() {
                     {recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"}
                   </span>
                 </div>
+                <div className="flex justify-between gap-3">
+                  <span className="text-gray-500">Nhân viên đã tuyển</span>
+                  <span className="font-medium text-gray-800">
+                    {recruiter.hired_count ?? 0}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -117,6 +123,43 @@ export default function RecruiterView() {
                 <p className="text-sm text-gray-700">
                   {recruiter.description || "Chưa cập nhật."}
                 </p>
+              </div>
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">
+                  Thông tin chi tiết
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <div className="text-gray-500">Website</div>
+                    <div className="font-medium text-gray-800">
+                      {recruiter.website || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Email</div>
+                    <div className="font-medium text-gray-800">
+                      {recruiter?.user?.email || recruiter.email || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Điện thoại</div>
+                    <div className="font-medium text-gray-800">
+                      {recruiter.phone || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Mã số thuế</div>
+                    <div className="font-medium text-gray-800">
+                      {recruiter.tax_number || "—"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-gray-500">Trạng thái</div>
+                    <div className="font-medium text-gray-800">
+                      {recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>

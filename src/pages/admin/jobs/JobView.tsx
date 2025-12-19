@@ -95,6 +95,48 @@ export default function JobView() {
                   {job.monthly_salary ?? "Thỏa thuận"}
                 </p>
               </div>
+              <div className="grid grid-cols-1 gap-2 text-sm">
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Ngành nghề</p>
+                  <p className="text-gray-800 font-medium">
+                    {Array.isArray(job.fields)
+                      ? job.fields.join(", ")
+                      : job.fields || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Kỹ năng máy tính</p>
+                  <p className="text-gray-800 font-medium">
+                    {job.computer_skill || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Trình độ yêu cầu</p>
+                  <p className="text-gray-800 font-medium">
+                    {job.graduation_rank || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Loại công việc</p>
+                  <p className="text-gray-800 font-medium">
+                    {job.job_type || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Thời gian làm việc</p>
+                  <p className="text-gray-800 font-medium">
+                    {job.working_time || "—"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs uppercase text-gray-400">Phúc lợi</p>
+                  <p className="text-gray-800 font-medium">
+                    {Array.isArray(job.benefits)
+                      ? job.benefits.join(", ")
+                      : job.benefits || "—"}
+                  </p>
+                </div>
+              </div>
             </div>
           </div>
         )}
@@ -102,4 +144,3 @@ export default function JobView() {
     </AdminLayout>
   );
 }
-

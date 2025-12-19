@@ -87,7 +87,7 @@ const CenterDashboard: React.FC = () => {
 
           {/* Support Requests Card */}
           <Link
-            to={path.CENTER_SUPPORT_REQUESTS}
+            to={path.CENTER_SUPPORT}
             className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-8 shadow-lg transition-all hover:-translate-y-1 hover:border-blue-300 hover:shadow-2xl"
           >
             <div className="absolute right-4 top-4 opacity-10 transition-opacity group-hover:opacity-20">

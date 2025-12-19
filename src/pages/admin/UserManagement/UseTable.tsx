@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Trash2, Download, Plus, Eye, Pencil } from "lucide-react";
+import { Trash2, Download, Plus, Eye, Pencil, Printer } from "lucide-react";
 import StatusBadge from "@/components/common/StatusBagde"; // Import component badge
 
 // Mock Data (Sau này thay bằng data từ API)
@@ -63,111 +63,83 @@ const UserTable: React.FC = () => {
     }
   };
 
-  const toggleAll = () => {
-    if (selectedRows.length === MOCK_USERS.length) {
-      setSelectedRows([]);
-    } else {
-      setSelectedRows(MOCK_USERS.map((u) => u.id));
-    }
-  };
-
   return (
     <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
       {/* Table Toolbar */}
       <div className="p-5 flex flex-wrap items-center justify-between gap-4 border-b border-gray-100">
-        <div className="flex items-center gap-3">
-          <button className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors shadow-sm">
-            <Trash2 className="w-4 h-4" /> Xóa
-          </button>
-          <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
-            <Download className="w-4 h-4" /> Xuất Excel
-          </button>
+        <div className="flex flex-col gap-2">
+          <div className="flex items-center gap-3">
+            <button className="flex items-center gap-2 px-4 py-2 bg-white text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-50 transition-colors shadow-sm">
+              <Trash2 className="w-4 h-4" /> Xóa
+            </button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors shadow-sm">
+              <Download className="w-4 h-4" /> Xuất Excel
+            </button>
+          </div>
+          <p className="text-xs text-gray-500">
+            Mật khẩu được tự sinh khi tạo mới, không cần nhập tay.
+          </p>
         </div>
         <button className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md shadow-orange-200 hover:shadow-lg transform active:scale-95">
-          <Plus className="w-5 h-5" /> Thêm mới
+          <Plus className="w-5 h-5" /> Thêm mới (auto password)
         </button>
       </div>
 
       {/* Table Content */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold tracking-wider">
-              <th className="p-4 w-10 text-center">
+      <div className="divide-y divide-gray-100">
+        {MOCK_USERS.map((user) => {
+          const checked = selectedRows.includes(user.id);
+          return (
+            <div
+              key={user.id}
+              className={`flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between ${
+                checked ? "bg-orange-50/40" : "bg-white"
+              }`}
+              >
+              <div className="flex items-start gap-3">
                 <input
                   type="checkbox"
-                  className="rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer w-4 h-4"
-                  checked={selectedRows.length === MOCK_USERS.length}
-                  onChange={toggleAll}
+                  className="mt-1 rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer w-4 h-4"
+                  checked={checked}
+                  onChange={() => toggleRow(user.id)}
                 />
-              </th>
-              <th className="p-4">ID</th>
-              <th className="p-4">Thông tin người dùng</th>
-              <th className="p-4">Vai trò</th>
-              <th className="p-4">Trạng thái</th>
-              <th className="p-4">Ngày tạo</th>
-              <th className="p-4 text-center">Hành động</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-50 text-sm">
-            {MOCK_USERS.map((user) => (
-              <tr
-                key={user.id}
-                className={`
-                    hover:bg-orange-50/40 transition-colors group 
-                    ${selectedRows.includes(user.id) ? "bg-orange-50/30" : ""}
-                `}
-              >
-                <td className="p-4 text-center">
-                  <input
-                    type="checkbox"
-                    className="rounded border-gray-300 text-orange-500 focus:ring-orange-500 cursor-pointer w-4 h-4"
-                    checked={selectedRows.includes(user.id)}
-                    onChange={() => toggleRow(user.id)}
+                <div className="flex items-center gap-3">
+                  <img
+                    src={user.avatar}
+                    alt={user.name}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-100 shadow-sm"
                   />
-                </td>
-                <td className="p-4 font-bold text-gray-500">{user.id}</td>
-                <td className="p-4">
-                  <div className="flex items-center gap-3">
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="w-10 h-10 rounded-full object-cover border border-gray-100 shadow-sm"
-                    />
-                    <div>
-                      <p className="font-bold text-gray-800">{user.name}</p>
-                      <p className="text-xs text-gray-500 font-medium">
-                        {user.email}
-                      </p>
+                  <div>
+                    <p className="font-bold text-gray-800">{user.name}</p>
+                    <p className="text-xs text-gray-500 font-medium">{user.email}</p>
+                    <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-gray-600">
+                      <span className="rounded-full bg-gray-100 px-2 py-1 font-semibold text-gray-700">
+                        {user.role}
+                      </span>
+                      <StatusBadge status={user.status} />
+                      <span className="text-gray-400">Tạo: {user.createdAt}</span>
                     </div>
                   </div>
-                </td>
-                <td className="p-4">
-                  <span className="font-medium text-gray-700">{user.role}</span>
-                </td>
-                <td className="p-4">
-                  <StatusBadge status={user.status} />
-                </td>
-                <td className="p-4 text-gray-500 font-medium">
-                  {user.createdAt}
-                </td>
-                <td className="p-4">
-                  <div className="flex items-center justify-center gap-1">
-                    <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
-                      <Eye className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all">
-                      <Pencil className="w-4 h-4" />
-                    </button>
-                    <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+                </div>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50">
+                  <Printer className="w-4 h-4" />
+                  In hồ sơ
+                </button>
+                <button className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all">
+                  <Eye className="w-4 h-4" />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all">
+                  <Pencil className="w-4 h-4" />
+                </button>
+                <button className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all">
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Pagination */}

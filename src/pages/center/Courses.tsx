@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
 import {
@@ -25,7 +25,21 @@ const CoursesPage = () => {
   const [courseName, setCourseName] = useState("");
   const [courseDesc, setCourseDesc] = useState("");
   const [candidateId, setCandidateId] = useState("");
+  const [candidateSearch, setCandidateSearch] = useState("");
   const [selectedCourse, setSelectedCourse] = useState("");
+  const { data: candidateRes } = useGetAllCandidatesQuery();
+  const candidates = (candidateRes as any)?.data || [];
+
+  const filteredCandidates = useMemo(() => {
+    const keyword = candidateSearch.toLowerCase();
+    return candidates.filter(
+      (c: any) =>
+        c.full_name?.toLowerCase().includes(keyword) ||
+        c.email?.toLowerCase().includes(keyword) ||
+        c.phone?.includes(keyword) ||
+        false
+    );
+  }, [candidates, candidateSearch]);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -53,7 +67,7 @@ const CoursesPage = () => {
 
   const handleAddStudent = async (courseId: string) => {
     if (!candidateId.trim()) {
-      toast.info("Nhập candidate_id");
+      toast.info("Chọn ứng viên");
       return;
     }
     try {

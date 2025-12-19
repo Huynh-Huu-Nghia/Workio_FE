@@ -31,8 +31,10 @@ export interface JobPost {
   status?: string | null;
 }
 
-const getAdminJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
-  const response = await axiosInstance.get("/admin/job-posts");
+const getAdminJobPostsRequest = async (
+  params: Record<string, any> = {}
+): Promise<ApiResponse<JobPost[]>> => {
+  const response = await axiosInstance.get("/admin/job-posts", { params });
   return response.data;
 };
 
@@ -45,10 +47,10 @@ const getAdminJobPostDetailRequest = async (
   return response.data;
 };
 
-export const useGetAdminJobPostsQuery = () =>
+export const useGetAdminJobPostsQuery = (filters: Record<string, any> = {}) =>
   useQuery({
-    queryKey: ["admin-job-posts"],
-    queryFn: getAdminJobPostsRequest,
+    queryKey: ["admin-job-posts", filters],
+    queryFn: () => getAdminJobPostsRequest(filters),
     staleTime: 1000 * 60 * 5,
   });
 
@@ -124,12 +126,16 @@ const getAdminSuggestedCandidatesRequest = async (
   return response.data;
 };
 
-export const useAdminSuggestedCandidatesQuery = (jobPostId: string) =>
+export const useAdminSuggestedCandidatesQuery = (
+  jobPostId: string,
+  options: any = {}
+) =>
   useQuery({
     queryKey: ["admin-suggested-candidates", jobPostId],
     queryFn: () => getAdminSuggestedCandidatesRequest(jobPostId),
-    enabled: Boolean(jobPostId),
+    enabled: Boolean(jobPostId) && (options.enabled ?? true),
     staleTime: 1000 * 60 * 5,
+    ...options,
   });
 
 // --- Admin: CRUD job post + apply ---

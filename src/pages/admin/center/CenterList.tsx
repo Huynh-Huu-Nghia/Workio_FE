@@ -1,11 +1,21 @@
-import React from "react";
+import React, { useState } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useAdminCentersQuery } from "@/api/center.api";
 import { Loader2, XCircle, MapPin, Eye } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const CenterList: React.FC = () => {
-  const { data, isLoading, isError } = useAdminCentersQuery();
+  const [search, setSearch] = useState("");
+  const [isActive, setIsActive] = useState("");
+  const [sortBy, setSortBy] = useState("");
+  const [order, setOrder] = useState<"ASC" | "DESC">("DESC");
+
+  const { data, isLoading, isError, refetch } = useAdminCentersQuery({
+    search: search || undefined,
+    is_active: isActive || undefined,
+    sort_by: sortBy || undefined,
+    order,
+  });
   const centers = data?.data ?? [];
 
   return (
@@ -26,6 +36,47 @@ const CenterList: React.FC = () => {
           >
             + Thêm trung tâm
           </Link>
+          <div className="flex flex-wrap gap-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Tìm tên/email/sđt"
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            />
+            <select
+              value={isActive}
+              onChange={(e) => setIsActive(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            >
+              <option value="">Trạng thái</option>
+              <option value="true">Đang hoạt động</option>
+              <option value="false">Đang khóa</option>
+            </select>
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            >
+              <option value="">Sắp xếp</option>
+              <option value="name">Tên</option>
+              <option value="created_at">Ngày tạo</option>
+              <option value="updated_at">Ngày cập nhật</option>
+            </select>
+            <select
+              value={order}
+              onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+            >
+              <option value="DESC">Giảm dần</option>
+              <option value="ASC">Tăng dần</option>
+            </select>
+            <button
+              onClick={() => refetch()}
+              className="rounded-lg border border-gray-200 px-3 py-2 text-sm hover:bg-gray-50"
+            >
+              Lọc
+            </button>
+          </div>
         </div>
 
         {isLoading && (
@@ -91,4 +142,3 @@ const CenterList: React.FC = () => {
 };
 
 export default CenterList;
-

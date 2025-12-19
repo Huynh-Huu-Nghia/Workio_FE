@@ -83,6 +83,12 @@ const InterviewList: React.FC = () => {
                   {itv.notes && (
                     <p className="text-sm text-gray-700">{itv.notes}</p>
                   )}
+                  <div className="text-xs text-gray-600 flex flex-wrap gap-3">
+                    <span>Job: {itv.job_post?.position || itv.job_post_id || "—"}</span>
+                    <span>Recruiter: {itv.job_post?.recruiter?.company_name || "—"}</span>
+                    <span>Candidate: {itv.candidate?.full_name || itv.candidate_id || "—"}</span>
+                    <span>Hình thức: {itv.interview_type || "—"}</span>
+                  </div>
                 </article>
               ))
             )}

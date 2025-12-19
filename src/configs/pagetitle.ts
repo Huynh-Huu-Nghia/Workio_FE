@@ -6,7 +6,7 @@ export const pathtotitle: { [key: string]: string } = {
   "/admin/candidates/create": "Quản lý ứng viên",
   "/admin/candidates/list": "Quản lý ứng viên",
   "/admin/recruiters": "Quản lý nhà tuyển dụng",
-  "/admin/recruiters/pending": "Quản lý nhà tuyển dụng",
+  "/admin/recruiters/pending": "Nhà tuyển dụng chờ xác thực",
   "/admin/recruiters/create": "Quản lý nhà tuyển dụng",
   "/admin/jobs": "Tin tuyển dụng",
   "/admin/jobs/create": "Tin tuyển dụng",

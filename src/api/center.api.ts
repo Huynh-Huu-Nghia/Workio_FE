@@ -50,8 +50,10 @@ const getAdminCenterDetailRequest = async (
   return response.data;
 };
 
-const getAdminCentersRequest = async (): Promise<ApiResponse<CenterDetail[]>> => {
-  const response = await axiosInstance.get("/admin/centers");
+const getAdminCentersRequest = async (
+  params: Record<string, any> = {}
+): Promise<ApiResponse<CenterDetail[]>> => {
+  const response = await axiosInstance.get("/admin/centers", { params });
   return response.data;
 };
 
@@ -62,10 +64,10 @@ export const useAdminCenterDetailQuery = (centerId?: string) =>
     enabled: Boolean(centerId),
   });
 
-export const useAdminCentersQuery = () =>
+export const useAdminCentersQuery = (filters: Record<string, any> = {}) =>
   useQuery({
-    queryKey: ["admin-centers"],
-    queryFn: getAdminCentersRequest,
+    queryKey: ["admin-centers", filters],
+    queryFn: () => getAdminCentersRequest(filters),
     staleTime: 1000 * 60 * 5,
   });
 
