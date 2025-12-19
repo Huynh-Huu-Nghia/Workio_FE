@@ -30,6 +30,17 @@ export interface CenterDetail {
   };
 }
 
+export interface CenterProfile {
+  id?: string;
+  name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  website?: string | null;
+  description?: string | null;
+  avatar_url?: string | null;
+  address_id?: string | null;
+}
+
 const getAdminCenterDetailRequest = async (
   centerId: string
 ): Promise<ApiResponse<CenterDetail>> => {
@@ -139,3 +150,26 @@ export const useAdminCenterCoursesQuery = (centerId?: string) =>
     enabled: Boolean(centerId),
     staleTime: 1000 * 60 * 3,
   });
+
+// --- Center: profile ---
+const getCenterProfileRequest = async (): Promise<ApiResponse<CenterProfile>> => {
+  const response = await axiosInstance.get("/center/profile");
+  return response.data;
+};
+
+const updateCenterProfileRequest = async (
+  payload: Partial<CenterProfile>
+): Promise<ApiResponse<CenterProfile>> => {
+  const response = await axiosInstance.put("/center/profile/update", payload);
+  return response.data;
+};
+
+export const useCenterProfileQuery = () =>
+  useQuery({
+    queryKey: ["center-profile"],
+    queryFn: getCenterProfileRequest,
+    staleTime: 1000 * 60 * 5,
+  });
+
+export const useUpdateCenterProfileMutation = () =>
+  useMutation({ mutationFn: updateCenterProfileRequest });

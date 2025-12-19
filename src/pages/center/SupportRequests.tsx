@@ -54,9 +54,6 @@ const CenterSupportRequests: React.FC = () => {
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-            Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
-          </p>
         </div>
         <Link
           to="/center/settings"
