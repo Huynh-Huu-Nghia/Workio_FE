@@ -3,15 +3,17 @@ import { Save, User } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
-import { useUpdateCandidateProfileMutation } from "@/api/profile.api";
+import { useCandidateProfileQuery, useUpdateCandidateProfileMutation } from "@/api/profile.api";
 import { toast } from "react-toastify";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
+import CandidateLayout from "@/layouts/CandidateLayout";
 
 const CandidateProfile: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Hồ sơ";
   const { user } = useUser();
   const updateProfile = useUpdateCandidateProfileMutation();
+  const { data: profileRes } = useCandidateProfileQuery();
 
   const storageKey = useMemo(
     () => `workio_candidate_profile_draft_${user?.id || "guest"}`,
@@ -41,6 +43,7 @@ const CandidateProfile: React.FC = () => {
     ward_code: "",
     province_code: "",
   });
+  const [prefilled, setPrefilled] = useState(false);
 
   const [tagLanguage, setTagLanguage] = useState("");
   const [tagField, setTagField] = useState("");
@@ -56,6 +59,36 @@ const CandidateProfile: React.FC = () => {
       // ignore
     }
   }, [storageKey]);
+
+  useEffect(() => {
+    if (prefilled) return;
+    const profile = profileRes?.data;
+    if (!profile) return;
+    setPrefilled(true);
+    setCandidateInfo((prev: any) => ({
+      ...prev,
+      full_name: profile.full_name || "",
+      phone: profile.phone || "",
+      place_of_birth: profile.place_of_birth || "",
+      ethnicity: profile.ethnicity || "Kinh",
+      gender: profile.gender || "Nam",
+      date_of_birth: profile.date_of_birth || "",
+      graduation_rank: profile.graduation_rank || "",
+      computer_skill: profile.computer_skill || "",
+      other_computer_skill: profile.other_computer_skill || "",
+      job_type: profile.job_type || "",
+      working_time: profile.working_time || "",
+      transport: profile.transport || "",
+      minimum_income: profile.minimum_income || 0,
+      languguages: profile.languguages || [],
+      fields_wish: profile.fields_wish || [],
+    }));
+    setAddressInfo({
+      street: profile.address?.street || "",
+      ward_code: profile.address?.ward_code || "",
+      province_code: profile.address?.province_code || "",
+    });
+  }, [profileRes, prefilled]);
 
   const saveDraft = () => {
     localStorage.setItem(
@@ -89,7 +122,7 @@ const CandidateProfile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <CandidateLayout title={title}>
       <div className="mx-auto max-w-3xl px-4 py-6">
         <header className="mb-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
@@ -103,10 +136,10 @@ const CandidateProfile: React.FC = () => {
           </div>
           <div className="ml-auto">
             <Link
-              to="/candidate/settings"
+              to="/candidate/support"
               className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
             >
-              Cài đặt tài khoản
+              Hỗ trợ
             </Link>
           </div>
         </header>
@@ -341,7 +374,7 @@ const CandidateProfile: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </CandidateLayout>
   );
 };
 

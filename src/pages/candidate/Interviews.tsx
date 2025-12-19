@@ -3,6 +3,7 @@ import { CalendarClock, Loader2, MapPin, XCircle } from "lucide-react";
 import { useCandidateInterviewsQuery } from "@/api/candidate.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
+import CandidateLayout from "@/layouts/CandidateLayout";
 
 const CandidateInterviews: React.FC = () => {
   const location = useLocation();
@@ -11,13 +12,10 @@ const CandidateInterviews: React.FC = () => {
   const interviews = data?.data ?? [];
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-6">
+    <CandidateLayout title={title}>
+      <div className="mx-auto max-w-5xl">
         <header className="mb-4">
           <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-            Lấy từ API /candidate/interviews-of-candidate.
-          </p>
         </header>
 
         {isLoading && (
@@ -80,7 +78,7 @@ const CandidateInterviews: React.FC = () => {
           </div>
         )}
       </div>
-    </div>
+    </CandidateLayout>
   );
 };
 

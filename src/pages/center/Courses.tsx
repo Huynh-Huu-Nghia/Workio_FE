@@ -8,6 +8,7 @@ import {
   useUpdateStudentStatusMutation,
 } from "@/api/center.api";
 import { toast } from "react-toastify";
+import CenterLayout from "@/layouts/CenterLayout";
 
 const CoursesPage = () => {
   const location = useLocation();
@@ -87,14 +88,16 @@ const CoursesPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-5xl px-4 py-6 space-y-5">
-        <header className="flex flex-col gap-2">
-          <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-          <p className="text-sm text-gray-500">
-            Quản lý khóa học của Trung tâm. API: /center/courses, /center/courses/:id/students.
-          </p>
-        </header>
+    <CenterLayout title={title}>
+      <div className="space-y-5">
+        <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+          <div className="flex flex-col gap-1">
+            <h1 className="text-lg font-semibold text-gray-800">{title}</h1>
+            <p className="text-sm text-gray-500">
+              Quản lý khóa học của Trung tâm. API: /center/courses, /center/courses/:id/students.
+            </p>
+          </div>
+        </div>
 
         <form
           onSubmit={handleCreate}
@@ -211,7 +214,7 @@ const CoursesPage = () => {
           )}
         </section>
       </div>
-    </div>
+    </CenterLayout>
   );
 };
 

@@ -32,8 +32,8 @@ import Settings from "@/pages/admin/settings/Settings";
 import CandidateJobBoard from "@/pages/candidate/JobBoard";
 import CandidateInterviews from "@/pages/candidate/Interviews";
 import CandidateProfile from "@/pages/candidate/Profile";
-import CandidateAccountSettings from "@/pages/candidate/AccountSettings";
 import CandidateSupportRequests from "@/pages/candidate/SupportRequests";
+import CandidateHome from "@/pages/candidate/Home";
 import RecruiterJobPosts from "@/pages/recruiter/JobPosts";
 import RecruiterInterviews from "@/pages/recruiter/Interviews";
 import RecruiterProfile from "@/pages/recruiter/Profile";
@@ -50,7 +50,6 @@ import SuggestedJobs from "@/pages/admin/jobs/SuggestedJobs";
 import AdminSuggestedCandidates from "@/pages/admin/jobs/SuggestedCandidates";
 import CenterView from "@/pages/admin/center/CenterView";
 import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
-import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
 import SuggestedCandidates from "@/pages/recruiter/SuggestedCandidates";
 import RecruiterJobForm from "@/pages/recruiter/JobForm";
@@ -227,15 +226,12 @@ export const AppRouter = createBrowserRouter([
     path: path.CANDIDATE_HOME,
     element: <Outlet />,
     children: [
+      { index: true, element: <CandidateHome /> },
+      { path: path.CANDIDATE_HOME, element: <CandidateHome /> },
       { path: path.CANDIDATE_JOBS, element: <CandidateJobBoard /> },
        { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
-       {
-        path: path.CANDIDATE_SUGGESTED_JOBS,
-        element: <CandidateSuggestedJobs />,
-      },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },
-      { path: path.CANDIDATE_SETTINGS, element: <CandidateAccountSettings /> },
       { path: path.CANDIDATE_SUPPORT, element: <CandidateSupportRequests /> },
     ],
   },
