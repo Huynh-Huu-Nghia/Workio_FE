@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
 
 interface ApiResponse<T> {
@@ -41,8 +41,17 @@ const createSupportRequestRequest = async (
   return response.data;
 };
 
-export const useCreateSupportRequestMutation = () =>
-  useMutation({ mutationFn: createSupportRequestRequest });
+export const useCreateSupportRequestMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createSupportRequestRequest,
+    onSuccess: () => {
+      // Invalidate both user's requests and admin requests list
+      queryClient.invalidateQueries({ queryKey: ["support-requests", "my"] });
+      queryClient.invalidateQueries({ queryKey: ["support-requests", "admin"] });
+    },
+  });
+};
 
 const getMySupportRequestsRequest = async (): Promise<
   ApiResponse<SupportRequest[]>
@@ -61,15 +70,35 @@ export const useMySupportRequestsQuery = () =>
 const getAllSupportRequestsAdminRequest = async (): Promise<
   ApiResponse<SupportRequest[]>
 > => {
-  const response = await axiosInstance.get("/admin/requests");
-  return response.data;
+  try {
+    const response = await axiosInstance.get("/admin/requests");
+    // Kiểm tra dữ liệu trả về
+    if (response.data.data && Array.isArray(response.data.data) && response.data.data.length > 0) {
+      const item = response.data.data[0];
+      console.log("[DEBUG] Sample request item:", {
+        id: item.id,
+        title: item.title,
+        created_at: item.created_at,
+        hasCreatedAt: "created_at" in item,
+      });
+    }
+    return response.data;
+  } catch (error: any) {
+    // Nếu BE trả về response có structure (err, mes, data) -> dùng nó
+    if (error.response?.data?.err !== undefined) {
+      return error.response.data;
+    }
+    // Nếu không có data structure -> throw error
+    throw error;
+  }
 };
 
 export const useAdminSupportRequestsQuery = () =>
   useQuery({
     queryKey: ["support-requests", "admin"],
     queryFn: getAllSupportRequestsAdminRequest,
-    staleTime: 1000 * 30,
+    staleTime: 1000 * 10, // 10 seconds
+    gcTime: 1000 * 60 * 5, // 5 minutes
   });
 
 export const updateSupportRequestAdminRequest = async ({
@@ -89,8 +118,15 @@ export const updateSupportRequestAdminRequest = async ({
   return response.data;
 };
 
-export const useUpdateSupportRequestAdminMutation = () =>
-  useMutation({ mutationFn: updateSupportRequestAdminRequest });
+export const useUpdateSupportRequestAdminMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateSupportRequestAdminRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["support-requests", "admin"] });
+    },
+  });
+};
 
 export const deleteSupportRequestAdminRequest = async ({
   requestId,
@@ -103,6 +139,23 @@ export const deleteSupportRequestAdminRequest = async ({
   return response.data;
 };
 
-export const useDeleteSupportRequestAdminMutation = () =>
-  useMutation({ mutationFn: deleteSupportRequestAdminRequest });
+export const useDeleteSupportRequestAdminMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteSupportRequestAdminRequest,
+    onSuccess: (_data, { requestId }) => {
+      // Update cache: remove the deleted request from list
+      queryClient.setQueryData(
+        ["support-requests", "admin"],
+        (oldData: ApiResponse<SupportRequest[]> | undefined) => {
+          if (!oldData) return oldData;
+          return {
+            ...oldData,
+            data: oldData.data?.filter((item) => item.id !== requestId) || [],
+          };
+        }
+      );
+    },
+  });
+};
 

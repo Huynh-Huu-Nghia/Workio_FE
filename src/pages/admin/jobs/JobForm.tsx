@@ -115,36 +115,44 @@ export default function JobFormAdmin() {
   );
 
   const onSubmit = handleSubmit(async (values) => {
-    try {
-      const payload = {
-        ...values,
-        benefits,
-        fields,
-        languguages: languages,
-      };
-      if (isEdit && id) {
-        const res = await updateMutation.mutateAsync({
-          jobPostId: id,
-          payload,
-        });
-        if ((res as any)?.err === 0) {
-          toast.success((res as any)?.mes || "Cập nhật tin thành công");
-          navigate(path.ADMIN_JOB_LIST);
-        } else toast.error((res as any)?.mes || "Cập nhật thất bại");
+  try {
+    const payload = {
+  ...values,
+  benefits,
+  fields,
+  languages,
+  } as any;
+
+
+    if (isEdit && id) {
+      const res = await updateMutation.mutateAsync({
+        jobPostId: id,
+        payload,
+      });
+
+      if ((res as any)?.err === 0) {
+        toast.success((res as any)?.mes || "Cập nhật tin thành công");
+        navigate(path.ADMIN_JOB_LIST);
       } else {
-        const res = await createMutation.mutateAsync({
-          recruiterId: values.recruiter_id,
-          payload,
-        });
-        if ((res as any)?.err === 0) {
-          toast.success((res as any)?.mes || "Tạo tin thành công");
-          navigate(path.ADMIN_JOB_LIST);
-        } else toast.error((res as any)?.mes || "Tạo tin thất bại");
+        toast.error((res as any)?.mes || "Cập nhật thất bại");
       }
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Thao tác thất bại");
+    } else {
+      const res = await createMutation.mutateAsync({
+        recruiterId: values.recruiter_id,
+        payload,
+      });
+
+      if ((res as any)?.err === 0) {
+        toast.success((res as any)?.mes || "Tạo tin thành công");
+        navigate(path.ADMIN_JOB_LIST);
+      } else {
+        toast.error((res as any)?.mes || "Tạo tin thất bại");
+      }
     }
-  });
+  } catch (e: any) {
+    toast.error(e?.response?.data?.mes || "Thao tác thất bại");
+  }
+});
 
   return (
     <AdminLayout title={isEdit ? "Sửa tin tuyển dụng" : "Thêm tin tuyển dụng"} activeMenu="jobs">

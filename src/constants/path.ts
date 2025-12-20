@@ -49,9 +49,11 @@ const path = {
   CANDIDATE_APPLIED_JOBS: "/candidate/jobs/applied",
   CANDIDATE_SUGGESTED_JOBS: "/candidate/jobs/suggested",
   CANDIDATE_INTERVIEWS: "/candidate/interviews",
+  CANDIDATE_COURSES: "/candidate/courses",
   CANDIDATE_PROFILE: "/candidate/profile",
   CANDIDATE_SETTINGS: "/candidate/settings",
   CANDIDATE_SUPPORT: "/candidate/support",
+  CANDIDATE_RECRUITER_VIEW: "/candidate/recruiters/view/:id",
 
   // --- Recruiter ---
   RECRUITER_HOME: "/recruiter",

@@ -18,6 +18,15 @@ export interface Interview {
   interview_type?: string | null;
   status?: string | null;
   notes?: string | null;
+  job_post?: {
+    position?: string | null;
+    recruiter?: {
+      company_name?: string | null;
+    } | null;
+  } | null;
+  candidate?: {
+    full_name?: string | null;
+  } | null;
 }
 
 const getAllInterviewsRequest = async (): Promise<ApiResponse<Interview[]>> => {

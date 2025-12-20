@@ -11,6 +11,53 @@ export interface JobPost {
   id: string;
   position: string;
   recruiter_id?: string;
+  recruiter_name?: string | null;
+  recruiter?: {
+    recruiter_id?: string;
+    id?: string;
+    user_id?: string;
+    company_name?: string | null;
+    phone?: string | null;
+    website?: string | null;
+    description?: string | null;
+    tax_number?: string | null;
+    established_at?: string | null;
+    is_verified?: boolean;
+    email?: string | null;
+    contact_name?: string | null;
+    province_code?: string | number | null;
+    ward_code?: string | number | null;
+    province?: {
+      code?: string | number | null;
+      name?: string | null;
+    } | null;
+    ward?: {
+      code?: string | number | null;
+      name?: string | null;
+    } | null;
+    address?: {
+      province_code?: string | number | null;
+      ward_code?: string | number | null;
+      province?: {
+        code?: string | number | null;
+        name?: string | null;
+      } | null;
+      ward?: {
+        code?: string | number | null;
+        name?: string | null;
+      } | null;
+    } | null;
+    user?: {
+      id?: string;
+      email?: string | null;
+      name?: string | null;
+    } | null;
+    recruiter?: {
+      id?: string;
+      email?: string | null;
+      name?: string | null;
+    } | null;
+  } | null;
   available_quantity?: number | null;
   requirements?: string | null;
   duration?: string | null;
@@ -29,6 +76,28 @@ export interface JobPost {
   working_time?: string | null;
   other_requirements?: string | null;
   status?: string | null;
+  province_code?: string | number | null;
+  ward_code?: string | number | null;
+  province?: {
+    code?: string | number | null;
+    name?: string | null;
+  } | null;
+  ward?: {
+    code?: string | number | null;
+    name?: string | null;
+  } | null;
+  address?: {
+    province_code?: string | number | null;
+    ward_code?: string | number | null;
+    province?: {
+      code?: string | number | null;
+      name?: string | null;
+    } | null;
+    ward?: {
+      code?: string | number | null;
+      name?: string | null;
+    } | null;
+  } | null;
 }
 
 const getAdminJobPostsRequest = async (
@@ -130,7 +199,7 @@ export const useAdminSuggestedCandidatesQuery = (
   jobPostId: string,
   options: any = {}
 ) =>
-  useQuery({
+  useQuery<ApiResponse<any[]>>({
     queryKey: ["admin-suggested-candidates", jobPostId],
     queryFn: () => getAdminSuggestedCandidatesRequest(jobPostId),
     enabled: Boolean(jobPostId) && (options.enabled ?? true),

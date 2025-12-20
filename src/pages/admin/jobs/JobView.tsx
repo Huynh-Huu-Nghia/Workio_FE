@@ -2,20 +2,28 @@ import AdminLayout from "@/layouts/AdminLayout";
 import path from "@/constants/path";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminJobPostDetailQuery } from "@/api/job-post.api";
-import { ArrowLeft, Calendar, Loader2, MapPin } from "lucide-react";
+import { ArrowLeft, Building2, Calendar, Loader2, MapPin } from "lucide-react";
 
 export default function JobView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useAdminJobPostDetailQuery(id);
   const job = data?.data as any;
+  const handleBack = () => {
+    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    if (canUseHistory) {
+      navigate(-1);
+      return;
+    }
+    navigate(path.ADMIN_JOB_LIST);
+  };
 
   return (
     <AdminLayout title="Chi tiết tin tuyển dụng" activeMenu="jobs">
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
-            onClick={() => navigate(path.ADMIN_JOB_LIST)}
+            onClick={handleBack}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
           >
             <ArrowLeft size={16} /> Quay lại danh sách
@@ -77,6 +85,25 @@ export default function JobView() {
                   {job.recruiter?.recruiter?.email || "—"}
                 </p>
               </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const recruiterId =
+                    job.recruiter_id ||
+                    job.recruiter?.recruiter_id ||
+                    job.recruiter?.recruiter?.id;
+                  if (recruiterId) {
+                    navigate(path.ADMIN_RECRUITER_VIEW.replace(":id", recruiterId));
+                  }
+                }}
+                disabled={
+                  !(job.recruiter_id || job.recruiter?.recruiter_id || job.recruiter?.recruiter?.id)
+                }
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <Building2 className="h-4 w-4" />
+                Xem chi tiết nhà tuyển dụng
+              </button>
               <div>
                 <p className="text-xs uppercase text-gray-400">Hình thức</p>
                 <p className="text-sm text-gray-800">

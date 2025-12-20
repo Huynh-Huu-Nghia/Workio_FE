@@ -3,6 +3,8 @@ import { toast } from "react-toastify";
 import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
+import RecruiterLayout from "@/layouts/RecruiterLayout";
+import path from "@/constants/path";
 
 const RecruiterSupportRequests: React.FC = () => {
   const location = useLocation();
@@ -11,21 +13,75 @@ const RecruiterSupportRequests: React.FC = () => {
   const { data, isLoading, isError, refetch } = useMySupportRequestsQuery();
   const createMutation = useCreateSupportRequestMutation();
 
+  const formatDate = (value?: string | number | Date | null) => {
+    if (!value) return "—";
+
+    try {
+      let date: Date | null = null;
+
+      if (value instanceof Date) {
+        date = value;
+      } else if (typeof value === "number") {
+        const ts = value < 1e12 ? value * 1000 : value; // seconds -> ms
+        date = new Date(ts);
+      } else if (typeof value === "string") {
+        let s = value.trim();
+        if (!s) return "—";
+
+        if (/^\d+$/.test(s)) {
+          let ts = parseInt(s, 10);
+          ts = ts < 1e12 ? ts * 1000 : ts;
+          date = new Date(ts);
+        } else {
+          const mainPart = s.split("+")[0].split("Z")[0];
+          const trimmedMain = mainPart.split(".")[0];
+          if (trimmedMain.includes(" ") && !trimmedMain.includes("T")) {
+            const [d, t] = trimmedMain.split(" ");
+            s = `${d}T${t}Z`;
+          }
+          date = new Date(s);
+        }
+      }
+
+      if (!date || isNaN(date.getTime())) return "Invalid Date";
+
+      return date.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "Invalid Date";
+    }
+  };
+
   const [query, setQuery] = useState("");
   const [titleInput, setTitleInput] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc">("created_desc");
 
   const items = data?.data ?? [];
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter(
-      (it) =>
-        it.title.toLowerCase().includes(q) ||
-        (it.description || "").toLowerCase().includes(q)
-    );
-  }, [items, query]);
+    const list = !q
+      ? items
+      : items.filter(
+          (it) =>
+            it.title.toLowerCase().includes(q) ||
+            (it.description || "").toLowerCase().includes(q)
+        );
+
+    const sorted = [...list];
+    sorted.sort((a, b) => {
+      const ta = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+      const tb = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+      return sortBy === "created_desc" ? tb - ta : ta - tb;
+    });
+    return sorted;
+  }, [items, query, sortBy]);
 
   const submit = async () => {
     if (!titleInput.trim()) {
@@ -75,24 +131,26 @@ const RecruiterSupportRequests: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-4xl px-4 py-6">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            <p className="text-sm text-gray-500">
-              Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
-            </p>
+    <RecruiterLayout title={title}>
+      <div className="space-y-5">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+              <p className="text-sm text-gray-500">
+                Bạn tạo yêu cầu, Admin sẽ tiếp nhận và xử lý.
+              </p>
+            </div>
+            <Link
+              to={path.RECRUITER_PROFILE}
+              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+            >
+              Hồ sơ & cài đặt
+            </Link>
           </div>
-          <Link
-            to="/recruiter/settings"
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-          >
-            Cài đặt tài khoản
-          </Link>
-        </div>
+        </section>
 
-        <div className="mt-5 grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4 lg:grid-cols-3">
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-1">
             <h2 className="text-sm font-semibold text-gray-800">Tạo yêu cầu</h2>
             <div className="mt-3 space-y-3">
@@ -145,15 +203,32 @@ const RecruiterSupportRequests: React.FC = () => {
 
           <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm lg:col-span-2">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm text-gray-600">
-                Tổng: <b className="text-gray-900">{items.length}</b>
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                <span>
+                  Tổng: <b className="text-gray-900">{items.length}</b>
+                </span>
+                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                  Hiển thị: {filtered.length}
+                </span>
               </div>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full sm:w-80 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="Tìm theo tiêu đề/mô tả..."
-              />
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full sm:w-64 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  placeholder="Tìm theo tiêu đề/mô tả..."
+                />
+                <select
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy((e.target.value as "created_desc" | "created_asc") || "created_desc")
+                  }
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="created_desc">Mới nhất</option>
+                  <option value="created_asc">Cũ nhất</option>
+                </select>
+              </div>
             </div>
 
             <div className="mt-4 space-y-3">
@@ -186,7 +261,7 @@ const RecruiterSupportRequests: React.FC = () => {
                           </p>
                         )}
                         <p className="mt-1 text-xs text-gray-400">
-                          {new Date(it.created_at).toLocaleString("vi-VN")}
+                          {formatDate(it.created_at)}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -205,7 +280,7 @@ const RecruiterSupportRequests: React.FC = () => {
           </div>
         </div>
       </div>
-    </div>
+    </RecruiterLayout>
   );
 };
 

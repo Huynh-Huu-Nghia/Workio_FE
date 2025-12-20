@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import {
   Building2,
   CheckCircle2,
@@ -34,6 +34,8 @@ const RecruiterList: React.FC = () => {
   const [addrStreet, setAddrStreet] = useState("");
   const [addrProvince, setAddrProvince] = useState("");
   const [addrWard, setAddrWard] = useState("");
+  const [provinceFilter, setProvinceFilter] = useState("");
+  const [wardFilter, setWardFilter] = useState("");
   const navigate = useNavigate();
   const createMutation = useCreateRecruiterMutation();
 
@@ -48,6 +50,17 @@ const RecruiterList: React.FC = () => {
   const recruiters = !apiErr ? data?.data ?? [] : [];
   const { data: provinceData } = useProvincesQuery();
   const { data: wardData } = useWardsQuery(true);
+
+  useEffect(() => {
+    if (!provinceFilter) setWardFilter("");
+  }, [provinceFilter]);
+
+  const filteredWardOptions = useMemo(() => {
+    if (!wardData) return [];
+    return wardData.filter((ward) =>
+      provinceFilter ? String(ward.province_code) === String(provinceFilter) : true
+    );
+  }, [wardData, provinceFilter]);
 
   const parseFields = (val: any): string[] => {
     if (Array.isArray(val)) return val;
@@ -82,11 +95,17 @@ const RecruiterList: React.FC = () => {
       if (!matchesKeyword) return false;
 
       if (fields.length) {
-        const recFields =
-          parseFields((rec as any).fields) ||
-          parseFields((rec as any).related_fields) ||
-          parseFields((rec as any).industry) ||
-          [];
+        const recFieldSources = [
+          parseFields((rec as any).fields),
+          parseFields((rec as any).related_fields),
+          parseFields((rec as any).industry),
+        ];
+        const recFields = recFieldSources.reduce<string[]>((acc, curr) => {
+          if (Array.isArray(curr) && curr.length) {
+            acc.push(...curr);
+          }
+          return acc;
+        }, []);
         const hasMatch =
           Array.isArray(recFields) &&
           recFields.some((f: string) => fields.includes(f));
@@ -95,9 +114,22 @@ const RecruiterList: React.FC = () => {
 
       if (showVerified === "verified") return Boolean(rec.is_verified);
       if (showVerified === "pending") return !rec.is_verified;
+      const recProvince =
+        rec.address?.province_code ??
+        rec.address?.province?.code ??
+        rec.province?.code ??
+        rec.province_code ??
+        null;
+      if (provinceFilter && String(recProvince || "") !== String(provinceFilter)) {
+        return false;
+      }
+      const recWard = rec.address?.ward_code ?? rec.ward_code ?? null;
+      if (wardFilter && String(recWard || "") !== String(wardFilter)) {
+        return false;
+      }
       return true;
     });
-  }, [recruiters, searchTerm, showVerified, fields]);
+  }, [recruiters, searchTerm, showVerified, fields, provinceFilter, wardFilter]);
 
   const printRecruiterProfile = (rec: any, password?: string) => {
     const html = `
@@ -202,11 +234,27 @@ const RecruiterList: React.FC = () => {
       activeSubmenu="all-recruiters"
     >
       <div className="min-h-screen bg-slate-50 p-6">
-        <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-800">Quản lý Nhà tuyển dụng</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Theo dõi trạng thái xác thực và thông tin liên hệ doanh nghiệp.
-          </p>
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Quản lý Nhà tuyển dụng</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Theo dõi trạng thái xác thực và thông tin liên hệ doanh nghiệp.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              onClick={() => refetch()}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+            >
+              Làm mới
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 sm:w-auto"
+            >
+              + Thêm nhanh
+            </button>
+          </div>
         </div>
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-sm overflow-y-auto py-10">
@@ -407,24 +455,26 @@ const RecruiterList: React.FC = () => {
         </div>
       )}
       <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm">
-        <div className="flex flex-col gap-4 p-5 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm theo tên công ty, email"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[260px]"
-              />
+        <div className="flex flex-col gap-5 p-5">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
+            <div className="md:col-span-2 xl:col-span-3">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Tìm theo tên công ty, email"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                />
+              </div>
             </div>
             <select
               value={showVerified}
               onChange={(e) =>
                 setShowVerified(e.target.value as "all" | "verified" | "pending")
               }
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
             >
               <option value="all">Tất cả</option>
               <option value="verified">Đã xác thực</option>
@@ -433,7 +483,7 @@ const RecruiterList: React.FC = () => {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
             >
               <option value="">Sắp xếp</option>
               <option value="company_name">Tên công ty</option>
@@ -443,23 +493,36 @@ const RecruiterList: React.FC = () => {
             <select
               value={order}
               onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
             >
               <option value="DESC">Giảm dần</option>
               <option value="ASC">Tăng dần</option>
             </select>
-            <button
-              onClick={() => refetch()}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            <select
+              value={provinceFilter}
+              onChange={(e) => setProvinceFilter(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
             >
-              Làm mới
-            </button>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
+              <option value="">Tỉnh/TP</option>
+              {provinceData?.map((province) => (
+                <option key={province.code} value={province.code}>
+                  {province.name}
+                </option>
+              ))}
+            </select>
+            <select
+              value={wardFilter}
+              onChange={(e) => setWardFilter(e.target.value)}
+              disabled={!provinceFilter}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
             >
-              + Thêm nhanh
-            </button>
+              <option value="">Phường/Xã</option>
+              {filteredWardOptions.map((ward) => (
+                <option key={ward.code} value={ward.code}>
+                  {ward.name}
+                </option>
+              ))}
+            </select>
           </div>
         </div>
         <div className="flex flex-wrap gap-2 px-5 pb-4 text-xs text-gray-700">

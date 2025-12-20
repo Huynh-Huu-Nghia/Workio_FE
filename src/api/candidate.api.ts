@@ -86,6 +86,33 @@ interface ApiResponse<T> {
   data: T;
 }
 
+export interface CandidateTrainingParticipation {
+  status?: string | null;
+  attendance?: number | null;
+  tuition_confirmed?: boolean | null;
+  signed_at?: string | null;
+  notes?: string | null;
+}
+
+export interface CandidateTrainingRecord {
+  course_id?: string | null;
+  course_name?: string | null;
+  center_id?: string | null;
+  center_name?: string | null;
+  training_field?: string | null;
+  occupation_type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  participation?: CandidateTrainingParticipation | null;
+}
+
+export interface CandidateAppliedJobSummary {
+  job_post_id?: string;
+  position?: string | null;
+  employer?: string | null;
+  status?: string | null;
+}
+
 export interface AdminCandidateDetail {
   candidate_id: string;
   full_name: string;
@@ -127,6 +154,8 @@ export interface AdminCandidateDetail {
   study_history?: any[];
   work_experience?: any[];
   interview?: any[];
+  training_history?: CandidateTrainingRecord[] | null;
+  applied_jobs?: CandidateAppliedJobSummary[] | null;
 }
 
 // ==========================================
@@ -295,6 +324,73 @@ export const useCandidateSuggestedJobsQuery = () =>
     queryFn: getSuggestedJobsRequest,
     staleTime: 1000 * 60 * 3,
   });
+
+// --- Candidate: khóa học tại trung tâm ---
+export interface CandidateCourse {
+  id: string;
+  course_id?: string;
+  name: string;
+  description?: string | null;
+  summary?: string | null;
+  details?: unknown;
+  training_field?: string | null;
+  occupation_type?: string | null;
+  start_date?: string | null;
+  end_date?: string | null;
+  duration_hours?: number | null;
+  center_name?: string | null;
+  center_phone?: string | null;
+  center_email?: string | null;
+  center_website?: string | null;
+  candidate_notes?: string | null;
+  candidate_requested_at?: string | null;
+  location?: string | null;
+  capacity?: number | null;
+  registered_count?: number | null;
+  tags?: string[] | null;
+  candidate_status?: string | null;
+  registration?: {
+    status?: string | null;
+    note?: string | null;
+  } | null;
+  can_register?: boolean;
+  center?: {
+    name?: string | null;
+    phone?: string | null;
+    email?: string | null;
+    website?: string | null;
+    address?: {
+      street?: string | null;
+      ward_code?: string | null;
+      district_code?: string | null;
+      province_code?: string | null;
+    } | null;
+  } | null;
+}
+
+const getCandidateCoursesRequest = async (): Promise<
+  ApiResponse<CandidateCourse[]>
+> => {
+  const response = await axiosInstance.get("/candidate/courses");
+  return response.data;
+};
+
+const registerCandidateCourseRequest = async (courseId: string) => {
+  const response = await axiosInstance.post("/candidate/courses/register", {
+    course_id: courseId,
+  });
+  return response.data as ApiResponse<any>;
+};
+
+export const useCandidateCoursesQuery = () =>
+  useQuery({
+    queryKey: ["candidate-courses"],
+    queryFn: getCandidateCoursesRequest,
+    staleTime: 1000 * 60 * 3,
+  });
+
+export const useCandidateCourseRegisterMutation = () =>
+  useMutation({ mutationFn: registerCandidateCourseRequest });
 
 // --- Candidate: apply job post (Backend: POST /candidate/apply-job-post?job_post_id=...) ---
 export const applyJobCandidateRequest = async (jobPostId: string) => {

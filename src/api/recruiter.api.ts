@@ -18,9 +18,27 @@ export interface RecruiterResponse {
   is_verified?: boolean;
   address_id?: string | null;
   hired_count?: number;
+  province_code?: string | number | null;
+  ward_code?: string | number | null;
   user?: {
     email?: string;
   };
+  address?: {
+    street?: string | null;
+    province_code?: string | number | null;
+    ward_code?: string | number | null;
+    province?: {
+      code?: string | number;
+      name?: string;
+    } | null;
+  } | null;
+  province?: {
+    code?: string | number;
+    name?: string;
+  } | null;
+  fields?: string[] | string | null;
+  related_fields?: string[] | string | null;
+  industry?: string[] | string | null;
 }
 
 // Interface Payload khớp JSON BE
@@ -83,6 +101,20 @@ export const useAdminRecruiterDetailQuery = (recruiterId?: string) =>
   useQuery({
     queryKey: ["admin-recruiter", recruiterId],
     queryFn: () => getAdminRecruiterDetailRequest(recruiterId as string),
+    enabled: Boolean(recruiterId),
+  });
+
+const getCandidateRecruiterDetailRequest = async (recruiterId: string) => {
+  const response = await axiosInstance.get("/candidate/recruiter", {
+    params: { recruiter_id: recruiterId },
+  });
+  return response.data as ApiResponse<RecruiterResponse>;
+};
+
+export const useCandidateRecruiterDetailQuery = (recruiterId?: string) =>
+  useQuery({
+    queryKey: ["candidate-recruiter", recruiterId],
+    queryFn: () => getCandidateRecruiterDetailRequest(recruiterId as string),
     enabled: Boolean(recruiterId),
   });
 

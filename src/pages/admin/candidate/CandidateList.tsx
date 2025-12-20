@@ -1,12 +1,10 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   Trash2,
-  Plus,
   Eye,
   Pencil,
   Search,
-  Filter,
   CheckCircle2,
   XCircle,
   Briefcase,
@@ -112,7 +110,6 @@ export default function CandidateList() {
   });
 
   const printCandidateProfile = (user: any, password?: string) => {
-    const tags = parseTags(user.fields_wish).join(", ");
     const html = `
       <html>
         <head>
@@ -293,9 +290,7 @@ export default function CandidateList() {
           place_of_birth: newBirthPlace || "",
           ethnicity: newEthnicity || "Kinh",
           phone: newPhone || null,
-          languguages: newLanguages
-            ? newLanguages
-            : [],
+          languguages: newLanguages.length ? newLanguages : [],
           graduation_rank: newGraduation || undefined,
           computer_skill: newComputerSkill || undefined,
           other_computer_skill: newOtherComputerSkill || undefined,
@@ -386,6 +381,28 @@ export default function CandidateList() {
       activeSubmenu="list-candidates"
     >
       <div className="min-h-screen bg-slate-50 p-6">
+        <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">Quản lý Ứng viên</h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Theo dõi nguồn ứng viên, trạng thái xác thực và nhu cầu việc làm.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              onClick={handleRefresh}
+              className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+            >
+              Làm mới
+            </button>
+            <button
+              onClick={() => setShowCreate(true)}
+              className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 sm:w-auto"
+            >
+              + Thêm nhanh
+            </button>
+          </div>
+        </div>
         {showCreate && (
           <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-sm overflow-y-auto py-10">
             <div className="w-full max-w-4xl rounded-2xl bg-white p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -444,9 +461,7 @@ export default function CandidateList() {
                               date_of_birth: newDob,
                               place_of_birth: newBirthPlace,
                               ethnicity: newEthnicity,
-                              languguages: newLanguages
-                                ? newLanguages.split(",").map((l) => l.trim()).filter(Boolean)
-                                : [],
+                              languguages: newLanguages,
                               graduation_rank: newGraduation,
                               job_type: newJobType,
                               working_time: newWorkingTime,
@@ -1072,13 +1087,6 @@ export default function CandidateList() {
                   </label>
                 ))}
               </div>
-              <button
-                onClick={handleRefresh}
-                className="flex items-center gap-2 px-3 py-2 bg-gray-50 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors"
-              >
-                <Filter size={16} />{" "}
-                <span className="hidden sm:inline">Làm mới</span>
-              </button>
             </div>
 
             <div className="flex items-center gap-3 w-full md:w-auto justify-end">
@@ -1091,18 +1099,6 @@ export default function CandidateList() {
                   <Trash2 size={16} /> Xóa ({selectedRows.length})
                 </button>
               )}
-              <Link
-                to="/admin/candidates/create"
-                className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg text-sm font-bold hover:from-orange-600 hover:to-orange-700 transition-all shadow-md shadow-orange-200 hover:shadow-lg transform active:scale-95"
-              >
-                <Plus size={18} /> Thêm mới
-              </Link>
-              <button
-                onClick={() => setShowCreate(true)}
-                className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 shadow-sm"
-              >
-                <Plus size={16} /> Thêm nhanh
-              </button>
             </div>
           </div>
 

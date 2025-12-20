@@ -3,7 +3,6 @@ import { Link, useLocation } from "react-router-dom";
 import path from "@/constants/path";
 import {
   Briefcase,
-  ClipboardList,
   Calendar,
   User,
   LifeBuoy,
@@ -12,6 +11,7 @@ import {
   X,
   Bell,
   ChevronDown,
+  GraduationCap,
 } from "lucide-react";
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
@@ -22,7 +22,26 @@ type Props = {
   children: React.ReactNode;
 };
 
-const menuGroups = [
+type MenuSubItem = {
+  id: string;
+  label: string;
+  link: string;
+};
+
+type MenuItem = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  link: string;
+  subItems?: MenuSubItem[];
+};
+
+type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+const menuGroups: MenuGroup[] = [
   {
     title: "TỔNG QUAN",
     items: [
@@ -61,6 +80,17 @@ const menuGroups = [
         label: "Lịch phỏng vấn",
         icon: <Calendar size={20} />,
         link: path.CANDIDATE_INTERVIEWS,
+      },
+    ],
+  },
+  {
+    title: "ĐÀO TẠO",
+    items: [
+      {
+        id: "courses",
+        label: "Khóa học",
+        icon: <GraduationCap size={20} />,
+        link: path.CANDIDATE_COURSES,
       },
     ],
   },
@@ -299,7 +329,7 @@ export default function CandidateLayout({ title, children }: Props) {
             <div className="flex items-center gap-3">
               <button
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
-                onClick={() => setOpen((v) => !v)}
+                onClick={() => setOpen((v: boolean) => !v)}
               >
                 {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>

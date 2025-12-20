@@ -34,6 +34,8 @@ import CandidateInterviews from "@/pages/candidate/Interviews";
 import CandidateProfile from "@/pages/candidate/Profile";
 import CandidateSupportRequests from "@/pages/candidate/SupportRequests";
 import CandidateHome from "@/pages/candidate/Home";
+import CandidateRecruiterView from "@/pages/candidate/RecruiterView";
+import CandidateCourses from "@/pages/candidate/Courses";
 import RecruiterJobPosts from "@/pages/recruiter/JobPosts";
 import RecruiterInterviews from "@/pages/recruiter/Interviews";
 import RecruiterProfile from "@/pages/recruiter/Profile";
@@ -228,9 +230,11 @@ export const AppRouter = createBrowserRouter([
       { path: path.CANDIDATE_JOBS, element: <CandidateJobBoard /> },
       { path: path.CANDIDATE_SUGGESTED_JOBS, element: <CandidateSuggestedJobs /> },
       { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
+      { path: "courses", element: <CandidateCourses /> },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },
       { path: path.CANDIDATE_SUPPORT, element: <CandidateSupportRequests /> },
+      { path: path.CANDIDATE_RECRUITER_VIEW, element: <CandidateRecruiterView /> },
     ],
   },
 

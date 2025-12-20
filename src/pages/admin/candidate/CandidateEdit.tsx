@@ -42,6 +42,17 @@ export default function CandidateEdit() {
   const { data: detailRes, isLoading, isError } =
     useGetCandidateDetailAdminQuery(id);
   const updateMutation = useUpdateCandidateAdminMutation();
+  const handleBack = () => {
+    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    if (canUseHistory) {
+      navigate(-1);
+      return;
+    }
+    const fallback = id
+      ? path.ADMIN_CANDIDATE_VIEW.replace(":id", id)
+      : path.ADMIN_USER_CANDIDATE_LIST;
+    navigate(fallback);
+  };
 
   const {
     register,
@@ -207,9 +218,7 @@ export default function CandidateEdit() {
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="mb-6 flex items-center justify-between gap-3">
             <button
-              onClick={() =>
-                navigate(id ? `/admin/candidates/view/${id}` : path.ADMIN_USER_CANDIDATE_LIST)
-              }
+              onClick={handleBack}
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
             >
               <ArrowLeft size={16} /> Quay lại

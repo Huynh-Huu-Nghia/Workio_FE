@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import {
   Briefcase,
+  Building2,
   Calendar,
   Download,
   Loader2,
@@ -17,7 +18,7 @@ import {
   useCreateAdminJobPostMutation,
   useAdminSuggestedCandidatesQuery,
 } from "@/api/job-post.api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   ADMIN_APPLICATION_FORM_DOC_URL,
   ADMIN_RECRUITMENT_NOTICE_PDF_URL,
@@ -25,8 +26,10 @@ import {
 import path from "@/constants/path";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 import { useGetAllRecruitersQuery } from "@/api/recruiter.api";
+import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 
 const JobList: React.FC = () => {
+  const navigate = useNavigate();
   const [showCreate, setShowCreate] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [newRecruiter, setNewRecruiter] = useState("");
@@ -77,6 +80,8 @@ const JobList: React.FC = () => {
   const [maxSalary, setMaxSalary] = useState("");
   const [jobType, setJobType] = useState("");
   const [workingTime, setWorkingTime] = useState("");
+  const [provinceFilter, setProvinceFilter] = useState("");
+  const [wardFilter, setWardFilter] = useState("");
 
   const { data, isLoading, isError, refetch } = useGetAdminJobPostsQuery({
     search: search || undefined,
@@ -92,6 +97,19 @@ const JobList: React.FC = () => {
   const deleteMutation = useDeleteAdminJobPostMutation();
   const createMutation = useCreateAdminJobPostMutation();
   const jobs = data?.data ?? [];
+  const { data: provinceData } = useProvincesQuery();
+  const { data: wardData } = useWardsQuery(true);
+
+  useEffect(() => {
+    if (!provinceFilter) setWardFilter("");
+  }, [provinceFilter]);
+
+  const filteredWardOptions = useMemo(() => {
+    if (!wardData) return [];
+    return wardData.filter((ward) =>
+      provinceFilter ? String(ward.province_code) === String(provinceFilter) : true
+    );
+  }, [wardData, provinceFilter]);
 
   const parseFields = (val: any): string[] => {
     if (Array.isArray(val)) return val;
@@ -116,9 +134,27 @@ const JobList: React.FC = () => {
       if (workingTime && job.working_time !== workingTime) return false;
       if (minSalary && Number(job.monthly_salary || 0) < Number(minSalary)) return false;
       if (maxSalary && Number(job.monthly_salary || 0) > Number(maxSalary)) return false;
+      const jobProvince =
+        job.recruiter?.address?.province_code ??
+        job.recruiter?.province_code ??
+        job.address?.province_code ??
+        job.province_code ??
+        null;
+      if (provinceFilter && String(jobProvince || "") !== String(provinceFilter)) {
+        return false;
+      }
+      const jobWard =
+        job.recruiter?.address?.ward_code ??
+        job.recruiter?.ward_code ??
+        job.address?.ward_code ??
+        job.ward_code ??
+        null;
+      if (wardFilter && String(jobWard || "") !== String(wardFilter)) {
+        return false;
+      }
       return true;
     });
-  }, [jobs, fields, jobType, workingTime, minSalary, maxSalary]);
+  }, [jobs, fields, jobType, workingTime, minSalary, maxSalary, provinceFilter, wardFilter]);
 
   const formatCurrency = (value?: number | string | null) => {
     if (value === null || value === undefined || value === "") return "Thỏa thuận";
@@ -188,6 +224,11 @@ const JobList: React.FC = () => {
     }
   };
 
+  const goToRecruiterDetail = (recId?: string | number | null) => {
+    if (!recId) return;
+    navigate(path.ADMIN_RECRUITER_VIEW.replace(":id", String(recId)));
+  };
+
   return (
     <AdminLayout
       title="Tin tuyển dụng"
@@ -196,107 +237,119 @@ const JobList: React.FC = () => {
     >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="p-5">
-          <div className="mb-4">
-            <h1 className="text-2xl font-bold text-gray-800">Quản lý tin đăng</h1>
-            <p className="text-sm text-gray-500 mt-1">Theo dõi và lọc tin tuyển dụng.</p>
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:flex-wrap">
-            <a
-              href={ADMIN_RECRUITMENT_NOTICE_PDF_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              title="Tải Thông báo tuyển dụng"
-            >
-              <Download className="h-4 w-4" />
-              Thông báo tuyển dụng
-            </a>
-            <a
-              href={ADMIN_APPLICATION_FORM_DOC_URL}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              title="Tải Phiếu đăng ký dự tuyển"
-            >
-              <Download className="h-4 w-4" />
-              Phiếu đăng ký dự tuyển
-            </a>
-            <Link
-              to={path.ADMIN_JOB_CREATE}
-              className="inline-flex items-center justify-center rounded-lg bg-orange-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
-            >
-              + Thêm tin
-            </Link>
-            <button
-              onClick={() => setShowCreate(true)}
-              className="inline-flex items-center justify-center rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              + Thêm nhanh
-            </button>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Tìm kiếm vị trí, ngành nghề"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[260px]"
-              />
+          <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-2xl font-bold text-gray-800">Quản lý tin đăng</h1>
+              <p className="text-sm text-gray-500 mt-1">Theo dõi và lọc tin tuyển dụng.</p>
             </div>
-            <select
-              value={statusFilter || "all"}
-              onChange={(e) =>
-                setStatusFilter(
-                  (e.target.value === "all" ? "all" : e.target.value) as
-                    | "all"
-                    | JobPost["status"]
-                )
-              }
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              <option value="Đang mở">Đang mở</option>
-              <option value="Đang xem xét">Đang xem xét</option>
-              <option value="Đã tuyển">Đã tuyển</option>
-              <option value="Đã hủy">Đã hủy</option>
-            </select>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-            >
-              <option value="">Sắp xếp</option>
-              <option value="position">Vị trí</option>
-              <option value="created_at">Ngày tạo</option>
-              <option value="updated_at">Ngày cập nhật</option>
-            </select>
-            <select
-              value={order}
-              onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-              className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-            >
-              <option value="DESC">Giảm dần</option>
-              <option value="ASC">Tăng dần</option>
-            </select>
-            <div className="flex flex-wrap gap-2 text-xs text-gray-700">
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <button
+                onClick={() => refetch()}
+                className="w-full rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 sm:w-auto"
+              >
+                Làm mới
+              </button>
+              <button
+                onClick={() => setShowCreate(true)}
+                className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 sm:w-auto"
+              >
+                + Thêm nhanh
+              </button>
+            </div>
+          </div>
+          <div className="flex flex-col gap-4">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+              <a
+                href={ADMIN_RECRUITMENT_NOTICE_PDF_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                title="Tải Thông báo tuyển dụng"
+              >
+                <Download className="h-4 w-4" />
+                Thông báo tuyển dụng
+              </a>
+              <a
+                href={ADMIN_APPLICATION_FORM_DOC_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+                title="Tải Phiếu đăng ký dự tuyển"
+              >
+                <Download className="h-4 w-4" />
+                Phiếu đăng ký dự tuyển
+              </a>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Tìm kiếm vị trí, ngành nghề"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+              </div>
+              <select
+                value={statusFilter || "all"}
+                onChange={(e) =>
+                  setStatusFilter(
+                    (e.target.value === "all" ? "all" : e.target.value) as
+                      | "all"
+                      | JobPost["status"]
+                  )
+                }
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="Đang mở">Đang mở</option>
+                <option value="Đang xem xét">Đang xem xét</option>
+                <option value="Đã tuyển">Đã tuyển</option>
+                <option value="Đã hủy">Đã hủy</option>
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              >
+                <option value="">Sắp xếp</option>
+                <option value="position">Vị trí</option>
+                <option value="created_at">Ngày tạo</option>
+                <option value="updated_at">Ngày cập nhật</option>
+              </select>
+              <select
+                value={order}
+                onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              >
+                <option value="DESC">Giảm dần</option>
+                <option value="ASC">Tăng dần</option>
+              </select>
+            </div>
+
+            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
               <input
                 type="number"
                 value={minSalary}
                 onChange={(e) => setMinSalary(e.target.value)}
                 placeholder="Lương từ"
-                className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               />
               <input
                 type="number"
                 value={maxSalary}
                 onChange={(e) => setMaxSalary(e.target.value)}
                 placeholder="Lương đến"
-                className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
               />
               <select
                 value={jobType}
                 onChange={(e) => setJobType(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               >
                 <option value="">Loại công việc</option>
                 <option value="Văn phòng">Văn phòng</option>
@@ -306,12 +359,37 @@ const JobList: React.FC = () => {
               <select
                 value={workingTime}
                 onChange={(e) => setWorkingTime(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               >
                 <option value="">Thời gian làm việc</option>
                 <option value="Giờ hành chính">Giờ hành chính</option>
                 <option value="Ca kíp">Ca kíp</option>
                 <option value="Khác">Khác</option>
+              </select>
+              <select
+                value={provinceFilter}
+                onChange={(e) => setProvinceFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+              >
+                <option value="">Tỉnh/TP</option>
+                {provinceData?.map((province) => (
+                  <option key={province.code} value={province.code}>
+                    {province.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                value={wardFilter}
+                onChange={(e) => setWardFilter(e.target.value)}
+                disabled={!provinceFilter}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+              >
+                <option value="">Phường/Xã</option>
+                {filteredWardOptions.map((ward) => (
+                  <option key={ward.code} value={ward.code}>
+                    {ward.name}
+                  </option>
+                ))}
               </select>
             </div>
           </div>
@@ -633,12 +711,6 @@ const JobList: React.FC = () => {
               {opt}
             </label>
           ))}
-          <button
-            onClick={() => refetch()}
-            className="ml-auto rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"
-          >
-            Làm mới
-          </button>
         </div>
 
         {isLoading && (
@@ -662,11 +734,19 @@ const JobList: React.FC = () => {
                 Không có tin nào phù hợp.
               </div>
             ) : (
-              filtered.map((job) => (
-                <article
-                  key={job.id}
-                  className="flex flex-col gap-3 p-5 hover:bg-orange-50/40"
-                >
+              filtered.map((job) => {
+                const recruiterId =
+                  job.recruiter_id ||
+                  job.recruiter?.recruiter_id ||
+                  job.recruiter?.recruiter?.id;
+                const recruiterName =
+                  job.recruiter?.company_name || job.recruiter_name || "Không rõ";
+
+                return (
+                  <article
+                    key={job.id}
+                    className="flex flex-col gap-3 p-5 hover:bg-orange-50/40"
+                  >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
@@ -677,8 +757,16 @@ const JobList: React.FC = () => {
                           {job.position}
                         </h3>
                         <p className="text-sm text-gray-500">
-                          NTD: {(job as any).recruiter?.company_name || "Không rõ"} | SL:{" "}
-                          {job.available_quantity ?? "N/A"}
+                          NTD:
+                          <button
+                            type="button"
+                            onClick={() => goToRecruiterDetail(recruiterId)}
+                            className="ml-1 text-orange-600 underline-offset-2 hover:text-orange-700 hover:underline disabled:cursor-not-allowed disabled:text-gray-400"
+                            disabled={!recruiterId}
+                          >
+                            {recruiterName}
+                          </button>
+                          {" "}| SL: {job.available_quantity ?? "N/A"}
                         </p>
                       </div>
                     </div>
@@ -770,6 +858,16 @@ const JobList: React.FC = () => {
                     </Link>
                     <button
                       type="button"
+                      onClick={() => goToRecruiterDetail(recruiterId)}
+                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={!recruiterId}
+                      title="Xem nhà tuyển dụng"
+                    >
+                      <Building2 className="h-4 w-4" />
+                      Xem nhà tuyển dụng
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => setActiveSuggestJobId(job.id)}
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                       title="Gợi ý ứng viên phù hợp"
@@ -806,7 +904,8 @@ const JobList: React.FC = () => {
                     </button>
                   </div>
                 </article>
-              ))
+                );
+              })
             )}
           </div>
         )}

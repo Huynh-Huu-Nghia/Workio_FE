@@ -1,12 +1,12 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Building2, Save } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
-import { Link, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
 import { useRecruiterProfileQuery, useUpdateRecruiterProfileMutation } from "@/api/profile.api";
 import { toast } from "react-toastify";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
-
+import RecruiterLayout from "@/layouts/RecruiterLayout";
 const RecruiterProfile: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Hồ sơ doanh nghiệp";
@@ -100,37 +100,32 @@ const RecruiterProfile: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="mx-auto max-w-3xl px-4 py-6">
-        <header className="mb-4 flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-            <Building2 className="h-5 w-5" />
+    <RecruiterLayout title={title}>
+      <div className="space-y-6">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                <Building2 className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+                <p className="text-sm text-gray-500">
+                  Cập nhật hồ sơ qua endpoint PUT `/recruiter/profile/update`.
+                </p>
+              </div>
+            </div>
+            <div className="text-sm text-gray-500">
+              Tài khoản: <b className="text-gray-900">{user?.email || "—"}</b>
+            </div>
           </div>
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
-            <p className="text-sm text-gray-500">
-              Cập nhật hồ sơ qua endpoint PUT `/recruiter/profile/update`.
-            </p>
-          </div>
-          <div className="ml-auto">
-            <Link
-              to="/recruiter/settings"
-              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-            >
-              Cài đặt tài khoản
-            </Link>
-          </div>
-        </header>
+        </section>
 
-        <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
-              <p className="text-sm text-gray-600">
-                Tài khoản: <b className="text-gray-900">{user?.email || "—"}</b>
-              </p>
-              <p className="text-xs text-gray-400">
-                Backend hiện chưa có GET profile, form dùng nháp local để điền lại.
-              </p>
+              <h2 className="text-lg font-semibold text-gray-900">Thông tin doanh nghiệp</h2>
+              <p className="text-sm text-gray-500">Thông tin hiển thị công khai với ứng viên.</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -154,9 +149,7 @@ const RecruiterProfile: React.FC = () => {
 
           <div className="grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Tên công ty
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Tên công ty</label>
               <input
                 value={recruiterInfo.company_name}
                 onChange={(e) =>
@@ -169,9 +162,7 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Mã số thuế
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Mã số thuế</label>
               <input
                 value={recruiterInfo.tax_number}
                 onChange={(e) =>
@@ -181,9 +172,7 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Số điện thoại
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Số điện thoại</label>
               <input
                 value={recruiterInfo.phone}
                 onChange={(e) =>
@@ -193,9 +182,7 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Website
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Website</label>
               <input
                 value={recruiterInfo.website}
                 onChange={(e) =>
@@ -206,9 +193,7 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Ngày thành lập
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Ngày thành lập</label>
               <input
                 type="date"
                 value={recruiterInfo.established_at}
@@ -222,9 +207,7 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Mô tả
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Mô tả</label>
               <textarea
                 value={recruiterInfo.description}
                 onChange={(e) =>
@@ -237,12 +220,10 @@ const RecruiterProfile: React.FC = () => {
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2">
-              <h2 className="text-sm font-semibold text-gray-800">Địa chỉ</h2>
+              <h3 className="text-sm font-semibold text-gray-800">Địa chỉ công ty</h3>
             </div>
             <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Số nhà, tên đường
-              </label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Số nhà, tên đường</label>
               <input
                 value={addressInfo.street}
                 onChange={(e) =>
@@ -269,9 +250,10 @@ const RecruiterProfile: React.FC = () => {
               />
             </div>
           </div>
-        </div>
+        </section>
+
       </div>
-    </div>
+    </RecruiterLayout>
   );
 };
 

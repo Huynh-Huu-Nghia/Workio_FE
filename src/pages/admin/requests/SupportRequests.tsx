@@ -9,21 +9,38 @@ import {
   useDeleteSupportRequestAdminMutation,
   useUpdateSupportRequestAdminMutation,
 } from "@/api/requests.api";
+import TagSelector, { type TagOption } from "@/components/admin/TagSelector";
 
 const SupportRequests: React.FC = () => {
-  const { data, isLoading, isError, refetch } = useAdminSupportRequestsQuery();
+  const { data, isLoading, isError } = useAdminSupportRequestsQuery();
   const updateRequest = useUpdateSupportRequestAdminMutation();
   const deleteRequest = useDeleteSupportRequestAdminMutation();
 
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<SupportRequestStatus | "all">("all");
   const [priorityFilter, setPriorityFilter] = useState<SupportRequestPriority | "all">("all");
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "priority" | "status">(
+    "created_desc"
+  );
 
   const items: SupportRequest[] = data?.data ?? [];
 
+  // Priority and Status options for TagSelector
+  const priorityOptions: TagOption[] = [
+    { value: "low", label: "Thấp", color: "blue" },
+    { value: "medium", label: "Trung", color: "orange" },
+    { value: "high", label: "Cao", color: "red" },
+  ];
+
+  const statusOptions: TagOption[] = [
+    { value: "open", label: "Mở", color: "yellow" },
+    { value: "in_progress", label: "Xử lý", color: "blue" },
+    { value: "resolved", label: "Xong", color: "green" },
+  ];
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
-    return items.filter((it) => {
+    const filteredList = items.filter((it) => {
       if (
         q &&
         !(
@@ -37,13 +54,44 @@ const SupportRequests: React.FC = () => {
       if (priorityFilter !== "all" && it.priority !== priorityFilter) return false;
       return true;
     });
-  }, [items, query, statusFilter, priorityFilter]);
+    const sorted = [...filteredList];
 
+    sorted.sort((a, b) => {
+      if (sortBy === "created_desc" || sortBy === "created_asc") {
+        const ta = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+        return sortBy === "created_desc" ? tb - ta : ta - tb;
+      }
+
+      if (sortBy === "priority") {
+        const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+        const pa = order[a.priority] ?? 99;
+        const pb = order[b.priority] ?? 99;
+        if (pa !== pb) return pa - pb;
+        const ta = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+        return tb - ta;
+      }
+
+      if (sortBy === "status") {
+        const order: Record<string, number> = { open: 0, in_progress: 1, resolved: 2 };
+        const sa = order[a.status] ?? 99;
+        const sb = order[b.status] ?? 99;
+        if (sa !== sb) return sa - sb;
+        const ta = a.created_at ? new Date(a.created_at as any).getTime() : 0;
+        const tb = b.created_at ? new Date(b.created_at as any).getTime() : 0;
+        return tb - ta;
+      }
+
+      return 0;
+    });
+
+    return sorted;
+  }, [items, query, statusFilter, priorityFilter, sortBy]);
   const updateStatus = async (id: string, status: SupportRequestStatus) => {
     try {
       await updateRequest.mutateAsync({ requestId: id, status });
       toast.success("Đã cập nhật trạng thái.");
-      refetch();
     } catch (e: any) {
       toast.error(e?.response?.data?.mes || "Cập nhật thất bại.");
     }
@@ -53,7 +101,6 @@ const SupportRequests: React.FC = () => {
     try {
       await updateRequest.mutateAsync({ requestId: id, priority: p });
       toast.success("Đã cập nhật ưu tiên.");
-      refetch();
     } catch (e: any) {
       toast.error(e?.response?.data?.mes || "Cập nhật thất bại.");
     }
@@ -63,35 +110,71 @@ const SupportRequests: React.FC = () => {
     try {
       await deleteRequest.mutateAsync({ requestId: id });
       toast.info("Đã xóa yêu cầu.");
-      refetch();
     } catch (e: any) {
       toast.error(e?.response?.data?.mes || "Xóa thất bại.");
     }
   };
 
-  const toViStatus = (status?: string) => {
-    switch (status) {
-      case "open":
-        return "Đang mở";
-      case "in_progress":
-        return "Đang xử lý";
-      case "resolved":
-        return "Đã xong";
+  const toViRole = (role?: string) => {
+    if (!role) return "—";
+    switch (role.toLowerCase()) {
+      case "candidate":
+        return "Ứng viên";
+      case "recruiter":
+        return "Nhà tuyển dụng";
+      case "center":
+        return "Trung tâm";
+      case "admin":
+        return "Quản trị viên";
       default:
-        return status || "Không rõ";
+        return role;
     }
   };
 
-  const toViPriority = (priority?: string) => {
-    switch (priority) {
-      case "low":
-        return "Thấp";
-      case "medium":
-        return "Trung bình";
-      case "high":
-        return "Cao";
-      default:
-        return priority || "Không rõ";
+  const formatDate = (value?: string | number | Date | null) => {
+    if (!value) return "—";
+
+    try {
+      let date: Date | null = null;
+
+      if (value instanceof Date) {
+        date = value;
+      } else if (typeof value === "number") {
+        const ts = value < 1e12 ? value * 1000 : value; // seconds -> ms
+        date = new Date(ts);
+      } else if (typeof value === "string") {
+        let s = value.trim();
+        if (!s) return "—";
+
+        // Numeric timestamp string
+        if (/^\d+$/.test(s)) {
+          let ts = parseInt(s, 10);
+          ts = ts < 1e12 ? ts * 1000 : ts;
+          date = new Date(ts);
+        } else {
+          // Normalize common DB timestamp format: "YYYY-MM-DD HH:mm:ss[.fff][+..]"
+          // Safari không parse được dạng có khoảng trắng, nên đổi thành ISO.
+          const mainPart = s.split("+")[0].split("Z")[0];
+          const trimmedMain = mainPart.split(".")[0];
+          if (trimmedMain.includes(" ") && !trimmedMain.includes("T")) {
+            const [d, t] = trimmedMain.split(" ");
+            s = `${d}T${t}Z`;
+          }
+          date = new Date(s);
+        }
+      }
+
+      if (!date || isNaN(date.getTime())) return "Invalid Date";
+
+      return date.toLocaleString("vi-VN", {
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } catch (e) {
+      return "Invalid Date";
     }
   };
 
@@ -147,6 +230,21 @@ const SupportRequests: React.FC = () => {
                   <option value="medium">Trung bình</option>
                   <option value="high">Cao</option>
                 </select>
+                <select
+                  value={sortBy}
+                  onChange={(e) =>
+                    setSortBy(
+                      (e.target.value as "created_desc" | "created_asc" | "priority" | "status") ||
+                        "created_desc"
+                    )
+                  }
+                  className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="created_desc">Mới nhất</option>
+                  <option value="created_asc">Cũ nhất</option>
+                  <option value="priority">Ưu tiên (Cao → Thấp)</option>
+                  <option value="status">Trạng thái</option>
+                </select>
               </div>
             </div>
 
@@ -155,7 +253,7 @@ const SupportRequests: React.FC = () => {
                 <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center text-gray-500">
                   Đang tải...
                 </div>
-              ) : isError ? (
+              ) : isError || data?.err === 1 ? (
                 <div className="rounded-xl border border-dashed border-gray-200 bg-white p-8 text-center text-red-600">
                   Không thể tải yêu cầu hỗ trợ. Kiểm tra backend/token.
                 </div>
@@ -180,68 +278,42 @@ const SupportRequests: React.FC = () => {
                           </p>
                         )}
                         <p className="mt-1 text-xs text-gray-400">
-                          {new Date(it.created_at).toLocaleString("vi-VN")} •{" "}
-                          {it.creator?.role?.value || "—"} •{" "}
+                          {formatDate(it.created_at)} •{" "}
+                          {toViRole(it.creator?.role?.value)} •{" "}
                           {it.creator?.email || it.created_by}
                         </p>
                       </div>
 
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                          Ưu tiên: {toViPriority(it.priority)}
-                        </span>
-                        <span
-                          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                            it.status === "resolved"
-                              ? "bg-green-50 text-green-700"
-                              : it.status === "in_progress"
-                              ? "bg-blue-50 text-blue-700"
-                              : "bg-yellow-50 text-yellow-700"
-                          }`}
-                        >
-                          {toViStatus(it.status)}
-                        </span>
-                        <select
-                          value={it.priority}
-                          onChange={(e) =>
-                            updatePriority(
-                              it.id,
-                              e.target.value as SupportRequestPriority
-                            )
-                          }
-                          className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700"
-                        >
-                          <option value="low">Thấp</option>
-                          <option value="medium">Trung bình</option>
-                          <option value="high">Cao</option>
-                        </select>
-                        <select
-                          value={it.status}
-                          onChange={(e) =>
-                            updateStatus(
-                              it.id,
-                              e.target.value as SupportRequestStatus
-                            )
-                          }
-                          className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700"
-                        >
-                          <option value="open">Đang mở</option>
-                          <option value="in_progress">Đang xử lý</option>
-                          <option value="resolved">Đã xong</option>
-                        </select>
-                        {it.status !== "resolved" && (
-                          <button
-                            type="button"
-                            onClick={() => updateStatus(it.id, "resolved")}
-                            className="rounded-lg bg-green-500 px-3 py-1 text-xs font-semibold text-white shadow-sm hover:bg-green-600"
-                          >
-                            Đã xử lý
-                          </button>
-                        )}
+                      <div className="flex flex-col items-end gap-3">
+                        <div className="flex flex-col gap-2">
+                          {/* Priority Tags */}
+                          <div>
+                            <p className="mb-1 text-xs font-semibold text-gray-600">Ưu tiên:</p>
+                            <TagSelector
+                              options={priorityOptions}
+                              selectedValue={it.priority}
+                              onSelect={(p) => updatePriority(it.id, p as SupportRequestPriority)}
+                              size="sm"
+                            />
+                          </div>
+
+                          {/* Status Tags */}
+                          <div>
+                            <p className="mb-1 text-xs font-semibold text-gray-600">Trạng thái:</p>
+                            <TagSelector
+                              options={statusOptions}
+                              selectedValue={it.status}
+                              onSelect={(s) => updateStatus(it.id, s as SupportRequestStatus)}
+                              size="sm"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Delete Button */}
                         <button
                           type="button"
                           onClick={() => remove(it.id)}
-                          className="rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                          className="rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-100"
                         >
                           {deleteRequest.isPending ? "..." : "Xóa"}
                         </button>

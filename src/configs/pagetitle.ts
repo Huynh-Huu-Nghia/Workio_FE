@@ -23,6 +23,7 @@ export const pathtotitle: { [key: string]: string } = {
   "/candidate/jobs": "Việc làm cho ứng viên",
   "/candidate": "Trang chủ ứng viên",
   "/candidate/jobs/applied": "Việc đã ứng tuyển",
+  "/candidate/courses": "Khóa học",
   "/candidate/interviews": "Lịch phỏng vấn",
   "/candidate/profile": "Hồ sơ của tôi",
   "/candidate/support": "Yêu cầu hỗ trợ",

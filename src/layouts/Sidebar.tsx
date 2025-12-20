@@ -22,12 +22,19 @@ export interface SidebarProps {
   activeSubmenu?: string;
 }
 
+interface MenuSubItem {
+  id: string;
+  label: string;
+  link: string;
+  hidden?: boolean;
+}
+
 interface MenuItem {
   id: string;
   label: string;
   icon: React.ReactNode;
   link: string;
-  subItems?: { id: string; label: string; link: string }[];
+  subItems?: MenuSubItem[];
 }
 
 interface MenuGroup {

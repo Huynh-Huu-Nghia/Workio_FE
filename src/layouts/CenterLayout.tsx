@@ -1,84 +1,327 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import React, { useEffect, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
-import { Home, BookOpen, Settings, LifeBuoy } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  LifeBuoy,
+  Menu,
+  Settings,
+  Bell,
+  X,
+  ClipboardList,
+} from "lucide-react";
+import LOGO_SRC from "@/assets/networking.png";
+import { pathtotitle } from "@/configs/pagetitle";
+import { useUser } from "@/context/user/user.context";
 
 type Props = {
   title?: string;
   children: React.ReactNode;
 };
 
-const centerNav = [
-  { label: "Tổng quan", link: path.CENTER_HOME, icon: <Home size={16} /> },
-  { label: "Khóa học", link: path.CENTER_COURSES, icon: <BookOpen size={16} /> },
-  { label: "Cài đặt", link: path.CENTER_SETTINGS, icon: <Settings size={16} /> },
-  { label: "Hỗ trợ", link: path.CENTER_SUPPORT, icon: <LifeBuoy size={16} /> },
+type MenuSubItem = {
+  id: string;
+  label: string;
+  link: string;
+  hash?: string;
+};
+
+type MenuItem = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  link: string;
+  subItems?: MenuSubItem[];
+};
+
+type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+const centerMenu: MenuGroup[] = [
+  {
+    title: "ĐÀO TẠO",
+    items: [
+      {
+        id: "courses",
+        label: "Khóa học",
+        icon: <BookOpen size={20} />,
+        link: path.CENTER_COURSES,
+        subItems: [
+          {
+            id: "courses-create",
+            label: "Thêm khóa học",
+            link: path.CENTER_COURSES,
+            hash: "create",
+          },
+          {
+            id: "courses-manage",
+            label: "Quản lý khóa học",
+            link: path.CENTER_COURSES,
+            hash: "manage",
+          },
+        ],
+      },
+    ],
+  },
+  {
+    title: "VẬN HÀNH",
+    items: [
+      {
+        id: "reports",
+        label: "Báo cáo đào tạo",
+        icon: <ClipboardList size={20} />,
+        link: path.CENTER_HOME,
+      },
+    ],
+  },
+  {
+    title: "HỖ TRỢ",
+    items: [
+      {
+        id: "settings",
+        label: "Cài đặt",
+        icon: <Settings size={20} />,
+        link: path.CENTER_SETTINGS,
+      },
+      {
+        id: "support",
+        label: "Hỗ trợ",
+        icon: <LifeBuoy size={20} />,
+        link: path.CENTER_SUPPORT,
+      },
+    ],
+  },
 ];
 
 export default function CenterLayout({ title, children }: Props) {
-  const { pathname } = useLocation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { pathname, hash } = location;
+  const { user } = useUser();
+  const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
+    if (typeof window === "undefined") {
+      return true;
+    }
+    const saved = window.localStorage.getItem("centerSidebarOpen");
+    return saved !== null ? saved === "true" : true;
+  });
+  const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+    window.localStorage.setItem("centerSidebarOpen", JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
+
+  useEffect(() => {
+    centerMenu.forEach((group) => {
+      group.items.forEach((item) => {
+        if (item.subItems) {
+          const match = item.subItems.some((sub) => pathname.startsWith(sub.link));
+          if (match) {
+            setOpenMenus((prev) => (prev.includes(item.id) ? prev : [...prev, item.id]));
+          }
+        }
+      });
+    });
+  }, [pathname]);
+
+  const displayTitle = useMemo(() => {
+    return pathtotitle[pathname] || title || "Trang trung tâm";
+  }, [pathname, title]);
+
+  const avatarInitial = useMemo(() => {
+    const source = user?.name || user?.email || "CT";
+    return source.trim().charAt(0).toUpperCase();
+  }, [user?.name, user?.email]);
+
+  const toggleMenu = (id: string) => {
+    setOpenMenus((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+  };
+
+  const resolveLink = (link: string, hashFragment?: string) =>
+    hashFragment ? `${link}#${hashFragment}` : link;
+
+  const isExpanded = sidebarOpen;
+
+  const handleBack = () => {
+    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    if (canUseHistory) {
+      navigate(-1);
+      return;
+    }
+    navigate(path.CENTER_HOME);
+  };
 
   return (
-    <div className="flex min-h-screen bg-slate-50">
-      <aside className="hidden w-64 border-r border-gray-100 bg-white px-4 py-6 shadow-sm lg:block">
-        <div className="px-2 pb-4">
-          <div className="text-sm font-semibold text-gray-800">Center Console</div>
-          <p className="text-xs text-gray-500">Quản lý khóa học, hỗ trợ, cài đặt</p>
+    <div className="flex min-h-screen bg-[#f5f7fb]">
+      <aside
+        className={`bg-white border-r border-gray-100 flex-col font-sans z-40 transition-all duration-300 fixed top-0 left-0 flex h-screen ${
+          isExpanded ? "w-64" : "w-20"
+        }`}
+      >
+        <div className="flex flex-col items-center justify-center border-b border-gray-100 py-6 transition-all duration-300">
+          <div
+            className={`bg-white rounded-xl shadow-sm border border-orange-100 flex items-center justify-center p-2 transition-all duration-300 ${
+              isExpanded ? "h-20 w-20" : "h-10 w-10"
+            }`}
+          >
+            <img src={LOGO_SRC} alt="Logo" className="h-full w-full object-contain" />
+          </div>
+          {isExpanded && (
+            <div className="mt-3 text-center">
+              <h1 className="text-xl font-extrabold tracking-tight text-gray-800">
+                Work<span className="text-orange-600">io</span>
+              </h1>
+              <p className="text-xs text-gray-400">Trung tâm đào tạo</p>
+            </div>
+          )}
         </div>
-        <nav className="space-y-1">
-          {centerNav.map((item) => {
-            const active = pathname === item.link;
-            return (
-              <Link
-                key={item.link}
-                to={item.link}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  active
-                    ? "bg-orange-50 text-orange-700 border border-orange-100"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <span className="text-gray-500">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+
+        <div className="flex-1 space-y-8 overflow-y-auto px-3 py-6 scrollbar-hide">
+          {centerMenu.map((group) => (
+            <div key={group.title}>
+              {isExpanded && (
+                <h3 className="mb-3 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                  {group.title}
+                </h3>
+              )}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const isUrlActive = pathname.startsWith(item.link) && item.link !== "#";
+                  const isMenuActive =
+                    isUrlActive ||
+                    (item.subItems && item.subItems.some((sub) => pathname.startsWith(sub.link)));
+                  const hasSubItems = item.subItems && item.subItems.length > 0;
+                  const expanded = openMenus.includes(item.id);
+                  const firstSubItem = hasSubItems ? item.subItems![0] : null;
+                  const defaultSubHash = firstSubItem?.hash;
+                  return (
+                    <div key={item.id}>
+                      <Link
+                        to={firstSubItem ? resolveLink(firstSubItem.link, firstSubItem.hash) : item.link}
+                        onClick={(event) => {
+                          if (hasSubItems) {
+                            event.preventDefault();
+                            toggleMenu(item.id);
+                          }
+                        }}
+                        className={`flex items-center ${
+                          isExpanded ? "justify-between px-3" : "justify-center px-0"
+                        } py-2.5 rounded-lg transition-all duration-200 ${
+                          isMenuActive ? "bg-orange-50 text-orange-600" : "text-gray-500 hover:bg-gray-50"
+                        }`}
+                        title={!isExpanded ? item.label : ""}
+                      >
+                        <div className={`flex items-center ${isExpanded ? "gap-3" : "gap-0"}`}>
+                          <span className={isMenuActive ? "text-orange-500" : "text-gray-400"}>{item.icon}</span>
+                          {isExpanded && <span className="font-medium">{item.label}</span>}
+                        </div>
+                        {hasSubItems && isExpanded && (
+                          <svg
+                            className={`h-4 w-4 transition-transform ${expanded ? "rotate-180 text-orange-400" : "text-gray-300"}`}
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9" />
+                          </svg>
+                        )}
+                      </Link>
+                      {hasSubItems && isExpanded && (
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ease-in-out ${
+                            expanded ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+                          }`}
+                        >
+                          <div className="ml-4 space-y-1 border-l-2 border-orange-100 pl-3">
+                            {item.subItems!.map((sub) => {
+                              const matchesHash = sub.hash
+                                ? hash === `#${sub.hash}` || (!hash && defaultSubHash && sub.hash === defaultSubHash)
+                                : true;
+                              const isSubActive = pathname === sub.link && matchesHash;
+                              return (
+                                <Link
+                                  key={sub.id}
+                                  to={resolveLink(sub.link, sub.hash)}
+                                  className={`block rounded-md px-3 py-2 text-sm transition-colors ${
+                                    isSubActive
+                                      ? "bg-orange-100 text-orange-700 font-medium"
+                                      : "text-gray-500 hover:bg-gray-50"
+                                  }`}
+                                >
+                                  {sub.label}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="border-t border-gray-50 p-4">
+          <button
+            className={`flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 ${
+              isExpanded ? "gap-3" : "justify-center"
+            }`}
+          >
+            <X size={18} />
+            {isExpanded && <span>Đăng xuất</span>}
+          </button>
+        </div>
       </aside>
 
-      <div className="flex-1">
-        <header className="bg-white shadow-sm">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
-            <div>
-              {title && <h1 className="text-xl font-semibold text-gray-800">{title}</h1>}
-              <p className="text-xs text-gray-500">
-                Trung tâm đào tạo • Quản lý khóa học, cài đặt, hỗ trợ
-              </p>
+      {isExpanded && (
+        <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+      )}
+
+      <div className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}>
+        <header className="sticky top-0 z-20 flex h-16 items-center border-b border-gray-100 bg-white shadow-sm">
+          <div className="mx-auto flex w-full items-center justify-between px-4 sm:px-6">
+            <div className="flex items-center gap-3">
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <button
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                onClick={() => setSidebarOpen((prev) => !prev)}
+              >
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              </button>
+              <div>
+                <h1 className="text-lg font-bold leading-tight text-gray-800">{displayTitle}</h1>
+                <p className="text-xs text-gray-500">Không gian quản trị trung tâm</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <button className="relative rounded-full p-2 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500">
+                <Bell size={18} />
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
+              </button>
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600">
+                {avatarInitial}
+              </div>
             </div>
           </div>
-          <nav className="border-t border-gray-100 bg-white px-4 py-2 lg:hidden">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              {centerNav.map((item) => {
-                const active = pathname === item.link;
-                return (
-                  <Link
-                    key={item.link}
-                    to={item.link}
-                    className={`rounded-full px-3 py-1 font-semibold transition ${
-                      active
-                        ? "bg-orange-500 text-white shadow-sm"
-                        : "bg-gray-100 text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
         </header>
 
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+        <main className="mx-auto w-full px-4 py-6">{children}</main>
       </div>
     </div>
   );

@@ -145,51 +145,6 @@ const CenterAccountSettings: React.FC = () => {
               </div>
             </div>
           </div>
-
-          {/* Additional Info Section */}
-          <div className="grid gap-6 md:grid-cols-2">
-            {/* Active Status */}
-            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
-              <div className="bg-gradient-to-r from-green-500 to-green-600 p-6">
-                <h3 className="text-lg font-bold text-white">Trạng thái</h3>
-              </div>
-              <div className="p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Tài khoản</span>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-                      Hoạt động
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Xác thực</span>
-                    <span className="rounded-full bg-green-100 px-3 py-1 text-xs font-bold text-green-700">
-                      Đã xác thực
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Statistics */}
-            <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-lg">
-              <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6">
-                <h3 className="text-lg font-bold text-white">Thống kê</h3>
-              </div>
-              <div className="p-6">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Khóa học</span>
-                    <span className="text-lg font-bold text-purple-600">12</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Học viên</span>
-                    <span className="text-lg font-bold text-purple-600">156</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
     </CenterLayout>

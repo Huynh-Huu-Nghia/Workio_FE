@@ -1,45 +1,111 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import path from "@/constants/path";
 import {
-  Briefcase,
-  Users,
-  Sparkles,
-  Calendar,
-  User,
-  Settings,
-  LifeBuoy,
-  Home,
-  Menu,
-  X,
   Bell,
+  Briefcase,
+  CalendarDays,
+  LifeBuoy,
+  Menu,
+  Sparkles,
+  User,
+  Users,
+  X,
 } from "lucide-react";
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
+import LOGO_SRC from "@/assets/networking.png";
 
 type Props = {
   title?: string;
   children: React.ReactNode;
 };
 
-const recruiterNav = [
-  { label: "Trang chủ", link: path.RECRUITER_HOME, icon: <Home size={16} /> },
-  { label: "Tin tuyển dụng", link: path.RECRUITER_JOBS, icon: <Briefcase size={16} /> },
-  { label: "Ứng viên cho tin", link: path.RECRUITER_JOB_CANDIDATES, icon: <Users size={16} /> },
-  { label: "Gợi ý ứng viên", link: path.RECRUITER_SUGGESTED_CANDIDATES, icon: <Sparkles size={16} /> },
-  { label: "Lịch phỏng vấn", link: path.RECRUITER_INTERVIEWS, icon: <Calendar size={16} /> },
-  { label: "Hồ sơ", link: path.RECRUITER_PROFILE, icon: <User size={16} /> },
-  { label: "Cài đặt", link: path.RECRUITER_SETTINGS, icon: <Settings size={16} /> },
-  { label: "Hỗ trợ", link: path.RECRUITER_SUPPORT, icon: <LifeBuoy size={16} /> },
+type MenuItem = {
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  link: string;
+  match?: string[];
+};
+
+type MenuGroup = {
+  title: string;
+  items: MenuItem[];
+};
+
+const recruiterMenu: MenuGroup[] = [
+  {
+    title: "TIN & ỨNG VIÊN",
+    items: [
+      {
+        id: "jobs",
+        label: "Tin tuyển dụng",
+        icon: <Briefcase size={18} />,
+        link: path.RECRUITER_JOBS,
+        match: [path.RECRUITER_JOBS, path.RECRUITER_JOB_CREATE, path.RECRUITER_JOB_EDIT],
+      },
+      {
+        id: "job-candidates",
+        label: "Ứng viên theo tin",
+        icon: <Users size={18} />,
+        link: path.RECRUITER_JOB_CANDIDATES,
+      },
+      {
+        id: "suggested",
+        label: "Gợi ý ứng viên",
+        icon: <Sparkles size={18} />,
+        link: path.RECRUITER_SUGGESTED_CANDIDATES,
+      },
+      {
+        id: "interviews",
+        label: "Lịch phỏng vấn",
+        icon: <CalendarDays size={18} />,
+        link: path.RECRUITER_INTERVIEWS,
+      },
+    ],
+  },
+  {
+    title: "TÀI KHOẢN",
+    items: [
+      {
+        id: "profile",
+        label: "Hồ sơ & cài đặt",
+        icon: <User size={18} />,
+        link: path.RECRUITER_PROFILE,
+        match: [path.RECRUITER_PROFILE, path.RECRUITER_SETTINGS],
+      },
+    ],
+  },
+  {
+    title: "HỖ TRỢ",
+    items: [
+      {
+        id: "support",
+        label: "Yêu cầu hỗ trợ",
+        icon: <LifeBuoy size={18} />,
+        link: path.RECRUITER_SUPPORT,
+      },
+    ],
+  },
 ];
 
 export default function RecruiterLayout({ title, children }: Props) {
   const { pathname } = useLocation();
   const { user } = useUser();
-  const [open, setOpen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = window.localStorage.getItem("recruiterSidebarOpen");
+    return saved !== null ? saved === "true" : true;
+  });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.localStorage.setItem("recruiterSidebarOpen", JSON.stringify(sidebarOpen));
+  }, [sidebarOpen]);
 
   const displayTitle = useMemo(
-    () => pathtotitle[pathname] || title || "Recruiter",
+    () => pathtotitle[pathname] || title || "Không gian nhà tuyển dụng",
     [pathname, title]
   );
 
@@ -48,95 +114,115 @@ export default function RecruiterLayout({ title, children }: Props) {
     return source.trim().charAt(0).toUpperCase();
   }, [user?.name, user?.email]);
 
+  const isExpanded = sidebarOpen;
+  const isActive = (item: MenuItem) => {
+    const targets = item.match && item.match.length > 0 ? item.match : [item.link];
+    return targets.some((target) => {
+      if (pathname === target) return true;
+      if (target.includes(":")) {
+        const base = target.split(":")[0];
+        return pathname.startsWith(base);
+      }
+      return false;
+    });
+  };
+
   return (
-    <div className="flex min-h-screen bg-slate-50">
+    <div className="flex min-h-screen bg-[#f5f7fb]">
       <aside
-        className={`fixed inset-y-0 left-0 z-40 w-64 transform border-r border-gray-100 bg-white px-4 py-6 shadow-sm transition duration-200 lg:static lg:translate-x-0 ${
-          open ? "translate-x-0" : "-translate-x-full"
+        className={`fixed top-0 left-0 z-40 flex h-screen flex-col border-r border-gray-100 bg-white transition-all duration-300 ${
+          isExpanded ? "w-64" : "w-20"
         }`}
       >
-        <div className="px-2 pb-4">
-          <div className="text-sm font-semibold text-gray-800">Recruiter</div>
-          <p className="text-xs text-gray-500">Quản lý tin đăng, ứng viên, phỏng vấn</p>
+        <div className="flex flex-col items-center justify-center border-b border-gray-100 py-6">
+          <div
+            className={`rounded-xl border border-orange-100 bg-white p-2 shadow-sm ${
+              isExpanded ? "h-16 w-16" : "h-10 w-10"
+            }`}
+          >
+            <img src={LOGO_SRC} alt="Workio" className="h-full w-full object-contain" />
+          </div>
+          {isExpanded && (
+            <div className="mt-2 text-center">
+              <p className="text-base font-extrabold text-gray-800">
+                Work<span className="text-orange-600">io</span>
+              </p>
+              <p className="text-xs text-gray-400">Bảng điều khiển NTD</p>
+            </div>
+          )}
         </div>
-        <nav className="space-y-1">
-          {recruiterNav.map((item) => {
-            const active = pathname === item.link;
-            return (
-              <Link
-                key={item.link}
-                to={item.link}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold transition ${
-                  active
-                    ? "bg-orange-50 text-orange-700 border border-orange-100"
-                    : "text-gray-700 hover:bg-gray-50"
-                }`}
-              >
-                <span className="text-gray-500">{item.icon}</span>
-                {item.label}
-              </Link>
-            );
-          })}
-        </nav>
+
+        <div className="flex-1 space-y-6 overflow-y-auto px-3 py-6 scrollbar-hide">
+          {recruiterMenu.map((group) => (
+            <div key={group.title}>
+              {isExpanded && (
+                <p className="mb-3 px-3 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+                  {group.title}
+                </p>
+              )}
+              <div className="space-y-1">
+                {group.items.map((item) => {
+                  const active = isActive(item);
+                  return (
+                    <Link
+                      key={item.id}
+                      to={item.link}
+                      title={!isExpanded ? item.label : undefined}
+                      className={`flex items-center rounded-lg py-2.5 transition ${
+                        isExpanded ? "justify-between px-3" : "justify-center"
+                      } ${
+                        active
+                          ? "bg-orange-50 text-orange-600"
+                          : "text-gray-500 hover:bg-gray-50"
+                      }`}
+                    >
+                      <span className={`flex items-center gap-3 ${isExpanded ? "" : "justify-center"}`}>
+                        <span className={active ? "text-orange-500" : "text-gray-400"}>{item.icon}</span>
+                        {isExpanded && <span className="font-medium">{item.label}</span>}
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
       </aside>
 
-      {open && (
-        <div
-          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
-          onClick={() => setOpen(false)}
-        />
+      {isExpanded && (
+        <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
       )}
 
-      <div className="flex-1">
-        <header className="bg-white shadow-sm sticky top-0 z-20 border-b border-gray-100">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-4">
+      <div className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}>
+        <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
+          <div className="mx-auto flex w-full items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
               <button
-                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50 lg:hidden"
-                onClick={() => setOpen((v) => !v)}
+                className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
+                onClick={() => setSidebarOpen((prev) => !prev)}
               >
-                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
               <div>
-                <p className="text-[11px] uppercase font-semibold text-gray-400">Nhà tuyển dụng</p>
-                <h1 className="text-lg font-bold text-gray-800 leading-tight">{displayTitle}</h1>
+                <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
+                  Nhà tuyển dụng
+                </p>
+                <h1 className="text-xl font-bold text-gray-900 leading-tight">{displayTitle}</h1>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="p-2 rounded-full text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors relative">
+              <button className="relative rounded-full p-2 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500">
                 <Bell size={18} />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
+                <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
               </button>
-              <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm border border-orange-200">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600">
                 {avatarInitial}
               </div>
             </div>
           </div>
-          <nav className="border-t border-gray-100 bg-white px-4 py-2 lg:hidden">
-            <div className="flex flex-wrap items-center gap-2 text-sm">
-              {recruiterNav.map((item) => {
-                const active = pathname === item.link;
-                return (
-                  <Link
-                    key={item.link}
-                    to={item.link}
-                    onClick={() => setOpen(false)}
-                    className={`rounded-full px-3 py-1 font-semibold transition ${
-                      active
-                        ? "bg-orange-500 text-white shadow-sm"
-                        : "bg-gray-100 text-gray-700 hover:bg-orange-50"
-                    }`}
-                  >
-                    {item.label}
-                  </Link>
-                );
-              })}
-            </div>
-          </nav>
         </header>
 
-        <main className="mx-auto max-w-6xl px-4 py-6">{children}</main>
+        <main className="mx-auto w-full px-6 py-6">{children}</main>
       </div>
     </div>
   );

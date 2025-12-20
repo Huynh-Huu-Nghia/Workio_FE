@@ -61,6 +61,8 @@ const CandidateProfile: React.FC = () => {
 
   const [tagLanguage, setTagLanguage] = useState("");
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
+  const normalizeYearInput = (value: string): number | "" =>
+    value.trim() === "" ? "" : Number(value);
 
   useEffect(() => {
     try {
@@ -200,9 +202,6 @@ const CandidateProfile: React.FC = () => {
             <div>
               <p className="text-sm text-gray-600">
                 Tài khoản: <b className="text-gray-900">{user?.email || "—"}</b>
-              </p>
-              <p className="text-xs text-gray-400">
-                Backend hiện chưa có GET profile, form dùng nháp local để điền lại.
               </p>
             </div>
             <div className="flex gap-2">
@@ -590,7 +589,9 @@ const CandidateProfile: React.FC = () => {
                   onChange={(e) =>
                     setStudyHistories((prev) =>
                       prev.map((item, i) =>
-                        i === idx ? { ...item, start_year: e.target.value } : item
+                        i === idx
+                          ? { ...item, start_year: normalizeYearInput(e.target.value) }
+                          : item
                       )
                     )
                   }
@@ -603,7 +604,9 @@ const CandidateProfile: React.FC = () => {
                     onChange={(e) =>
                       setStudyHistories((prev) =>
                         prev.map((item, i) =>
-                          i === idx ? { ...item, end_year: e.target.value } : item
+                          i === idx
+                            ? { ...item, end_year: normalizeYearInput(e.target.value) }
+                            : item
                         )
                       )
                     }

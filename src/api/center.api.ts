@@ -72,13 +72,39 @@ export const useAdminCentersQuery = (filters: Record<string, any> = {}) =>
   });
 
 // --- Center: courses ---
+export interface CourseCandidate {
+  candidate_id: string;
+  status?: string | null;
+  requested_at?: string | null;
+  attendance?: number | null;
+  tuition_confirmed?: boolean | null;
+  signed_at?: string | null;
+  notes?: string | null;
+  name?: string | null;
+  candidate_name?: string | null;
+  email?: string | null;
+  phone?: string | null;
+  candidate?: {
+    id?: string;
+    name?: string | null;
+    full_name?: string | null;
+    email?: string | null;
+    phone?: string | null;
+  } | null;
+}
+
 export interface Course {
-  id: string;
+  id?: string;
+  course_id?: string;
   name: string;
   description?: string | null;
+  summary?: string | null;
+  details?: unknown;
   start_date?: string | null;
   end_date?: string | null;
-  candidates?: { candidate_id: string; status: string }[];
+  capacity?: number | null;
+  registered_count?: number | null;
+  candidates?: CourseCandidate[];
 }
 
 const getCenterCoursesRequest = async (): Promise<ApiResponse<Course[]>> => {
@@ -96,6 +122,22 @@ export const useCenterCoursesQuery = () =>
 export const createCenterCourseRequest = async (payload: Partial<Course>) => {
   const response = await axiosInstance.post("/center/courses", payload);
   return response.data as ApiResponse<Course>;
+};
+
+export const updateCenterCourseRequest = async ({
+  courseId,
+  payload,
+}: {
+  courseId: string;
+  payload: Partial<Course>;
+}) => {
+  const response = await axiosInstance.patch(`/center/courses/${courseId}`, payload);
+  return response.data as ApiResponse<Course>;
+};
+
+export const deleteCenterCourseRequest = async (courseId: string) => {
+  const response = await axiosInstance.delete(`/center/courses/${courseId}`);
+  return response.data as ApiResponse<any>;
 };
 
 export const addStudentToCourseRequest = async ({
@@ -116,24 +158,51 @@ export const updateStudentStatusRequest = async ({
   courseId,
   candidateId,
   status,
+  attendance,
+  tuition_confirmed,
+  signed_at,
+  notes,
 }: {
   courseId: string;
   candidateId: string;
   status: string;
+  attendance?: number | null;
+  tuition_confirmed?: boolean | null;
+  signed_at?: string | null;
+  notes?: string | null;
 }) => {
   const response = await axiosInstance.patch(
     `/center/courses/${courseId}/students/${candidateId}`,
-    { status }
+    { status, attendance, tuition_confirmed, signed_at, notes }
+  );
+  return response.data as ApiResponse<any>;
+};
+
+export const removeStudentFromCourseRequest = async ({
+  courseId,
+  candidateId,
+}: {
+  courseId: string;
+  candidateId: string;
+}) => {
+  const response = await axiosInstance.delete(
+    `/center/courses/${courseId}/students/${candidateId}`
   );
   return response.data as ApiResponse<any>;
 };
 
 export const useCreateCenterCourseMutation = () =>
   useMutation({ mutationFn: createCenterCourseRequest });
+export const useUpdateCenterCourseMutation = () =>
+  useMutation({ mutationFn: updateCenterCourseRequest });
+export const useDeleteCenterCourseMutation = () =>
+  useMutation({ mutationFn: deleteCenterCourseRequest });
 export const useAddStudentToCourseMutation = () =>
   useMutation({ mutationFn: addStudentToCourseRequest });
 export const useUpdateStudentStatusMutation = () =>
   useMutation({ mutationFn: updateStudentStatusRequest });
+export const useRemoveStudentFromCourseMutation = () =>
+  useMutation({ mutationFn: removeStudentFromCourseRequest });
 
 // --- Admin: xem khóa học của trung tâm ---
 const getAdminCenterCoursesRequest = async (

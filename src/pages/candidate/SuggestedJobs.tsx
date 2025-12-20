@@ -11,6 +11,7 @@ import { useCandidateSuggestedJobsQuery } from "@/api/candidate.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
 import CandidateLayout from "@/layouts/CandidateLayout";
+import { useJobLocationResolver } from "@/hooks/useJobLocationResolver";
 
 const CandidateSuggestedJobs: React.FC = () => {
   const location = useLocation();
@@ -22,6 +23,13 @@ const CandidateSuggestedJobs: React.FC = () => {
   const [statuses, setStatuses] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const { resolveJobLocation } = useJobLocationResolver();
+  const selectableFields = useMemo(() => {
+    const raw = jobs[0]?.fields;
+    if (Array.isArray(raw) && raw.length) return raw;
+    if (typeof raw === "string" && raw.trim()) return [raw];
+    return ["CNTT", "Kinh doanh", "Ngân hàng"];
+  }, [jobs]);
 
   const allStatuses = useMemo(() => {
     const set = new Set<string>();
@@ -130,22 +138,20 @@ const CandidateSuggestedJobs: React.FC = () => {
             <div>
               <p className="mb-1 text-sm font-medium text-gray-700">Ngành</p>
               <div className="flex flex-wrap gap-2">
-                {(jobs[0]?.fields || ["CNTT", "Kinh doanh", "Ngân hàng"]).map(
-                  (field: string) => (
-                    <label
-                      key={field}
-                      className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700"
-                    >
-                      <input
-                        type="checkbox"
-                        className="h-3 w-3 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
-                        checked={selectedFields.includes(field)}
-                        onChange={() => toggleField(field)}
-                      />
-                      {field}
-                    </label>
-                  )
-                )}
+                {selectableFields.map((field: string) => (
+                  <label
+                    key={field}
+                    className="inline-flex items-center gap-2 rounded-full border border-gray-200 px-3 py-1 text-xs font-semibold text-gray-700"
+                  >
+                    <input
+                      type="checkbox"
+                      className="h-3 w-3 rounded border-gray-300 text-orange-500 focus:ring-orange-500"
+                      checked={selectedFields.includes(field)}
+                      onChange={() => toggleField(field)}
+                    />
+                    {field}
+                  </label>
+                ))}
               </div>
             </div>
           </div>
@@ -169,6 +175,9 @@ const CandidateSuggestedJobs: React.FC = () => {
             ) : (
               filteredJobs.map((job: any) => {
                 const isExpanded = expandedId === job.id;
+                const locationInfo = resolveJobLocation(job);
+                const locationText =
+                  locationInfo.label || job.location || "Chưa cập nhật địa điểm";
                 return (
                   <article
                     key={job.id}
@@ -236,12 +245,10 @@ const CandidateSuggestedJobs: React.FC = () => {
                           {job.working_time}
                         </span>
                       )}
-                      {job.location && (
-                        <span className="inline-flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {job.location}
-                        </span>
-                      )}
+                      <span className="inline-flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        {locationText}
+                      </span>
                     </div>
 
                     {isExpanded && (
