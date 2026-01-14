@@ -58,6 +58,9 @@ const forgotPasswordRequest = (payload: ForgotPasswordFormSchema) => {
     case "Recruiter":
       apiUrl = "/recruiter/auth/forgot-password";
       break;
+    case "Center":
+      apiUrl = "/center/auth/forgot-password";
+      break;
     default:
       apiUrl = "/candidate/auth/forgot-password";
       break;
@@ -77,23 +80,26 @@ export const useForgotPasswordMutation = () => {
 // --- PHẦN RESET PASSWORD (Giữ nguyên) ---
 const resetPasswordRequest = (payload: ResetPasswordFormSchema) => {
   // Tách role và confirm_password ra, chỉ gửi password và token đi
-  const { role, confirm_password: _confirm_password, ...resetData } = payload;
+  const { role, confirm_password: _confirm_password, token, ...resetData } = payload;
   let apiUrl = "";
   switch (role) {
     case "Admin":
       apiUrl = "/admin-auth/create-new-password";
       break;
     case "Recruiter":
-      apiUrl = "/recruiter/auth/create-new-password";
+      apiUrl = `/recruiter/auth/reset-password?token=${token}`;
+      break;
+    case "Center":
+      apiUrl = `/center/auth/reset-password?token=${token}`;
       break;
     default:
-      apiUrl = "/candidate/auth/create-new-password";
+      apiUrl = `/candidate/auth/reset-password?token=${token}`;
       break;
   }
   console.log(`🌐 Reset Password [${role}] -> ${apiUrl}`, resetData);
 
-  // resetData lúc này chỉ còn { password, token } -> ĐÚNG
-  return axiosInstance.put(apiUrl, resetData);
+  // resetData lúc này chỉ còn { password } -> ĐÚNG
+  return axiosInstance.post(apiUrl, resetData);
 };
 
 export const useResetPasswordMutation = () => {
@@ -102,14 +108,14 @@ export const useResetPasswordMutation = () => {
   });
 };
 
-// --- ✅ Refresh token + Logout (Candidate/Recruiter/Admin) ---
+// --- ✅ Refresh token + Logout (Candidate/Recruiter/Admin/Center) ---
 export type AuthRole = "Admin" | "Recruiter" | "Candidate" | "Center";
 
 export const refreshTokenRequest = async ({
   role,
   refresh_token,
 }: {
-  role: Exclude<AuthRole, "Center">;
+  role: AuthRole;
   refresh_token: string;
 }) => {
   let apiUrl = "";
@@ -119,6 +125,9 @@ export const refreshTokenRequest = async ({
       break;
     case "Recruiter":
       apiUrl = "/recruiter/auth/refresh-token";
+      break;
+    case "Center":
+      apiUrl = "/center/auth/refresh-token";
       break;
     default:
       apiUrl = "/candidate/auth/refresh-token";
@@ -133,7 +142,7 @@ export const useRefreshTokenMutation = () =>
 export const logoutRequest = async ({
   role,
 }: {
-  role: Exclude<AuthRole, "Center">;
+  role: AuthRole;
 }) => {
   let apiUrl = "";
   switch (role) {
@@ -142,6 +151,9 @@ export const logoutRequest = async ({
       break;
     case "Recruiter":
       apiUrl = "/recruiter/auth/logout";
+      break;
+    case "Center":
+      apiUrl = "/center/auth/logout";
       break;
     default:
       apiUrl = "/candidate/auth/logout";

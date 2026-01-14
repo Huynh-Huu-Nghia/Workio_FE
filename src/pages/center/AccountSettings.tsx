@@ -1,8 +1,31 @@
 import React from "react";
 import CenterLayout from "@/layouts/CenterLayout";
-import { Settings, Mail, Phone, Globe, FileText, MapPin, Save } from "lucide-react";
+import { Settings, Mail, Phone, Globe, FileText, MapPin, Save, LogOut } from "lucide-react";
+import { useLogoutMutation } from "@/api/auth.api";
+import { useUser } from "@/context/user/user.context";
+import { toast } from "react-toastify";
 
 const CenterAccountSettings: React.FC = () => {
+  const { setUser } = useUser();
+  const logoutMutation = useLogoutMutation();
+
+  const handleLogout = async () => {
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+
+    try {
+      await logoutMutation.mutateAsync({ role: "Center" });
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      window.location.href = "/login";
+    }
+  };
+
   return (
     <CenterLayout title="Cài đặt tài khoản">
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
@@ -143,6 +166,35 @@ const CenterAccountSettings: React.FC = () => {
                   Hủy
                 </button>
               </div>
+            </div>
+          </div>
+
+          {/* Logout Section */}
+          <div className="overflow-hidden rounded-3xl border border-gray-200 bg-white shadow-2xl">
+            <div className="bg-gradient-to-r from-red-500 to-red-600 p-8">
+              <div className="flex items-center gap-4">
+                <div className="flex h-16 w-16 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
+                  <LogOut className="h-8 w-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-2xl font-bold text-white">Đăng xuất</h2>
+                  <p className="mt-1 text-red-100">Thoát khỏi tài khoản trung tâm</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-8">
+              <p className="text-gray-600 mb-4">
+                Nhấn nút bên dưới để đăng xuất khỏi tài khoản. Bạn sẽ cần đăng nhập lại để tiếp tục sử dụng.
+              </p>
+              <button
+                onClick={handleLogout}
+                disabled={logoutMutation.isPending}
+                className="flex items-center gap-2 rounded-xl bg-gradient-to-r from-red-500 to-red-600 px-8 py-3.5 font-bold text-white shadow-lg transition-all hover:shadow-xl hover:from-red-600 hover:to-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <LogOut className="h-5 w-5" />
+                {logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}
+              </button>
             </div>
           </div>
         </div>

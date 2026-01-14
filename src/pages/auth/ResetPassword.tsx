@@ -125,7 +125,7 @@ export default function ResetPassword() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-400">
               Xác nhận vai trò <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <RoleCard
                 id="role-candidate"
                 value="Candidate"
@@ -141,6 +141,15 @@ export default function ResetPassword() {
                 label="Nhà tuyển dụng"
                 desc="Đăng tin tuyển dụng"
                 icon="🏢"
+                register={register}
+                currentRole={currentRole}
+              />
+              <RoleCard
+                id="role-center"
+                value="Center"
+                label="Trung tâm"
+                desc="Tôi đào tạo"
+                icon="🎓"
                 register={register}
                 currentRole={currentRole}
               />

@@ -182,7 +182,7 @@ export default function ForgotPassword() {
             <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-400">
               Bạn thuộc đối tượng nào? <span className="text-red-500">*</span>
             </label>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-3">
               <RoleCard
                 id="role-candidate"
                 value="Candidate"
@@ -198,6 +198,15 @@ export default function ForgotPassword() {
                 label="Nhà tuyển dụng"
                 desc="Tôi đăng tuyển"
                 icon="🏢"
+                register={register}
+                currentRole={currentRole}
+              />
+              <RoleCard
+                id="role-center"
+                value="Center"
+                label="Trung tâm"
+                desc="Tôi đào tạo"
+                icon="🎓"
                 register={register}
                 currentRole={currentRole}
               />
