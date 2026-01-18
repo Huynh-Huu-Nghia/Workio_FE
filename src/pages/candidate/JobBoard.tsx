@@ -10,6 +10,8 @@ import {
   Search,
   Tags,
   XCircle,
+  ChevronUp,
+  Filter,
 } from "lucide-react";
 import { useApplyJobCandidateMutation, useCandidateJobPostsQuery } from "@/api/candidate.api";
 import { pathtotitle } from "@/configs/pagetitle";
@@ -32,6 +34,8 @@ const CandidateJobBoard: React.FC = () => {
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { user } = useUser();
+  
+  // --- State cho bộ lọc ---
   const [searchTerm, setSearchTerm] = useState("");
   const [fields, setFields] = useState<string[]>([]);
   const [minSalary, setMinSalary] = useState("");
@@ -43,6 +47,10 @@ const CandidateJobBoard: React.FC = () => {
   const [workingTime, setWorkingTime] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("");
   const [wardFilter, setWardFilter] = useState("");
+  
+  // --- State đóng/mở bộ lọc (Mới) ---
+  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+
   const { resolveJobLocation } = useJobLocationResolver();
   const { data: provinceData } = useProvincesQuery();
   const { data: wardData } = useWardsQuery(true);
@@ -64,6 +72,7 @@ const CandidateJobBoard: React.FC = () => {
       Number(value)
     );
   };
+  
   const formatDate = (value?: string | null) =>
     value ? new Date(value).toLocaleDateString("vi-VN") : "Chưa thiết lập";
 
@@ -162,166 +171,223 @@ const CandidateJobBoard: React.FC = () => {
 
   return (
     <CandidateLayout title={title}>
-      <div className="mb-4 rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <div className="lg:col-span-2">
-            <label className="mb-1 block text-sm font-medium text-gray-700">Tìm kiếm</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                placeholder="Tìm theo vị trí, ngành nghề"
-                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              />
-            </div>
+      
+      {/* --- BỘ LỌC TÌM KIẾM (COLLAPSIBLE) --- */}
+      <div className="mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
+        {/* Header để bấm đóng/mở */}
+        <div 
+          className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+          onClick={() => setIsFilterOpen(!isFilterOpen)}
+        >
+          <div className="flex items-center gap-2 font-bold text-gray-700">
+            <Filter size={20} className="text-orange-500" />
+            <span>Bộ lọc tìm kiếm</span>
+            {/* Hiển thị tóm tắt nhỏ nếu đang lọc và bộ lọc đang đóng */}
+            {!isFilterOpen && (searchTerm || provinceFilter || statusFilter !== 'all') && (
+              <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
+                Đang lọc...
+              </span>
+            )}
           </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as any)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="all">Tất cả trạng thái</option>
-              {allStatuses.map((st) => (
-                <option key={st} value={st}>
-                  {st}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Sắp xếp</label>
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="">Không sắp xếp</option>
-              <option value="created_at">Ngày đăng</option>
-              <option value="monthly_salary">Mức lương</option>
-              <option value="application_deadline_to">Hạn nộp</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Thứ tự</label>
-            <select
-              value={order}
-              onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="DESC">Giảm dần</option>
-              <option value="ASC">Tăng dần</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Tỉnh/TP</label>
-            <select
-              value={provinceFilter}
-              onChange={(e) => setProvinceFilter(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="">Tất cả</option>
-              {provinceData?.map((province) => (
-                <option key={province.code} value={province.code}>
-                  {province.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Phường/Xã</label>
-            <select
-              value={wardFilter}
-              onChange={(e) => setWardFilter(e.target.value)}
-              disabled={!provinceFilter}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50"
-            >
-              <option value="">Tất cả</option>
-              {filteredWardOptions.map((ward) => (
-                <option key={ward.code} value={ward.code}>
-                  {ward.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Lương từ</label>
-                <input
-                  type="number"
-                  value={minSalary}
-                  onChange={(e) => setMinSalary(e.target.value)}
-                  placeholder="Min"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Lương đến</label>
-                <input
-                  type="number"
-                  value={maxSalary}
-                  onChange={(e) => setMaxSalary(e.target.value)}
-                  placeholder="Max"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-              </div>
-            </div>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Loại việc</label>
-            <select
-              value={jobType}
-              onChange={(e) => setJobType(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="">Tất cả</option>
-              <option value="Full-time">Full-time</option>
-              <option value="Part-time">Part-time</option>
-              <option value="Intern">Intern</option>
-            </select>
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Giờ làm</label>
-            <select
-              value={workingTime}
-              onChange={(e) => setWorkingTime(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
-            >
-              <option value="">Tất cả</option>
-              <option value="Giờ hành chính">Giờ hành chính</option>
-              <option value="Linh hoạt">Linh hoạt</option>
-              <option value="Ca">Ca</option>
-            </select>
-          </div>
+          {/* Đổi icon mũi tên */}
+          {isFilterOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
         </div>
-        <div className="mt-5">
-          <p className="mb-1 text-sm font-medium text-gray-700">Ngành</p>
-          <div className="flex flex-wrap gap-2 text-xs text-gray-700">
-            {INDUSTRY_OPTIONS.map((opt) => (
-              <label
-                key={opt}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1"
+
+        {/* Nội dung bộ lọc - Chỉ hiện khi isFilterOpen = true */}
+        {isFilterOpen && (
+          <div className="p-5 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              
+              {/* 1. Tìm kiếm từ khóa */}
+              <div className="lg:col-span-2">
+                <label className="mb-1 block text-sm font-medium text-gray-700">Tìm kiếm</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    placeholder="Tìm theo vị trí, ngành nghề"
+                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  />
+                </div>
+              </div>
+
+              {/* 2. Trạng thái */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
+                <select
+                  value={statusFilter}
+                  onChange={(e) => setStatusFilter(e.target.value as any)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="all">Tất cả trạng thái</option>
+                  {allStatuses.map((st) => (
+                    <option key={st} value={st}>
+                      {st}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 3. Sắp xếp */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Sắp xếp</label>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="">Không sắp xếp</option>
+                  <option value="created_at">Ngày đăng</option>
+                  <option value="monthly_salary">Mức lương</option>
+                  <option value="application_deadline_to">Hạn nộp</option>
+                </select>
+              </div>
+
+              {/* 4. Thứ tự */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Thứ tự</label>
+                <select
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="DESC">Giảm dần</option>
+                  <option value="ASC">Tăng dần</option>
+                </select>
+              </div>
+
+              {/* 5. Tỉnh/TP */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Tỉnh/TP</label>
+                <select
+                  value={provinceFilter}
+                  onChange={(e) => setProvinceFilter(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="">Tất cả</option>
+                  {provinceData?.map((province) => (
+                    <option key={province.code} value={province.code}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 6. Phường/Xã */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Phường/Xã</label>
+                <select
+                  value={wardFilter}
+                  onChange={(e) => setWardFilter(e.target.value)}
+                  disabled={!provinceFilter}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none disabled:cursor-not-allowed disabled:bg-gray-50"
+                >
+                  <option value="">Tất cả</option>
+                  {filteredWardOptions.map((ward) => (
+                    <option key={ward.code} value={ward.code}>
+                      {ward.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* 7. Lương */}
+              <div className="md:col-span-2">
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Lương từ</label>
+                    <input
+                      type="number"
+                      value={minSalary}
+                      onChange={(e) => setMinSalary(e.target.value)}
+                      placeholder="Min"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">Lương đến</label>
+                    <input
+                      type="number"
+                      value={maxSalary}
+                      onChange={(e) => setMaxSalary(e.target.value)}
+                      placeholder="Max"
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 8. Loại việc */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Loại việc</label>
+                <select
+                  value={jobType}
+                  onChange={(e) => setJobType(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="Full-time">Full-time</option>
+                  <option value="Part-time">Part-time</option>
+                  <option value="Intern">Intern</option>
+                </select>
+              </div>
+
+              {/* 9. Giờ làm */}
+              <div>
+                <label className="mb-1 block text-sm font-medium text-gray-700">Giờ làm</label>
+                <select
+                  value={workingTime}
+                  onChange={(e) => setWorkingTime(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                >
+                  <option value="">Tất cả</option>
+                  <option value="Giờ hành chính">Giờ hành chính</option>
+                  <option value="Linh hoạt">Linh hoạt</option>
+                  <option value="Ca">Ca</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Checkbox Ngành nghề */}
+            <div className="mt-5">
+              <p className="mb-1 text-sm font-medium text-gray-700">Ngành nghề</p>
+              <div className="flex flex-wrap gap-2 text-xs text-gray-700">
+                {INDUSTRY_OPTIONS.map((opt) => (
+                  <label
+                    key={opt}
+                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 hover:bg-gray-50 cursor-pointer"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={fields.includes(opt)}
+                      onChange={(e) => {
+                        if (e.target.checked) setFields([...fields, opt]);
+                        else setFields(fields.filter((f) => f !== opt));
+                      }}
+                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    />
+                    {opt}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            {/* Nút thu gọn ở dưới cùng */}
+            <div className="mt-4 flex justify-center border-t border-gray-100 pt-3">
+              <button 
+                onClick={() => setIsFilterOpen(false)}
+                className="text-xs text-gray-500 hover:text-orange-500 hover:underline flex items-center gap-1"
               >
-                <input
-                  type="checkbox"
-                  checked={fields.includes(opt)}
-                  onChange={(e) => {
-                    if (e.target.checked) setFields([...fields, opt]);
-                    else setFields(fields.filter((f) => f !== opt));
-                  }}
-                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                />
-                {opt}
-              </label>
-            ))}
+                <ChevronUp size={14}/> Thu gọn bộ lọc
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
+      {/* --- DANH SÁCH VIỆC LÀM --- */}
       {isLoading && (
         <div className="flex h-48 items-center justify-center text-gray-500">
           <Loader2 className="mr-2 h-5 w-5 animate-spin text-orange-500" />
@@ -340,34 +406,34 @@ const CandidateJobBoard: React.FC = () => {
         <div className="space-y-3">
           {filtered.length === 0 ? (
             <div className="rounded-lg border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Chưa có việc làm nào.
-              </div>
-            ) : (
-              filtered.map((job) => {
-                const locationInfo = resolveJobLocation(job);
-                const locationText = locationInfo.label || "Chưa cập nhật địa điểm";
-                const recruiterId =
-                  job.recruiter_id ||
-                  job.recruiter?.recruiter_id ||
-                  job.recruiter?.id ||
-                  job.recruiter?.user_id;
-                const recruiterLabel =
-                  job.recruiter?.company_name ||
-                  job.recruiter_name ||
-                  job.recruiter?.user?.email ||
-                  job.recruiter?.contact_name ||
-                  "Nhà tuyển dụng";
-                const canViewRecruiter = Boolean(recruiterId);
-                const recruiterIdStr = recruiterId ? String(recruiterId) : "";
-                const goToRecruiter = () => {
-                  if (!canViewRecruiter) return;
-                  navigate(path.CANDIDATE_RECRUITER_VIEW.replace(":id", recruiterIdStr));
-                };
-                return (
-                  <article
-                    key={job.id}
-                    className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-                  >
+              Chưa có việc làm nào phù hợp.
+            </div>
+          ) : (
+            filtered.map((job) => {
+              const locationInfo = resolveJobLocation(job);
+              const locationText = locationInfo.label || "Chưa cập nhật địa điểm";
+              const recruiterId =
+                job.recruiter_id ||
+                job.recruiter?.recruiter_id ||
+                job.recruiter?.id ||
+                job.recruiter?.user_id;
+              const recruiterLabel =
+                job.recruiter?.company_name ||
+                job.recruiter_name ||
+                job.recruiter?.user?.email ||
+                job.recruiter?.contact_name ||
+                "Nhà tuyển dụng";
+              const canViewRecruiter = Boolean(recruiterId);
+              const recruiterIdStr = recruiterId ? String(recruiterId) : "";
+              const goToRecruiter = () => {
+                if (!canViewRecruiter) return;
+                navigate(path.CANDIDATE_RECRUITER_VIEW.replace(":id", recruiterIdStr));
+              };
+              return (
+                <article
+                  key={job.id}
+                  className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+                >
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
                       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-orange-50 text-orange-600">
@@ -605,12 +671,12 @@ const CandidateJobBoard: React.FC = () => {
                   )}
                 </article>
               );
-              })
-            )}
-          </div>
-        )}
-      </CandidateLayout>
-    );
-  };
+            })
+          )}
+        </div>
+      )}
+    </CandidateLayout>
+  );
+};
 
 export default CandidateJobBoard;

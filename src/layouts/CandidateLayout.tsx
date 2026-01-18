@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
+import { toast } from "react-toastify";
 import path from "@/constants/path";
 import {
   Briefcase,
@@ -119,13 +122,27 @@ const menuGroups: MenuGroup[] = [
 ];
 
 export default function CandidateLayout({ title, children }: Props) {
+  const navigate = useNavigate();
+  const { user, setUser } = useUser();
   const { pathname } = useLocation();
-  const { user } = useUser();
   const [open, setOpen] = useState(() => {
     const saved = localStorage.getItem("candidateSidebarOpen");
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  // HÀM ĐĂNG XUẤT CHUẨN
+  const handleLogout = () => {
+    // 1. Xóa bản nháp của user hiện tại (nếu có)
+    if (user?.id) {
+        const draftKey = `workio_candidate_profile_draft_${user.id}`;
+        localStorage.removeItem(draftKey);
+    }
+    clearAuthTokens(); // Xóa LocalStorage
+    setUser(null); // Xóa Context
+    toast.success("Đăng xuất thành công");
+    navigate(path.login); // Chuyển về trang login
+  };
 
   useEffect(() => {
     localStorage.setItem("candidateSidebarOpen", JSON.stringify(open));
@@ -205,7 +222,10 @@ export default function CandidateLayout({ title, children }: Props) {
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const isUrlActive =
-                    pathname.startsWith(item.link) && item.link !== "#";
+                    item.link === path.CANDIDATE_HOME 
+                      ? pathname === item.link // Nếu là trang chủ, phải khớp chính xác 100%
+                      : pathname.startsWith(item.link) && item.link !== "#"; // Các trang khác thì startsWith
+
                   const isParentActive =
                     isUrlActive ||
                     (item.subItems &&
@@ -302,6 +322,7 @@ export default function CandidateLayout({ title, children }: Props) {
 
         <div className="p-4 border-t border-gray-50">
           <button
+            onClick={handleLogout}
             className={`flex items-center w-full px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium ${
               isExpanded ? "gap-3" : "justify-center"
             }`}

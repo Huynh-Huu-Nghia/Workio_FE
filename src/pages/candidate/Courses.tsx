@@ -461,7 +461,7 @@ const CandidateCourses: React.FC = () => {
                     <div>
                       <p className="text-xs uppercase text-gray-400">Sĩ số hiện tại</p>
                       <p className="font-medium text-gray-900">
-                        {selectedCourse.registered_count || 0}/{selectedCourse.capacity || "∞"} học viên
+                        {selectedCourse.registered_count || 0}/{selectedCourse.capacity || "100"} học viên
                       </p>
                     </div>
                     {selectedCourse.training_field && (
@@ -815,7 +815,7 @@ const CandidateCourses: React.FC = () => {
                             <div className="flex items-center gap-2">
                               <BookOpen className="h-4 w-4 text-gray-400" />
                               <span>
-                                {course.registered_count || 0}/{course.capacity || "∞"} học viên
+                                {course.registered_count || 0}/{course.capacity || "100"} học viên 
                               </span>
                             </div>
                           )}

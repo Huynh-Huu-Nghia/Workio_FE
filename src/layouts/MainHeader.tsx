@@ -51,7 +51,6 @@ const MainHeader: React.FC<MainHeaderProps> = ({
         </button>
 
         <div className="h-8 w-8 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm cursor-pointer border border-orange-200">
-          AD
         </div>
       </div>
     </header>

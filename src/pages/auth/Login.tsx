@@ -85,7 +85,7 @@ export default function Login() {
             navigate(path.CENTER_HOME);
             break;
           default:
-            navigate(path.CANDIDATE_JOBS);
+            navigate(path.CANDIDATE_HOME);
             break;
         }
       },

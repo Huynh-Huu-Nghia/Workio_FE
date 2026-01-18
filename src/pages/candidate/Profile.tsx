@@ -17,7 +17,9 @@ const CandidateProfile: React.FC = () => {
   const title = pathtotitle[location.pathname] || "Hồ sơ";
   const { user } = useUser();
   const updateProfile = useUpdateCandidateProfileMutation();
-  const { data: profileRes } = useCandidateProfileQuery();
+  
+  // 1. Lấy thêm hàm refetch để làm mới dữ liệu từ server sau khi lưu
+  const { data: profileRes, refetch } = useCandidateProfileQuery();
 
   const storageKey = useMemo(
     () => `workio_candidate_profile_draft_${user?.id || "guest"}`,
@@ -57,88 +59,101 @@ const CandidateProfile: React.FC = () => {
   >([
     { company_name: "", position: "", start_date: "", end_date: "", description: "" },
   ]);
-  const [prefilled, setPrefilled] = useState(false);
+  
+  // Biến cờ này giúp ngăn chặn việc Server ghi đè nếu đã load bản nháp
+  const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
 
   const [tagLanguage, setTagLanguage] = useState("");
   const [showFieldDropdown, setShowFieldDropdown] = useState(false);
   const normalizeYearInput = (value: string): number | "" =>
     value.trim() === "" ? "" : Number(value);
 
+  // -----------------------------------------------------------
+  // LOGIC LOAD DỮ LIỆU THÔNG MINH (Ưu tiên Nháp > Server)
+  // -----------------------------------------------------------
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setCandidateInfo((prev: any) => ({ ...prev, ...(parsed.candidateInfo || {}) }));
-      setAddressInfo((prev: any) => ({ ...prev, ...(parsed.addressInfo || {}) }));
-      if (Array.isArray(parsed.studyHistories) && parsed.studyHistories.length) {
-        setStudyHistories(parsed.studyHistories);
-      }
-      if (Array.isArray(parsed.workExperiences) && parsed.workExperiences.length) {
-        setWorkExperiences(parsed.workExperiences);
-      }
-    } catch {
-      // ignore
-    }
-  }, [storageKey]);
+    if (!user) return; 
 
-  useEffect(() => {
-    if (prefilled) return;
-    const profile = profileRes?.data;
-    if (!profile) return;
-    setPrefilled(true);
-    setCandidateInfo((prev: any) => ({
-      ...prev,
-      full_name: profile.full_name || "",
-      phone: profile.phone || "",
-      place_of_birth: profile.place_of_birth || "",
-      ethnicity: profile.ethnicity || "Kinh",
-      gender: profile.gender || "Nam",
-      date_of_birth: profile.date_of_birth || "",
-      graduation_rank: profile.graduation_rank || "",
-      computer_skill: profile.computer_skill || "",
-      other_computer_skill: profile.other_computer_skill || "",
-      job_type: profile.job_type || "",
-      working_time: profile.working_time || "",
-      transport: profile.transport || "",
-      minimum_income: profile.minimum_income || 0,
-      languguages: profile.languguages || [],
-      fields_wish: profile.fields_wish || [],
-    }));
-    setAddressInfo({
-      street: profile.address?.street || "",
-      ward_code: profile.address?.ward_code || "",
-      province_code: profile.address?.province_code || "",
-    });
-    if (Array.isArray(profile.study_history) && profile.study_history.length) {
-      setStudyHistories(
-        profile.study_history.map((s: any) => ({
-          school_name: s.school_name || "",
-          major: s.major || "",
-          start_year: s.start_year || "",
-          end_year: s.end_year || "",
-          degree: s.degree || "",
-        }))
-      );
+    // 1. Kiểm tra bản nháp trước
+    const rawDraft = localStorage.getItem(storageKey);
+    
+    if (rawDraft) {
+      try {
+        const parsed = JSON.parse(rawDraft);
+        // Load nháp vào State
+        if (parsed.candidateInfo) setCandidateInfo((prev: any) => ({ ...prev, ...parsed.candidateInfo }));
+        if (parsed.addressInfo) setAddressInfo((prev: any) => ({ ...prev, ...parsed.addressInfo }));
+        if (Array.isArray(parsed.studyHistories)) setStudyHistories(parsed.studyHistories);
+        if (Array.isArray(parsed.workExperiences)) setWorkExperiences(parsed.workExperiences);
+        
+        // Đánh dấu là đã load nháp -> Chặn data server
+        setHasLoadedDraft(true);
+        return; 
+      } catch (e) {
+        console.error("Lỗi đọc bản nháp", e);
+      }
     }
-    if (Array.isArray(profile.work_experience) && profile.work_experience.length) {
-      setWorkExperiences(
-        profile.work_experience.map((w: any) => ({
-          company_name: w.company_name || "",
-          position: w.position || "",
-          start_date: w.start_date || "",
-          end_date: w.end_date || "",
-          description: w.description || "",
-        }))
-      );
+
+    // 2. Nếu không có nháp (hoặc đã bị xóa) thì mới load từ Server
+    // Chỉ chạy khi chưa load nháp
+    if (!hasLoadedDraft) {
+        const profile = profileRes?.data;
+        if (profile) {
+          setCandidateInfo((prev: any) => ({
+            ...prev,
+            full_name: profile.full_name || "",
+            phone: profile.phone || "",
+            place_of_birth: profile.place_of_birth || "",
+            ethnicity: profile.ethnicity || "Kinh",
+            gender: profile.gender || "Nam",
+            date_of_birth: profile.date_of_birth || "",
+            graduation_rank: profile.graduation_rank || "",
+            computer_skill: profile.computer_skill || "",
+            other_computer_skill: profile.other_computer_skill || "",
+            job_type: profile.job_type || "",
+            working_time: profile.working_time || "",
+            transport: profile.transport || "",
+            minimum_income: profile.minimum_income || 0,
+            languguages: profile.languguages || [],
+            fields_wish: profile.fields_wish || [],
+          }));
+          setAddressInfo({
+            street: profile.address?.street || "",
+            ward_code: profile.address?.ward_code || "",
+            province_code: profile.address?.province_code || "",
+          });
+          if (Array.isArray(profile.study_history)) {
+            setStudyHistories(
+              profile.study_history.map((s: any) => ({
+                school_name: s.school_name || "",
+                major: s.major || "",
+                start_year: s.start_year || "",
+                end_year: s.end_year || "",
+                degree: s.degree || "",
+              }))
+            );
+          }
+          if (Array.isArray(profile.work_experience)) {
+            setWorkExperiences(
+              profile.work_experience.map((w: any) => ({
+                company_name: w.company_name || "",
+                position: w.position || "",
+                start_date: w.start_date || "",
+                end_date: w.end_date || "",
+                description: w.description || "",
+              }))
+            );
+          }
+        }
     }
-  }, [profileRes, prefilled]);
+  }, [storageKey, profileRes, user, hasLoadedDraft]); 
 
   const saveDraft = () => {
     localStorage.setItem(
       storageKey,
-      JSON.stringify({ candidateInfo, addressInfo })
+      JSON.stringify({ candidateInfo, addressInfo, studyHistories, workExperiences }) 
     );
+    setHasLoadedDraft(true); // Đảm bảo trạng thái draft được giữ
     toast.info("Đã lưu nháp trên máy.");
   };
 
@@ -166,19 +181,24 @@ const CandidateProfile: React.FC = () => {
             end_date: w.end_date || null,
           })),
       };
+      
       await updateProfile.mutateAsync(payload);
       toast.success("Cập nhật hồ sơ thành công.");
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ candidateInfo, addressInfo, studyHistories, workExperiences })
-      );
+      
+      // Xóa draft sau khi lưu thành công để đồng bộ với server
+      localStorage.removeItem(storageKey); 
+      setHasLoadedDraft(false); // Reset cờ để lần sau load lại từ server mới
+      refetch(); // Gọi API lấy dữ liệu mới nhất
+      
     } catch (e: any) {
       toast.error(e?.response?.data?.msg || "Cập nhật hồ sơ thất bại.");
     }
   };
 
+  // ... (Phần return JSX giữ nguyên như cũ)
   return (
     <CandidateLayout title={title}>
+      {/* ... giữ nguyên nội dung JSX ... */}
       <div className="mx-auto max-w-6xl px-4 py-6">
         <header className="mb-4 flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">

@@ -1,0 +1,3 @@
+.react-calendar { width: 100% !important; border: none !important; font-family: inherit !important; }
+.react-calendar__tile--now { background: #fff7ed !important; color: #ea580c !important; }
+.react-calendar__tile--active { background: #ea580c !important; color: white !important; }
