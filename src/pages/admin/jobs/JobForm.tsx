@@ -46,29 +46,31 @@ export default function JobFormAdmin() {
   const [languages, setLanguages] = useState<string[]>([]);
   const [languageInput, setLanguageInput] = useState("");
 
-  const { register, handleSubmit, reset, setValue, watch } = useForm<FormValues>({
-    defaultValues: {
-      position: "",
-      recruiter_id: "",
-      available_quantity: undefined,
-      monthly_salary: undefined,
-      recruitment_type: "Full-time",
-      status: "Đang mở",
-      duration: "",
-      application_deadline_from: "",
-      application_deadline_to: "",
-      requirements: "",
-      support_info: "",
-      graduation_rank: "",
-      computer_skill: "",
-      job_type: "",
-      working_time: "",
-      other_requirements: "",
-    },
-  });
+  const { register, handleSubmit, reset, setValue, watch } =
+    useForm<FormValues>({
+      defaultValues: {
+        position: "",
+        recruiter_id: "",
+        available_quantity: undefined,
+        monthly_salary: undefined,
+        recruitment_type: "Full-time",
+        status: "Đang mở",
+        duration: "",
+        application_deadline_from: "",
+        application_deadline_to: "",
+        requirements: "",
+        support_info: "",
+        graduation_rank: "",
+        computer_skill: "",
+        job_type: "",
+        working_time: "",
+        other_requirements: "",
+      },
+    });
 
   useEffect(() => {
     if (!detailRes?.data || !isEdit) return;
+    console.log("Detail data:", detailRes.data);
     const job = detailRes.data as any;
     reset({
       position: job.position || "",
@@ -89,73 +91,79 @@ export default function JobFormAdmin() {
       other_requirements: job.other_requirements || "",
     });
     setFields(
-      Array.isArray(job.fields) ? job.fields : job.fields ? [job.fields] : []
+      Array.isArray(job.fields) ? job.fields : job.fields ? [job.fields] : [],
     );
     setBenefits(
-      Array.isArray(job.benefits) ? job.benefits : job.benefits ? [job.benefits] : []
+      Array.isArray(job.benefits)
+        ? job.benefits
+        : job.benefits
+          ? [job.benefits]
+          : [],
     );
     setLanguages(
       Array.isArray(job.languguages)
         ? job.languguages
         : job.languguages
-        ? [job.languguages]
-        : []
+          ? [job.languguages]
+          : [],
     );
   }, [detailRes, isEdit, reset]);
 
   const recruiters = useMemo(
     () => (recruiterRes as any)?.data || [],
-    [recruiterRes]
+    [recruiterRes],
   );
 
   const selectedRecruiterId = watch("recruiter_id");
   const selectedRecruiter = useMemo(
     () => recruiters.find((r: any) => r.recruiter_id === selectedRecruiterId),
-    [recruiters, selectedRecruiterId]
+    [recruiters, selectedRecruiterId],
   );
 
   const onSubmit = handleSubmit(async (values) => {
-  try {
-    const payload = {
-  ...values,
-  benefits,
-  fields,
-  languages,
-  } as any;
+    try {
+      const payload = {
+        ...values,
+        benefits,
+        fields,
+        languages,
+      } as any;
 
+      if (isEdit && id) {
+        const res = await updateMutation.mutateAsync({
+          jobPostId: id,
+          payload,
+        });
 
-    if (isEdit && id) {
-      const res = await updateMutation.mutateAsync({
-        jobPostId: id,
-        payload,
-      });
-
-      if ((res as any)?.err === 0) {
-        toast.success((res as any)?.mes || "Cập nhật tin thành công");
-        navigate(path.ADMIN_JOB_LIST);
+        if ((res as any)?.err === 0) {
+          toast.success((res as any)?.mes || "Cập nhật tin thành công");
+          navigate(path.ADMIN_JOB_LIST);
+        } else {
+          toast.error((res as any)?.mes || "Cập nhật thất bại");
+        }
       } else {
-        toast.error((res as any)?.mes || "Cập nhật thất bại");
-      }
-    } else {
-      const res = await createMutation.mutateAsync({
-        recruiterId: values.recruiter_id,
-        payload,
-      });
+        const res = await createMutation.mutateAsync({
+          recruiterId: values.recruiter_id,
+          payload,
+        });
 
-      if ((res as any)?.err === 0) {
-        toast.success((res as any)?.mes || "Tạo tin thành công");
-        navigate(path.ADMIN_JOB_LIST);
-      } else {
-        toast.error((res as any)?.mes || "Tạo tin thất bại");
+        if ((res as any)?.err === 0) {
+          toast.success((res as any)?.mes || "Tạo tin thành công");
+          navigate(path.ADMIN_JOB_LIST);
+        } else {
+          toast.error((res as any)?.mes || "Tạo tin thất bại");
+        }
       }
+    } catch (e: any) {
+      toast.error(e?.response?.data?.mes || "Thao tác thất bại");
     }
-  } catch (e: any) {
-    toast.error(e?.response?.data?.mes || "Thao tác thất bại");
-  }
-});
+  });
 
   return (
-    <AdminLayout title={isEdit ? "Sửa tin tuyển dụng" : "Thêm tin tuyển dụng"} activeMenu="jobs">
+    <AdminLayout
+      title={isEdit ? "Sửa tin tuyển dụng" : "Thêm tin tuyển dụng"}
+      activeMenu="jobs"
+    >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
@@ -164,7 +172,9 @@ export default function JobFormAdmin() {
         </div>
         <form onSubmit={onSubmit} className="grid gap-4 p-5 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Vị trí *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Vị trí *
+            </label>
             <input
               {...register("position", { required: true })}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -200,7 +210,9 @@ export default function JobFormAdmin() {
             )}
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Số lượng</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Số lượng
+            </label>
             <input
               type="number"
               {...register("available_quantity")}
@@ -209,7 +221,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mức lương</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Mức lương
+            </label>
             <input
               type="number"
               {...register("monthly_salary")}
@@ -218,7 +232,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hình thức</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hình thức
+            </label>
             <select
               {...register("recruitment_type")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -230,7 +246,9 @@ export default function JobFormAdmin() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Trạng thái</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Trạng thái
+            </label>
             <select
               {...register("status")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -242,7 +260,9 @@ export default function JobFormAdmin() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Thời hạn</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Thời hạn
+            </label>
             <input
               {...register("duration")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -250,7 +270,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hạn nộp từ</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hạn nộp từ
+            </label>
             <input
               type="date"
               {...register("application_deadline_from")}
@@ -258,7 +280,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hạn nộp đến</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hạn nộp đến
+            </label>
             <input
               type="date"
               {...register("application_deadline_to")}
@@ -266,7 +290,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Loại công việc</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Loại công việc
+            </label>
             <select
               {...register("job_type")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -280,7 +306,9 @@ export default function JobFormAdmin() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Giờ làm việc</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Giờ làm việc
+            </label>
             <select
               {...register("working_time")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -292,7 +320,9 @@ export default function JobFormAdmin() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Xếp loại tốt nghiệp</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Xếp loại tốt nghiệp
+            </label>
             <input
               {...register("graduation_rank")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -300,7 +330,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Kỹ năng máy tính</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Kỹ năng máy tính
+            </label>
             <input
               {...register("computer_skill")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -308,7 +340,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Yêu cầu</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Yêu cầu
+            </label>
             <textarea
               {...register("requirements")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -317,7 +351,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Yêu cầu khác</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Yêu cầu khác
+            </label>
             <textarea
               {...register("other_requirements")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -326,7 +362,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hỗ trợ</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hỗ trợ
+            </label>
             <input
               {...register("support_info")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -334,7 +372,9 @@ export default function JobFormAdmin() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Phúc lợi (Enter để thêm)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Phúc lợi (Enter để thêm)
+            </label>
             <div className="mt-1 flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100">
               {benefits.map((b) => (
                 <span
@@ -358,7 +398,8 @@ export default function JobFormAdmin() {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     const val = benefitInput.trim();
-                    if (val && !benefits.includes(val)) setBenefits([...benefits, val]);
+                    if (val && !benefits.includes(val))
+                      setBenefits([...benefits, val]);
                     setBenefitInput("");
                   }
                 }}
@@ -368,7 +409,9 @@ export default function JobFormAdmin() {
             </div>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Ngôn ngữ (Enter để thêm)</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Ngôn ngữ (Enter để thêm)
+            </label>
             <div className="mt-1 flex flex-wrap gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm focus-within:border-orange-500 focus-within:ring-2 focus-within:ring-orange-100">
               {languages.map((lang) => (
                 <span
@@ -378,7 +421,9 @@ export default function JobFormAdmin() {
                   {lang}
                   <button
                     type="button"
-                    onClick={() => setLanguages(languages.filter((l) => l !== lang))}
+                    onClick={() =>
+                      setLanguages(languages.filter((l) => l !== lang))
+                    }
                     className="text-purple-500 hover:text-purple-700"
                   >
                     ×
@@ -392,7 +437,8 @@ export default function JobFormAdmin() {
                   if (e.key === "Enter") {
                     e.preventDefault();
                     const val = languageInput.trim();
-                    if (val && !languages.includes(val)) setLanguages([...languages, val]);
+                    if (val && !languages.includes(val))
+                      setLanguages([...languages, val]);
                     setLanguageInput("");
                   }
                 }}
@@ -402,7 +448,9 @@ export default function JobFormAdmin() {
             </div>
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Ngành liên quan</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Ngành liên quan
+            </label>
             <div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-700">
               {INDUSTRY_OPTIONS.map((opt) => (
                 <label
@@ -425,19 +473,28 @@ export default function JobFormAdmin() {
           </div>
 
           <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-              className="w-full rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 disabled:opacity-60"
-            >
-              {isEdit
-                ? updateMutation.isPending
-                  ? "Đang lưu..."
-                  : "Lưu thay đổi"
-                : createMutation.isPending
-                ? "Đang tạo..."
-                : "Tạo tin"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => navigate(path.ADMIN_JOB_LIST)}
+                className="flex-1 rounded-lg border border-gray-200 px-4 py-3 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Quay lại
+              </button>
+              <button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="flex-1 rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 disabled:opacity-60"
+              >
+                {isEdit
+                  ? updateMutation.isPending
+                    ? "Đang lưu..."
+                    : "Lưu thay đổi"
+                  : createMutation.isPending
+                    ? "Đang tạo..."
+                    : "Tạo tin"}
+              </button>
+            </div>
           </div>
         </form>
       </div>

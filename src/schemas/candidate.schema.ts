@@ -67,12 +67,69 @@ export const createCandidateSchema = z.object({
   workExperiences: z.array(workExperienceSchema),
 });
 
-export const updateCandidateSchema = createCandidateSchema.extend({
+export const updateCandidateSchema = z.object({
+  email: z.string().email("Email không hợp lệ"),
   password: z
     .string()
     .min(6, "Mật khẩu phải có ít nhất 6 ký tự")
     .optional()
     .or(z.literal("")),
+
+  candidateInfo: z.object({
+    full_name: z.string().min(1, "Họ tên không được để trống"),
+    gender: z.enum(["Nam", "Nữ", "Khác"]).optional(),
+    date_of_birth: z
+      .string()
+      .optional()
+      .refine((date) => !date || new Date(date).toString() !== "Invalid Date", {
+        message: "Ngày sinh không hợp lệ",
+      }),
+    place_of_birth: z.string().optional(),
+    ethnicity: z.string().optional(),
+    phone: z
+      .string()
+      .optional()
+      .refine(
+        (phone) => !phone || /(84|0[3|5|7|8|9])+([0-9]{8})\b/.test(phone),
+        {
+          message: "Số điện thoại không hợp lệ",
+        },
+      ),
+
+    // 🔥 MẢNG: Ngôn ngữ (Lưu ý: BE trả về key 'languguages' có thể do typo, ta giữ nguyên để khớp API)
+    languguages: z.array(z.string()).optional(),
+
+    // Các trường chọn (Dropdown)
+    graduation_rank: z.string().optional(),
+    computer_skill: z.string().optional(),
+    other_computer_skill: z.string().optional(),
+
+    // 🔥 MẢNG: Ngành nghề mong muốn
+    fields_wish: z.array(z.string()).optional(),
+
+    job_type: z.string().optional(),
+    working_time: z.string().optional(),
+    transport: z.string().optional(),
+
+    // Tiền tệ
+    minimum_income: z.coerce
+      .number()
+      .optional()
+      .refine((val) => val === undefined || val >= 0, {
+        message: "Mức lương mong muốn phải lớn hơn 0",
+      }),
+  }),
+
+  addressInfo: z
+    .object({
+      street: z.string().optional(),
+      ward_code: z.string().optional(),
+      province_code: z.string().optional(),
+    })
+    .optional(),
+
+  studyHistories: z.array(studyHistorySchema).optional(),
+  workExperiences: z.array(workExperienceSchema).optional(),
 });
 
 export type CreateCandidateSchema = z.infer<typeof createCandidateSchema>;

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Briefcase,
@@ -15,6 +15,9 @@ import {
 } from "lucide-react";
 
 import LOGO_SRC from "@/assets/networking.png";
+import { useUser } from "@/context/user/user.context";
+import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
+import { toast } from "react-toastify";
 
 export interface SidebarProps {
   isOpen: boolean;
@@ -44,7 +47,29 @@ interface MenuGroup {
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout: contextLogout } = useUser();
+  const logoutMutation = useLogoutMutation();
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+
+  const handleLogout = async () => {
+    if (!user?.role?.value) return;
+
+    try {
+      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
+      // Clear user context
+      contextLogout();
+      // Navigate to login
+      navigate("/login");
+      toast.success("Đăng xuất thành công!");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      // Even if API call fails, still logout locally
+      contextLogout();
+      navigate("/login");
+      toast.success("Đăng xuất thành công!");
+    }
+  };
 
   const menuGroups: MenuGroup[] = [
     {
@@ -167,8 +192,16 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
           icon: <Building2 size={20} />,
           link: "#",
           subItems: [
-            { id: "center-list", label: "Danh sách trung tâm", link: "/admin/centers" },
-            { id: "center-create", label: "Thêm trung tâm", link: "/admin/centers/create" },
+            {
+              id: "center-list",
+              label: "Danh sách trung tâm",
+              link: "/admin/centers",
+            },
+            {
+              id: "center-create",
+              label: "Thêm trung tâm",
+              link: "/admin/centers/create",
+            },
           ],
         },
         {
@@ -211,11 +244,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
       group.items.forEach((item) => {
         if (item.subItems) {
           const hasActiveSub = item.subItems.some((sub) =>
-            currentPath.startsWith(sub.link)
+            currentPath.startsWith(sub.link),
           );
           if (hasActiveSub) {
             setOpenMenus((prev) =>
-              !prev.includes(item.id) ? [...prev, item.id] : prev
+              !prev.includes(item.id) ? [...prev, item.id] : prev,
             );
           }
         }
@@ -225,7 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
 
   const toggleMenu = (id: string) => {
     setOpenMenus((prev) =>
-      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
     );
   };
 
@@ -290,7 +323,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
                   isUrlActive ||
                   (item.subItems &&
                     item.subItems.some((sub) =>
-                      location.pathname.startsWith(sub.link)
+                      location.pathname.startsWith(sub.link),
                     ));
 
                 const isExpanded = openMenus.includes(item.id);
@@ -387,12 +420,18 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
 
       <div className="p-4 border-t border-gray-50">
         <button
-          className={`flex items-center w-full px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium ${
+          onClick={handleLogout}
+          disabled={logoutMutation.isPending}
+          className={`flex items-center w-full px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed ${
             isOpen ? "gap-3" : "justify-center"
           }`}
         >
           <LogOut size={18} />
-          {isOpen && <span>Đăng xuất</span>}
+          {isOpen && (
+            <span>
+              {logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}
+            </span>
+          )}
         </button>
       </div>
     </aside>

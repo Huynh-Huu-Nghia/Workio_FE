@@ -46,7 +46,10 @@ const CourseSection = ({ title, courses }: CourseSectionProps) => {
           const status = course?.participation?.status;
           return (
             <div
-              key={course?.course_id || `${course?.course_name}-${course?.center_id}`}
+              key={
+                course?.course_id ||
+                `${course?.course_name}-${course?.center_id}`
+              }
               className="rounded-lg border border-gray-100 bg-slate-50 p-4 shadow-sm"
             >
               <div className="flex items-start justify-between gap-3">
@@ -60,7 +63,7 @@ const CourseSection = ({ title, courses }: CourseSectionProps) => {
                 </div>
                 <span
                   className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${getCourseBadgeClass(
-                    status
+                    status,
                   )}`}
                 >
                   {getCourseStatusLabel(status)}
@@ -68,22 +71,39 @@ const CourseSection = ({ title, courses }: CourseSectionProps) => {
               </div>
               <div className="mt-3 grid grid-cols-1 gap-2 text-xs text-gray-600 md:grid-cols-2">
                 <div>
-                  <span className="font-semibold text-gray-700">Ngành đào tạo:</span> {course?.training_field || "—"}
+                  <span className="font-semibold text-gray-700">
+                    Ngành đào tạo:
+                  </span>{" "}
+                  {course?.training_field || "—"}
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Thời gian:</span> {formatCourseDate(course?.start_date)} - {formatCourseDate(course?.end_date)}
+                  <span className="font-semibold text-gray-700">
+                    Thời gian:
+                  </span>{" "}
+                  {formatCourseDate(course?.start_date)} -{" "}
+                  {formatCourseDate(course?.end_date)}
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Điểm danh:</span> {course?.participation?.attendance ?? "—"} buổi
+                  <span className="font-semibold text-gray-700">
+                    Điểm danh:
+                  </span>{" "}
+                  {course?.participation?.attendance ?? "—"} buổi
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Học phí:</span> {course?.participation?.tuition_confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
+                  <span className="font-semibold text-gray-700">Học phí:</span>{" "}
+                  {course?.participation?.tuition_confirmed
+                    ? "Đã xác nhận"
+                    : "Chưa xác nhận"}
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Ngày ký:</span> {formatCourseDate(course?.participation?.signed_at)}
+                  <span className="font-semibold text-gray-700">Ngày ký:</span>{" "}
+                  {formatCourseDate(course?.participation?.signed_at)}
                 </div>
                 <div>
-                  <span className="font-semibold text-gray-700">Nghề đào tạo:</span> {course?.occupation_type || "—"}
+                  <span className="font-semibold text-gray-700">
+                    Nghề đào tạo:
+                  </span>{" "}
+                  {course?.occupation_type || "—"}
                 </div>
               </div>
               {course?.participation?.notes && (
@@ -104,19 +124,24 @@ export default function CandidateView() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: apiResponse, isLoading, isError } =
-    useGetCandidateDetailAdminQuery(id);
+  const {
+    data: apiResponse,
+    isLoading,
+    isError,
+  } = useGetCandidateDetailAdminQuery(id);
   const deleteMutation = useDeleteCandidateAdminMutation();
 
   const candidate = apiResponse?.data as AdminCandidateDetail | undefined;
-  const trainingHistory: CandidateTrainingRecord[] = Array.isArray(candidate?.training_history)
+  const trainingHistory: CandidateTrainingRecord[] = Array.isArray(
+    candidate?.training_history,
+  )
     ? candidate.training_history
     : [];
   const ongoingCourses = trainingHistory.filter(
-    (course) => course?.participation?.status === "dang_hoc"
+    (course) => course?.participation?.status === "dang_hoc",
   );
   const completedCourses = trainingHistory.filter(
-    (course) => course?.participation?.status === "da_hoc"
+    (course) => course?.participation?.status === "da_hoc",
   );
   const otherCourses = trainingHistory.filter((course) => {
     const status = course?.participation?.status ?? "";
@@ -143,7 +168,8 @@ export default function CandidateView() {
   };
 
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -200,51 +226,45 @@ export default function CandidateView() {
         )}
 
         {!isLoading && !isError && candidate && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            <div className="lg:col-span-1 rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 flex items-center justify-center font-bold text-xl border border-orange-100">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
+            <div className="lg:col-span-1 rounded-xl border border-gray-200/60 bg-white p-4 shadow-sm">
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 flex items-center justify-center font-bold text-lg border border-orange-100">
                   {candidate.full_name?.charAt(0) || "U"}
                 </div>
-                <div>
-                  <h2 className="text-lg font-bold text-gray-800">
+                <div className="flex-1 min-w-0">
+                  <h2 className="text-base font-bold text-gray-800 truncate">
                     {candidate.full_name}
                   </h2>
-                  <p className="text-sm text-gray-500">
+                  <p className="text-sm text-gray-500 truncate">
                     {candidate.candidate?.email || candidate.email || "—"}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between gap-3">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between gap-2">
                   <span className="text-gray-500">SĐT</span>
-                  <span className="font-medium text-gray-800">
+                  <span className="font-medium text-gray-800 truncate">
                     {candidate.phone || "—"}
                   </span>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-gray-500">Giới tính</span>
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Xác thực</span>
                   <span className="font-medium text-gray-800">
-                    {candidate.gender || "—"}
+                    {candidate.is_verified ? "✓" : "✗"}
                   </span>
                 </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-gray-500">Ngày sinh</span>
+                <div className="flex justify-between gap-2">
+                  <span className="text-gray-500">Việc làm</span>
                   <span className="font-medium text-gray-800">
-                    {candidate.date_of_birth || "—"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-3">
-                  <span className="text-gray-500">Trình độ</span>
-                  <span className="font-medium text-gray-800">
-                    {candidate.graduation_rank || "—"}
+                    {candidate.is_employed ? "Có" : "Tìm"}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="lg:col-span-2 space-y-5">
+            <div className="lg:col-span-3 space-y-5">
               <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-800 mb-3">
                   Địa chỉ
@@ -259,7 +279,9 @@ export default function CandidateView() {
                   <div>
                     <div className="text-gray-500">Phường/Xã</div>
                     <div className="font-medium text-gray-800">
-                      {candidate.address?.ward || candidate.address?.ward_code || "—"}
+                      {candidate.address?.ward ||
+                        candidate.address?.ward_code ||
+                        "—"}
                     </div>
                   </div>
                   <div>
@@ -285,7 +307,10 @@ export default function CandidateView() {
                       <ul className="space-y-2">
                         {candidate.study_history.map((item: any) => (
                           <li
-                            key={item?.id || `${item?.school_name}-${item?.start_year}`}
+                            key={
+                              item?.id ||
+                              `${item?.school_name}-${item?.start_year}`
+                            }
                             className="rounded-lg bg-slate-50 p-3 border border-gray-100"
                           >
                             <div className="font-medium text-gray-800">
@@ -313,14 +338,18 @@ export default function CandidateView() {
                       <ul className="space-y-2">
                         {candidate.work_experience.map((item: any) => (
                           <li
-                            key={item?.id || `${item?.company_name}-${item?.start_date}`}
+                            key={
+                              item?.id ||
+                              `${item?.company_name}-${item?.start_date}`
+                            }
                             className="rounded-lg bg-slate-50 p-3 border border-gray-100"
                           >
                             <div className="font-medium text-gray-800">
                               {item?.company_name || "—"}
                             </div>
                             <div className="text-gray-600">
-                              {item?.position || "—"} • {item?.start_date || "—"} -{" "}
+                              {item?.position || "—"} •{" "}
+                              {item?.start_date || "—"} -{" "}
                               {item?.end_date || "—"}
                             </div>
                           </li>
@@ -338,7 +367,9 @@ export default function CandidateView() {
                   <div className="flex items-center gap-2">
                     <BookOpen className="h-5 w-5 text-orange-500" />
                     <div>
-                      <h3 className="text-sm font-bold text-gray-800">Lộ trình đào tạo</h3>
+                      <h3 className="text-sm font-bold text-gray-800">
+                        Lộ trình đào tạo
+                      </h3>
                       <p className="text-xs text-gray-500">
                         Theo dõi các khóa học đang theo học và đã hoàn thành
                       </p>
@@ -349,11 +380,19 @@ export default function CandidateView() {
                   </span>
                 </div>
                 {trainingHistory.length === 0 ? (
-                  <div className="mt-3 text-sm text-gray-500">Chưa có dữ liệu khóa học.</div>
+                  <div className="mt-3 text-sm text-gray-500">
+                    Chưa có dữ liệu khóa học.
+                  </div>
                 ) : (
                   <div className="mt-4 space-y-5">
-                    <CourseSection title="Khóa đang theo học" courses={ongoingCourses} />
-                    <CourseSection title="Khóa đã hoàn thành" courses={completedCourses} />
+                    <CourseSection
+                      title="Khóa đang theo học"
+                      courses={ongoingCourses}
+                    />
+                    <CourseSection
+                      title="Khóa đã hoàn thành"
+                      courses={completedCourses}
+                    />
                     <CourseSection title="Khóa khác" courses={otherCourses} />
                   </div>
                 )}
@@ -420,7 +459,10 @@ export default function CandidateView() {
                       </thead>
                       <tbody className="divide-y divide-gray-50">
                         {candidate.applied_jobs.map((job: any) => (
-                          <tr key={job.job_post_id} className="hover:bg-slate-50">
+                          <tr
+                            key={job.job_post_id}
+                            className="hover:bg-slate-50"
+                          >
                             <td className="p-3 font-semibold text-gray-800">
                               {job.position || "—"}
                             </td>

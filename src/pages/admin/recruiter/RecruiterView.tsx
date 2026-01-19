@@ -31,10 +31,20 @@ const parseList = (value?: string[] | string | null) => {
 const formatNumber = (value?: number | null) =>
   new Intl.NumberFormat("vi-VN").format(value ?? 0);
 
-const InfoItem = ({ label, value }: { label: string; value?: string | number | null }) => (
+const InfoItem = ({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number | null;
+}) => (
   <div>
-    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">{label}</p>
-    <p className="text-sm font-semibold text-gray-800">{value || "Chưa cập nhật"}</p>
+    <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+      {label}
+    </p>
+    <p className="text-sm font-semibold text-gray-800">
+      {value || "Chưa cập nhật"}
+    </p>
   </div>
 );
 
@@ -68,7 +78,8 @@ export default function RecruiterView() {
   const relatedFields = recruiter ? parseList(recruiter.related_fields) : [];
   const industries = recruiter ? parseList(recruiter.industry) : [];
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -112,7 +123,7 @@ export default function RecruiterView() {
 
         {!isLoading && !isError && recruiter && (
           <>
-            <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
               {[
                 {
                   id: "status",
@@ -131,18 +142,25 @@ export default function RecruiterView() {
                   accent: "bg-indigo-50 text-indigo-600",
                 },
                 {
-                  id: "fields",
-                  label: "Lĩnh vực chính",
-                  value: primaryFields[0] || "Chưa cập nhật",
-                  icon: Building2,
+                  id: "total_jobs",
+                  label: "Tổng tin đăng",
+                  value: formatNumber(recruiter.total_job_posts),
+                  icon: Briefcase,
                   accent: "bg-blue-50 text-blue-600",
                 },
                 {
-                  id: "industry",
-                  label: "Ngành ưu tiên",
-                  value: industries[0] || "Chưa cập nhật",
-                  icon: Briefcase,
+                  id: "active_jobs",
+                  label: "Tin đang mở",
+                  value: formatNumber(recruiter.active_job_posts),
+                  icon: Building2,
                   accent: "bg-orange-50 text-orange-600",
+                },
+                {
+                  id: "applications",
+                  label: "Tổng ứng tuyển",
+                  value: formatNumber(recruiter.total_applications),
+                  icon: Mail,
+                  accent: "bg-purple-50 text-purple-600",
                 },
               ].map((stat) => (
                 <div
@@ -228,13 +246,15 @@ export default function RecruiterView() {
                     </div>
                     <BadgeCheck
                       className={`h-10 w-10 ${
-                        recruiter.is_verified ? "text-emerald-500" : "text-amber-500"
+                        recruiter.is_verified
+                          ? "text-emerald-500"
+                          : "text-amber-500"
                       }`}
                     />
                   </div>
                   <p className="mt-3 text-sm text-gray-500">
-                    Trạng thái được đồng bộ từ hệ thống quản trị dựa trên giấy tờ pháp
-                    lý và lịch sử hợp tác với Workio.
+                    Trạng thái được đồng bộ từ hệ thống quản trị dựa trên giấy
+                    tờ pháp lý và lịch sử hợp tác với Workio.
                   </p>
                 </div>
               </div>
@@ -252,11 +272,15 @@ export default function RecruiterView() {
                     </div>
                   </div>
                   <p className="mt-4 text-sm leading-relaxed text-gray-700">
-                    {recruiter.description || "Doanh nghiệp chưa cập nhật mô tả chi tiết."}
+                    {recruiter.description ||
+                      "Doanh nghiệp chưa cập nhật mô tả chi tiết."}
                   </p>
                   <div className="mt-6 grid gap-5 md:grid-cols-2">
                     <TagGroup label="Lĩnh vực chính" items={primaryFields} />
-                    <TagGroup label="Lĩnh vực liên quan" items={relatedFields} />
+                    <TagGroup
+                      label="Lĩnh vực liên quan"
+                      items={relatedFields}
+                    />
                   </div>
                   <div className="mt-5">
                     <TagGroup label="Ngành ưu tiên" items={industries} />
@@ -269,11 +293,22 @@ export default function RecruiterView() {
                   </h3>
                   <div className="grid gap-4 sm:grid-cols-2">
                     <InfoItem label="Website" value={recruiter.website} />
-                    <InfoItem label="Email liên hệ" value={recruiter?.user?.email || recruiter.email} />
+                    <InfoItem
+                      label="Email liên hệ"
+                      value={recruiter?.user?.email || recruiter.email}
+                    />
                     <InfoItem label="Điện thoại" value={recruiter.phone} />
                     <InfoItem label="Mã số thuế" value={recruiter.tax_number} />
-                    <InfoItem label="Đã tuyển" value={formatNumber(recruiter.hired_count)} />
-                    <InfoItem label="Trạng thái" value={recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"} />
+                    <InfoItem
+                      label="Đã tuyển"
+                      value={formatNumber(recruiter.hired_count)}
+                    />
+                    <InfoItem
+                      label="Trạng thái"
+                      value={
+                        recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"
+                      }
+                    />
                   </div>
                 </div>
 
@@ -281,8 +316,12 @@ export default function RecruiterView() {
                   <div className="flex items-center gap-3">
                     <MapPin className="h-5 w-5 text-orange-500" />
                     <div>
-                      <p className="text-xs uppercase tracking-widest text-gray-400">Địa chỉ hoạt động</p>
-                      <h3 className="text-base font-bold text-gray-900">Thông tin địa lý & khu vực</h3>
+                      <p className="text-xs uppercase tracking-widest text-gray-400">
+                        Địa chỉ hoạt động
+                      </p>
+                      <h3 className="text-base font-bold text-gray-900">
+                        Thông tin địa lý & khu vực
+                      </h3>
                     </div>
                   </div>
                   <div className="mt-4 grid gap-4 md:grid-cols-3 text-sm">
@@ -301,12 +340,15 @@ export default function RecruiterView() {
                     <div>
                       <p className="text-gray-500">Tỉnh/TP</p>
                       <p className="font-semibold text-gray-900">
-                        {recruiter.address?.province?.name || recruiter.address?.province_code || "—"}
+                        {recruiter.address?.province?.name ||
+                          recruiter.address?.province_code ||
+                          "—"}
                       </p>
                     </div>
                   </div>
                   <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-gray-600">
-                    Các thông tin địa lý này phục vụ đối chiếu khu vực tuyển dụng và giao tiếp với trung tâm đào tạo.
+                    Các thông tin địa lý này phục vụ đối chiếu khu vực tuyển
+                    dụng và giao tiếp với trung tâm đào tạo.
                   </div>
                 </div>
               </div>

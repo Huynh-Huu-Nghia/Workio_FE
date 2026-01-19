@@ -80,7 +80,12 @@ export const useForgotPasswordMutation = () => {
 // --- PHẦN RESET PASSWORD (Giữ nguyên) ---
 const resetPasswordRequest = (payload: ResetPasswordFormSchema) => {
   // Tách role và confirm_password ra, chỉ gửi password và token đi
-  const { role, confirm_password: _confirm_password, token, ...resetData } = payload;
+  const {
+    role,
+    confirm_password: _confirm_password,
+    token,
+    ...resetData
+  } = payload;
   let apiUrl = "";
   switch (role) {
     case "Admin":
@@ -139,29 +144,6 @@ export const refreshTokenRequest = async ({
 export const useRefreshTokenMutation = () =>
   useMutation({ mutationFn: refreshTokenRequest });
 
-export const logoutRequest = async ({
-  role,
-}: {
-  role: AuthRole;
-}) => {
-  let apiUrl = "";
-  switch (role) {
-    case "Admin":
-      apiUrl = "/admin-auth/logout";
-      break;
-    case "Recruiter":
-      apiUrl = "/recruiter/auth/logout";
-      break;
-    case "Center":
-      apiUrl = "/center/auth/logout";
-      break;
-    default:
-      apiUrl = "/candidate/auth/logout";
-      break;
-  }
-  return axiosInstance.post(apiUrl, {});
-};
-
 export const useLogoutMutation = () =>
   useMutation({ mutationFn: logoutRequest });
 
@@ -174,7 +156,9 @@ export const verifyEmailRequest = async ({
   token: string;
 }) => {
   const apiUrl =
-    role === "Recruiter" ? "/recruiter/auth/verified" : "/candidate/auth/verified";
+    role === "Recruiter"
+      ? "/recruiter/auth/verified"
+      : "/candidate/auth/verified";
   return axiosInstance.get(apiUrl, { params: { token } });
 };
 
@@ -190,4 +174,30 @@ export const verifyResetPasswordTokenRequest = async ({
       ? "/recruiter/auth/reset-password"
       : "/candidate/auth/reset-password";
   return axiosInstance.get(apiUrl, { params: { token } });
+};
+
+// --- PHẦN LOGOUT ---
+interface LogoutResponse {
+  err: number;
+  mes: string;
+}
+
+const logoutRequest = ({ role }: { role: AuthRole }) => {
+  let apiUrl = "";
+  switch (role) {
+    case "Admin":
+      apiUrl = "/admin-auth/logout";
+      break;
+    case "Recruiter":
+      apiUrl = "/recruiter/auth/logout";
+      break;
+    case "Center":
+      apiUrl = "/center/auth/logout";
+      break;
+    default:
+      apiUrl = "/candidate/auth/logout";
+      break;
+  }
+  console.log(`🚪 Logout [${role}] -> ${apiUrl}`);
+  return axiosInstance.post<LogoutResponse>(apiUrl);
 };

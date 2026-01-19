@@ -39,11 +39,15 @@ export default function CandidateEdit() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: detailRes, isLoading, isError } =
-    useGetCandidateDetailAdminQuery(id);
+  const {
+    data: detailRes,
+    isLoading,
+    isError,
+  } = useGetCandidateDetailAdminQuery(id);
   const updateMutation = useUpdateCandidateAdminMutation();
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -108,29 +112,44 @@ export default function CandidateEdit() {
 
     setValue("candidateInfo.full_name", candidate.full_name || "");
     setValue("candidateInfo.gender", candidate.gender || "Nam");
-    setValue("candidateInfo.date_of_birth", safeFormatDate(candidate.date_of_birth));
+    setValue(
+      "candidateInfo.date_of_birth",
+      safeFormatDate(candidate.date_of_birth),
+    );
     setValue("candidateInfo.place_of_birth", candidate.place_of_birth || "");
     setValue("candidateInfo.ethnicity", candidate.ethnicity || "Kinh");
     setValue("candidateInfo.phone", candidate.phone || "");
     setValue("candidateInfo.graduation_rank", candidate.graduation_rank || "");
     setValue("candidateInfo.computer_skill", candidate.computer_skill || "");
-    setValue("candidateInfo.other_computer_skill", candidate.other_computer_skill || "");
+    setValue(
+      "candidateInfo.other_computer_skill",
+      candidate.other_computer_skill || "",
+    );
     setValue(
       "candidateInfo.languguages",
-      Array.isArray(candidate.languguages) ? candidate.languguages : []
+      Array.isArray(candidate.languguages) ? candidate.languguages : [],
     );
     setValue(
       "candidateInfo.fields_wish",
-      Array.isArray(candidate.fields_wish) ? candidate.fields_wish : []
+      Array.isArray(candidate.fields_wish) ? candidate.fields_wish : [],
     );
     setValue("candidateInfo.job_type", candidate.job_type || "");
     setValue("candidateInfo.working_time", candidate.working_time || "");
     setValue("candidateInfo.transport", candidate.transport || "");
-    setValue("candidateInfo.minimum_income", Number(candidate.minimum_income || 0));
+    setValue(
+      "candidateInfo.minimum_income",
+      Number(candidate.minimum_income || 0),
+    );
 
     setValue("addressInfo.street", candidate?.address?.street || "");
-    setValue("addressInfo.ward_code", candidate?.address?.ward_code || candidate?.address?.ward || "");
-    setValue("addressInfo.province_code", candidate?.address?.province_code || "");
+    setValue(
+      "addressInfo.ward_code",
+      candidate?.address?.ward_code || candidate?.address?.ward || "",
+    );
+    setValue(
+      "addressInfo.province_code",
+      candidate?.address?.province_code || "",
+    );
 
     setValue(
       "studyHistories",
@@ -140,7 +159,7 @@ export default function CandidateEdit() {
         start_year: edu.start_year || "",
         end_year: edu.end_year || "",
         degree: edu.degree || "",
-      }))
+      })),
     );
     setValue(
       "workExperiences",
@@ -150,7 +169,7 @@ export default function CandidateEdit() {
         start_date: safeFormatDate(exp.start_date),
         end_date: safeFormatDate(exp.end_date),
         description: exp.description || "",
-      }))
+      })),
     );
   }, [detailRes, setValue]);
 
@@ -159,33 +178,97 @@ export default function CandidateEdit() {
     try {
       const payload: Partial<UpdateCandidatePayload> = {
         email: formData.email,
-        candidateInfo: {
-          ...formData.candidateInfo,
-          minimum_income: Number(formData.candidateInfo.minimum_income),
-          date_of_birth: safeFormatDate(formData.candidateInfo.date_of_birth),
-          languguages: formData.candidateInfo.languguages || [],
-          fields_wish: formData.candidateInfo.fields_wish || [],
-        },
-        addressInfo: {
-          street: formData.addressInfo.street,
-          ward_code: formData.addressInfo.ward_code,
-          province_code: formData.addressInfo.province_code,
-        },
-        studyHistories: (formData.studyHistories || []).map((edu) => ({
+      };
+
+      // Only include password if it's provided
+      if (formData.password && formData.password.trim()) {
+        payload.password = formData.password;
+      }
+
+      // Build candidateInfo with optional fields
+      const candidateInfo: any = {};
+      if (formData.candidateInfo.full_name)
+        candidateInfo.full_name = formData.candidateInfo.full_name;
+      if (formData.candidateInfo.gender)
+        candidateInfo.gender = formData.candidateInfo.gender;
+      if (formData.candidateInfo.date_of_birth)
+        candidateInfo.date_of_birth = safeFormatDate(
+          formData.candidateInfo.date_of_birth,
+        );
+      if (formData.candidateInfo.place_of_birth)
+        candidateInfo.place_of_birth = formData.candidateInfo.place_of_birth;
+      if (formData.candidateInfo.ethnicity)
+        candidateInfo.ethnicity = formData.candidateInfo.ethnicity;
+      if (formData.candidateInfo.phone)
+        candidateInfo.phone = formData.candidateInfo.phone;
+      if (formData.candidateInfo.graduation_rank)
+        candidateInfo.graduation_rank = formData.candidateInfo.graduation_rank;
+      if (formData.candidateInfo.computer_skill)
+        candidateInfo.computer_skill = formData.candidateInfo.computer_skill;
+      if (formData.candidateInfo.other_computer_skill)
+        candidateInfo.other_computer_skill =
+          formData.candidateInfo.other_computer_skill;
+      if (
+        formData.candidateInfo.languguages &&
+        formData.candidateInfo.languguages.length > 0
+      )
+        candidateInfo.languguages = formData.candidateInfo.languguages;
+      if (
+        formData.candidateInfo.fields_wish &&
+        formData.candidateInfo.fields_wish.length > 0
+      )
+        candidateInfo.fields_wish = formData.candidateInfo.fields_wish;
+      if (formData.candidateInfo.job_type)
+        candidateInfo.job_type = formData.candidateInfo.job_type;
+      if (formData.candidateInfo.working_time)
+        candidateInfo.working_time = formData.candidateInfo.working_time;
+      if (formData.candidateInfo.transport)
+        candidateInfo.transport = formData.candidateInfo.transport;
+      if (formData.candidateInfo.minimum_income !== undefined)
+        candidateInfo.minimum_income = Number(
+          formData.candidateInfo.minimum_income,
+        );
+
+      if (Object.keys(candidateInfo).length > 0) {
+        payload.candidateInfo = candidateInfo;
+      }
+
+      // Build addressInfo with optional fields
+      if (formData.addressInfo) {
+        const addressInfo: any = {};
+        if (formData.addressInfo.street)
+          addressInfo.street = formData.addressInfo.street;
+        if (formData.addressInfo.ward_code)
+          addressInfo.ward_code = formData.addressInfo.ward_code;
+        if (formData.addressInfo.province_code)
+          addressInfo.province_code = formData.addressInfo.province_code;
+
+        if (Object.keys(addressInfo).length > 0) {
+          payload.addressInfo = addressInfo;
+        }
+      }
+
+      // Handle study histories
+      if (formData.studyHistories && formData.studyHistories.length > 0) {
+        payload.studyHistories = formData.studyHistories.map((edu) => ({
           school_name: edu.school_name,
           major: edu.major,
           degree: edu.degree,
           start_year: Number(edu.start_year),
           end_year: Number(edu.end_year),
-        })),
-        workExperiences: (formData.workExperiences || []).map((exp) => ({
+        }));
+      }
+
+      // Handle work experiences
+      if (formData.workExperiences && formData.workExperiences.length > 0) {
+        payload.workExperiences = formData.workExperiences.map((exp) => ({
           company_name: exp.company_name,
           position: exp.position,
           description: exp.description || "",
           start_date: safeFormatDate(exp.start_date),
           end_date: safeFormatDate(exp.end_date),
-        })),
-      };
+        }));
+      }
 
       const trimmedPassword = (formData.password || "").trim();
       if (trimmedPassword) payload.password = trimmedPassword;
@@ -198,7 +281,9 @@ export default function CandidateEdit() {
       if (res?.err === 0) {
         toast.success(res?.mes || "Cập nhật ứng viên thành công!");
         await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        await queryClient.invalidateQueries({ queryKey: ["admin-candidate", id] });
+        await queryClient.invalidateQueries({
+          queryKey: ["admin-candidate", id],
+        });
         navigate(`/admin/candidates/view/${id}`);
         return;
       }
@@ -307,26 +392,26 @@ export default function CandidateEdit() {
                   </SectionWrapper>
                 </div>
 
-                <div className="space-y-6">
-                  <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 sticky top-6">
-                    <h3 className="font-semibold text-gray-800 mb-4">
+                <div className="lg:col-span-1">
+                  <div className="rounded-lg bg-white p-4 shadow-sm border border-gray-100 sticky top-6">
+                    <h3 className="font-semibold text-gray-800 mb-3 text-sm">
                       Hoàn tất cập nhật
                     </h3>
-                    <p className="text-sm text-gray-500 mb-6">
+                    <p className="text-xs text-gray-500 mb-4">
                       Kiểm tra lại thông tin trước khi lưu.
                     </p>
 
-                    <div className="flex flex-col gap-3">
+                    <div className="flex flex-col gap-2">
                       <button
                         type="submit"
                         disabled={updateMutation.isPending}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white shadow-md hover:bg-orange-600 transition disabled:bg-gray-300"
+                        className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-3 py-2.5 font-medium text-white shadow-sm hover:bg-orange-600 transition disabled:bg-gray-300 text-sm"
                       >
                         {updateMutation.isPending ? (
                           "Đang xử lý..."
                         ) : (
                           <>
-                            <Save size={18} /> Lưu thay đổi
+                            <Save size={16} /> Lưu thay đổi
                           </>
                         )}
                       </button>
@@ -334,7 +419,7 @@ export default function CandidateEdit() {
                       <button
                         type="button"
                         onClick={() => navigate(-1)}
-                        className="w-full rounded-lg border bg-gray-50 px-4 py-3 font-medium text-gray-600 hover:bg-gray-100 transition"
+                        className="w-full rounded-lg border bg-gray-50 px-3 py-2 font-medium text-gray-600 hover:bg-gray-100 transition text-sm"
                       >
                         Hủy
                       </button>
@@ -359,7 +444,9 @@ const SectionWrapper = ({ title, description, icon, children }: any) => (
         </div>
         <div>
           <h2 className="text-lg font-bold text-gray-800">{title}</h2>
-          {description && <p className="text-xs text-gray-500">{description}</p>}
+          {description && (
+            <p className="text-xs text-gray-500">{description}</p>
+          )}
         </div>
       </div>
     </div>
