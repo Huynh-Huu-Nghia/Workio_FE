@@ -4,12 +4,14 @@ import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/ap
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 import CenterLayout from "@/layouts/CenterLayout";
+import { useUser } from "@/context/user/user.context";
 
 const CenterSupportRequests: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Yêu cầu hỗ trợ";
+  const { user } = useUser();
 
-  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery();
+  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(user?.id);
   const createMutation = useCreateSupportRequestMutation();
 
   const formatDate = (value?: string | number | Date | null) => {
@@ -100,6 +102,32 @@ const CenterSupportRequests: React.FC = () => {
       refetch();
     } catch (e: any) {
       toast.error(e?.response?.data?.mes || "Gửi yêu cầu thất bại.");
+    }
+  };
+
+  const toViStatus = (status?: string) => {
+    switch (status) {
+      case "open":
+        return "Đang mở";
+      case "in_progress":
+        return "Đang xử lý";
+      case "resolved":
+        return "Đã giải quyết";
+      default:
+        return status || "Không rõ";
+    }
+  };
+
+  const toViPriority = (priority?: string) => {
+    switch (priority) {
+      case "low":
+        return "Thấp";
+      case "medium":
+        return "Trung bình";
+      case "high":
+        return "Cao";
+      default:
+        return priority || "Không rõ";
     }
   };
 
@@ -227,16 +255,16 @@ const CenterSupportRequests: React.FC = () => {
                             {it.description}
                           </p>
                         )}
-                        <p className="mt-2 text-xs text-gray-500">
+                        <p className="mt-2 text-xs text-gray-400">
                           {formatDate(it.created_at)}
                         </p>
                       </div>
                       <div className="flex flex-col items-end gap-2">
-                        <span className="rounded-full bg-gradient-to-r from-gray-100 to-gray-200 px-4 py-1.5 text-xs font-bold text-gray-800 shadow-sm">
-                          {it.priority}
+                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                          Ưu tiên: {toViPriority(it.priority)}
                         </span>
-                        <span className="rounded-full bg-gradient-to-r from-blue-50 to-blue-100 px-4 py-1.5 text-xs font-bold text-blue-700 shadow-sm">
-                          {it.status}
+                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                          {toViStatus(it.status)}
                         </span>
                       </div>
                     </div>

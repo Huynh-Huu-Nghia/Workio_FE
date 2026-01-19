@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
+import { useLogoutMutation } from "@/api/auth.api";
 import path from "@/constants/path";
 import {
   Briefcase,
@@ -11,6 +12,7 @@ import {
   Home,
   Menu,
   X,
+  LogOut,
   Bell,
   ChevronDown,
   GraduationCap,
@@ -128,8 +130,8 @@ const menuGroups: MenuGroup[] = [
 
 export default function CandidateLayout({ title, children }: Props) {
   const navigate = useNavigate();
-  const { user, logout: contextLogout } = useUser();
   const logoutMutation = useLogoutMutation();
+  const { user, setUser } = useUser();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(() => {
     const saved = localStorage.getItem("candidateSidebarOpen");
@@ -139,31 +141,38 @@ export default function CandidateLayout({ title, children }: Props) {
   const [showUserMenu, setShowUserMenu] = useState(false);
 
   // HÀM ĐĂNG XUẤT CHUẨN
+  // const handleLogout = () => {
+  //   // 1. Xóa bản nháp của user hiện tại (nếu có)
+  //   if (user?.id) {
+  //       const draftKey = `workio_candidate_profile_draft_${user.id}`;
+  //       localStorage.removeItem(draftKey);
+  //   }
+  //   clearAuthTokens(); // Xóa LocalStorage
+  //   setUser(null); // Xóa Context
+  //   toast.success("Đăng xuất thành công");
+  //   navigate(path.login); // Chuyển về trang login
+  // };
+
   const handleLogout = async () => {
-    if (!user?.role?.value) return;
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
 
     try {
-      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
-      // 1. Xóa bản nháp của user hiện tại (nếu có)
+      // 1. Xóa bản nháp Profile của Candidate này
       if (user?.id) {
         const draftKey = `workio_candidate_profile_draft_${user.id}`;
         localStorage.removeItem(draftKey);
       }
-      // Clear user context
-      contextLogout();
-      // Navigate to login
-      navigate(path.login);
+      await logoutMutation.mutateAsync({ role: "Candidate" });
+      clearAuthTokens(); // Xóa LocalStorage
       toast.success("Đăng xuất thành công!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Logout error:", error);
-      // Even if API call fails, still logout locally
-      if (user?.id) {
-        const draftKey = `workio_candidate_profile_draft_${user.id}`;
-        localStorage.removeItem(draftKey);
-      }
-      contextLogout();
-      navigate(path.login);
-      toast.success("Đăng xuất thành công!");
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
     }
   };
 
@@ -358,7 +367,7 @@ export default function CandidateLayout({ title, children }: Props) {
               isExpanded ? "gap-3" : "justify-center"
             }`}
           >
-            <X size={18} />
+            <LogOut size={18} />
             {isExpanded && <span>Đăng xuất</span>}
           </button>
         </div>

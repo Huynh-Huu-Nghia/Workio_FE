@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
+import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
+import { toast } from "react-toastify";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
 import {
@@ -8,6 +10,7 @@ import {
   Menu,
   Settings,
   Bell,
+  LogOut,
   X,
   ClipboardList,
   LogOut,
@@ -15,8 +18,7 @@ import {
 import LOGO_SRC from "@/assets/networking.png";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useUser } from "@/context/user/user.context";
-import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
-import { toast } from "react-toastify";
+import { useLogoutMutation } from "@/api/auth.api";
 
 type Props = {
   title?: string;
@@ -102,9 +104,9 @@ const centerMenu: MenuGroup[] = [
 export default function CenterLayout({ title, children }: Props) {
   const location = useLocation();
   const navigate = useNavigate();
-  const { pathname, hash } = location;
-  const { user, logout: contextLogout } = useUser();
   const logoutMutation = useLogoutMutation();
+  const { pathname, hash } = location;
+  const { user, setUser } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true;
@@ -186,6 +188,37 @@ export default function CenterLayout({ title, children }: Props) {
     }
     navigate(path.CENTER_HOME);
   };
+
+  const handleLogout = async () => {
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+
+    try {
+      await logoutMutation.mutateAsync({ role: "Center" });
+      clearAuthTokens(); // Xóa LocalStorage
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
+    }
+  };
+
+  // // HÀM ĐĂNG XUẤT CHUẨN
+  // const handleLogout = () => {
+  //   // 1. Xóa bản nháp của user hiện tại (nếu có)
+  //   if (user?.id) {
+  //       const draftKey = `workio_center_profile_draft_${user.id}`;
+  //       localStorage.removeItem(draftKey);
+  //   }
+  //   clearAuthTokens(); // Xóa LocalStorage
+  //   setUser(null); // Xóa Context
+  //   toast.success("Đăng xuất thành công");
+  //   navigate(path.login); // Chuyển về trang login
+  // };
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb]">
@@ -336,11 +369,12 @@ export default function CenterLayout({ title, children }: Props) {
 
         <div className="border-t border-gray-50 p-4">
           <button
+            onClick={handleLogout}
             className={`flex w-full items-center rounded-lg px-3 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-red-50 hover:text-red-600 ${
               isExpanded ? "gap-3" : "justify-center"
             }`}
           >
-            <X size={18} />
+            <LogOut size={18} />
             {isExpanded && <span>Đăng xuất</span>}
           </button>
         </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
 import {
   Bell,
@@ -7,17 +7,21 @@ import {
   CalendarDays,
   LifeBuoy,
   Menu,
+  LogOut,
   Sparkles,
   User,
   Users,
   X,
   LogOut,
 } from "lucide-react";
+import { clearAuthTokens } from "@/utils/authStorage";
+import { toast } from "react-toastify";
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
 import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
 import { toast } from "react-toastify";
+import { useLogoutMutation } from "@/api/auth.api";
 
 type Props = {
   title?: string;
@@ -101,6 +105,8 @@ export default function RecruiterLayout({ title, children }: Props) {
   const { pathname } = useLocation();
   const { user, logout: contextLogout } = useUser();
   const logoutMutation = useLogoutMutation();
+  const { user } = useUser();
+  const logoutMutation = useLogoutMutation();
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = window.localStorage.getItem("recruiterSidebarOpen");
@@ -153,6 +159,47 @@ export default function RecruiterLayout({ title, children }: Props) {
       }
       return false;
     });
+  };
+
+  const navigate = useNavigate();
+  const { setUser } = useUser();
+  const [open] = useState(true);
+
+  // --- LOGIC ĐĂNG XUẤT ---
+  // const handleLogout = () => {
+  //   // 1. Xóa bản nháp Profile của Recruiter này
+  //   if (user?.id) {
+  //       const draftKey = `workio_recruiter_profile_draft_${user.id}`;
+  //       localStorage.removeItem(draftKey);
+  //   }
+
+  //   // 2. Xóa token & state
+  //   clearAuthTokens();
+  //   setUser(null);
+  //   toast.success("Đăng xuất thành công");
+  //   navigate(path.login);
+  // };
+
+  const handleLogout = async () => {
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+    try {
+      // 1. Xóa bản nháp Profile của Recruiter này
+      if (user?.id) {
+        const draftKey = `workio_recruiter_profile_draft_${user.id}`;
+        localStorage.removeItem(draftKey);
+      }
+      await logoutMutation.mutateAsync({ role: "Recruiter" });
+      clearAuthTokens(); // Xóa LocalStorage
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
+    }
   };
 
   return (
@@ -228,6 +275,17 @@ export default function RecruiterLayout({ title, children }: Props) {
               </div>
             </div>
           ))}
+        </div>
+        <div className="p-4 border-t border-gray-50">
+          <button
+            onClick={handleLogout} // Gắn hàm logout vào đây
+            className={`flex items-center w-full px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium ${
+              open ? "gap-3" : "justify-center"
+            }`}
+          >
+            <LogOut size={18} />
+            {open && <span>Đăng xuất</span>}
+          </button>
         </div>
       </aside>
 
