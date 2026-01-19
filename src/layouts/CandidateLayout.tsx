@@ -16,12 +16,11 @@ import {
   Bell,
   ChevronDown,
   GraduationCap,
-  LogOut,
 } from "lucide-react";
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
-import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
+import { clearAuthTokens } from "@/utils/authStorage";
 
 type Props = {
   title?: string;

@@ -262,28 +262,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
     );
   };
 
-  const { setUser } = useUser();
-  const logoutMutation = useLogoutMutation();
-  const navigate = useNavigate();
-
-  const handleLogout = async () => {
-    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-
-    try {
-      await logoutMutation.mutateAsync({ role: "Admin" });
-      clearAuthTokens(); // Xóa LocalStorage
-      toast.success("Đăng xuất thành công!");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.info("Đang đăng xuất...");
-    } finally {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      setUser(null);
-      navigate(path.login); // Chuyển về trang login
-    }
-  };
-
   return (
     <aside
       className={`

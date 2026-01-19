@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
 import { toast } from "react-toastify";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
@@ -13,12 +12,11 @@ import {
   LogOut,
   X,
   ClipboardList,
-  LogOut,
 } from "lucide-react";
 import LOGO_SRC from "@/assets/networking.png";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useUser } from "@/context/user/user.context";
-import { useLogoutMutation } from "@/api/auth.api";
+import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
 
 type Props = {
   title?: string;
@@ -106,7 +104,7 @@ export default function CenterLayout({ title, children }: Props) {
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
   const { pathname, hash } = location;
-  const { user, setUser } = useUser();
+  const { user, logout: contextLogout } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true;
@@ -187,24 +185,6 @@ export default function CenterLayout({ title, children }: Props) {
       return;
     }
     navigate(path.CENTER_HOME);
-  };
-
-  const handleLogout = async () => {
-    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-
-    try {
-      await logoutMutation.mutateAsync({ role: "Center" });
-      clearAuthTokens(); // Xóa LocalStorage
-      toast.success("Đăng xuất thành công!");
-    } catch (error) {
-      console.error("Logout error:", error);
-      toast.info("Đang đăng xuất...");
-    } finally {
-      localStorage.removeItem("access_token");
-      localStorage.removeItem("refresh_token");
-      setUser(null);
-      navigate(path.login); // Chuyển về trang login
-    }
   };
 
   // // HÀM ĐĂNG XUẤT CHUẨN
