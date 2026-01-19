@@ -7,6 +7,8 @@ import {
 import { useLogoutMutation } from "@/api/auth.api";
 import { toast } from "react-toastify";
 import { Plus } from "lucide-react";
+import path from "@/constants/path";
+import { useNavigate } from "react-router-dom";
 
 const Settings: React.FC = () => {
   const { data, isLoading, isError, refetch } = useAdminProfileQuery();
@@ -70,15 +72,21 @@ const Settings: React.FC = () => {
     }
   };
 
+  const navigate = useNavigate();
+
   const onLogout = async () => {
     try {
+      if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
       await logout.mutateAsync({ role: "Admin" });
-    } catch {
-      // ignore
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.info("Đang đăng xuất...");
     } finally {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
-      window.location.href = "/login";
+      //window.location.href = "/login";
+      navigate(path.login); // Chuyển về trang login
     }
   };
 

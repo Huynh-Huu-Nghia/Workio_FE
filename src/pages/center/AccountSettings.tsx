@@ -5,6 +5,8 @@ import { useLogoutMutation } from "@/api/auth.api";
 import { useCenterProfileQuery, useUpdateCenterProfileMutation } from "@/api/center.api";
 import { useUser } from "@/context/user/user.context";
 import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import path from "@/constants/path";
 
 const CenterAccountSettings: React.FC = () => {
   const { setUser, user } = useUser();
@@ -83,6 +85,8 @@ const CenterAccountSettings: React.FC = () => {
     setIsEditing(true);
   };
 
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
     if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
 
@@ -96,7 +100,7 @@ const CenterAccountSettings: React.FC = () => {
       localStorage.removeItem("access_token");
       localStorage.removeItem("refresh_token");
       setUser(null);
-      window.location.href = "/login";
+      navigate(path.login); // Chuyển về trang login
     }
   };
 

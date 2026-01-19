@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
 import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
 import { toast } from "react-toastify";
+import { useLogoutMutation } from "@/api/auth.api";
 import path from "@/constants/path";
 import {
   Briefcase,
@@ -12,6 +13,7 @@ import {
   Home,
   Menu,
   X,
+  LogOut,
   Bell,
   ChevronDown,
   GraduationCap,
@@ -123,6 +125,7 @@ const menuGroups: MenuGroup[] = [
 
 export default function CandidateLayout({ title, children }: Props) {
   const navigate = useNavigate();
+  const logoutMutation = useLogoutMutation();
   const { user, setUser } = useUser();
   const { pathname } = useLocation();
   const [open, setOpen] = useState(() => {
@@ -132,17 +135,35 @@ export default function CandidateLayout({ title, children }: Props) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
 
   // HÀM ĐĂNG XUẤT CHUẨN
-  const handleLogout = () => {
-    // 1. Xóa bản nháp của user hiện tại (nếu có)
-    if (user?.id) {
-        const draftKey = `workio_candidate_profile_draft_${user.id}`;
-        localStorage.removeItem(draftKey);
-    }
-    clearAuthTokens(); // Xóa LocalStorage
-    setUser(null); // Xóa Context
-    toast.success("Đăng xuất thành công");
-    navigate(path.login); // Chuyển về trang login
-  };
+  // const handleLogout = () => {
+  //   // 1. Xóa bản nháp của user hiện tại (nếu có)
+  //   if (user?.id) {
+  //       const draftKey = `workio_candidate_profile_draft_${user.id}`;
+  //       localStorage.removeItem(draftKey);
+  //   }
+  //   clearAuthTokens(); // Xóa LocalStorage
+  //   setUser(null); // Xóa Context
+  //   toast.success("Đăng xuất thành công");
+  //   navigate(path.login); // Chuyển về trang login
+  // };
+
+    const handleLogout = async () => {
+      if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+  
+      try {
+        await logoutMutation.mutateAsync({ role: "Candidate" });
+        clearAuthTokens(); // Xóa LocalStorage
+        toast.success("Đăng xuất thành công!");
+      } catch (error) {
+        console.error("Logout error:", error);
+        toast.info("Đang đăng xuất...");
+      } finally {
+        localStorage.removeItem("access_token");
+        localStorage.removeItem("refresh_token");
+        setUser(null);
+        navigate(path.login); // Chuyển về trang login
+      }
+    };
 
   useEffect(() => {
     localStorage.setItem("candidateSidebarOpen", JSON.stringify(open));
@@ -327,7 +348,7 @@ export default function CandidateLayout({ title, children }: Props) {
               isExpanded ? "gap-3" : "justify-center"
             }`}
           >
-            <X size={18} />
+            <LogOut size={18} />
             {isExpanded && <span>Đăng xuất</span>}
           </button>
         </div>

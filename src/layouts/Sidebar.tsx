@@ -1,4 +1,10 @@
 import React, { useState, useEffect } from "react";
+import { useUser } from "@/context/user/user.context";
+import { useLogoutMutation } from "@/api/auth.api";
+import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
+import { toast } from "react-toastify";
+import { useNavigate } from "react-router-dom";
+import path from "@/constants/path";
 import { Link, useLocation } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -229,6 +235,28 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
     );
   };
 
+  const { setUser } = useUser();
+  const logoutMutation = useLogoutMutation();
+  const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+    
+        try {
+          await logoutMutation.mutateAsync({ role: "Admin" });
+          clearAuthTokens(); // Xóa LocalStorage
+          toast.success("Đăng xuất thành công!");
+        } catch (error) {
+          console.error("Logout error:", error);
+          toast.info("Đang đăng xuất...");
+        } finally {
+          localStorage.removeItem("access_token");
+          localStorage.removeItem("refresh_token");
+          setUser(null);
+          navigate(path.login); // Chuyển về trang login
+        }
+      };
+
   return (
     <aside
       className={`
@@ -387,6 +415,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
 
       <div className="p-4 border-t border-gray-50">
         <button
+          onClick={handleLogout}
           className={`flex items-center w-full px-3 py-2 text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors text-sm font-medium ${
             isOpen ? "gap-3" : "justify-center"
           }`}
