@@ -153,8 +153,12 @@ export default function RecruiterLayout({ title, children }: Props) {
 
     const handleLogout = async () => {
       if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-  
       try {
+        // 1. Xóa bản nháp Profile của Recruiter này
+        if (user?.id) {
+          const draftKey = `workio_recruiter_profile_draft_${user.id}`;
+          localStorage.removeItem(draftKey);
+        }
         await logoutMutation.mutateAsync({ role: "Recruiter" });
         clearAuthTokens(); // Xóa LocalStorage
         toast.success("Đăng xuất thành công!");

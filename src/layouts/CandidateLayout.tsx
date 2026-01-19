@@ -151,6 +151,11 @@ export default function CandidateLayout({ title, children }: Props) {
       if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
   
       try {
+        // 1. Xóa bản nháp Profile của Candidate này
+        if (user?.id) {
+          const draftKey = `workio_candidate_profile_draft_${user.id}`;
+          localStorage.removeItem(draftKey);
+        }
         await logoutMutation.mutateAsync({ role: "Candidate" });
         clearAuthTokens(); // Xóa LocalStorage
         toast.success("Đăng xuất thành công!");

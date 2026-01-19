@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Building2, Save } from "lucide-react";
+import { Building2, Save, MapPin } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
@@ -7,12 +7,15 @@ import { useRecruiterProfileQuery, useUpdateRecruiterProfileMutation } from "@/a
 import { toast } from "react-toastify";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
+
 const RecruiterProfile: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Hồ sơ doanh nghiệp";
   const { user } = useUser();
   const updateProfile = useUpdateRecruiterProfileMutation();
-  const { data: profileRes } = useRecruiterProfileQuery();
+  
+  // Lấy hàm refetch để làm mới dữ liệu sau khi update
+  const { data: profileRes, refetch } = useRecruiterProfileQuery();
 
   const storageKey = useMemo(
     () => `workio_recruiter_profile_draft_${user?.id || "guest"}`,
@@ -34,47 +37,60 @@ const RecruiterProfile: React.FC = () => {
     ward_code: "",
     province_code: "",
   });
-  const [prefilled, setPrefilled] = useState(false);
+  
+  // Biến cờ: Đã load draft chưa? (Để chặn server overwrite)
+  const [hasLoadedDraft, setHasLoadedDraft] = useState(false);
 
+  // --- LOGIC LOAD DỮ LIỆU ---
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (!raw) return;
-      const parsed = JSON.parse(raw);
-      setRecruiterInfo((prev: any) => ({ ...prev, ...(parsed.recruiterInfo || {}) }));
-      setAddressInfo((prev: any) => ({ ...prev, ...(parsed.addressInfo || {}) }));
-    } catch {
-      // ignore
+    if (!user) return;
+
+    // 1. Kiểm tra bản nháp trước
+    const rawDraft = localStorage.getItem(storageKey);
+    if (rawDraft) {
+      try {
+        const parsed = JSON.parse(rawDraft);
+        // Load nháp vào state
+        if (parsed.recruiterInfo) setRecruiterInfo((prev: any) => ({ ...prev, ...parsed.recruiterInfo }));
+        if (parsed.addressInfo) setAddressInfo((prev: any) => ({ ...prev, ...parsed.addressInfo }));
+        
+        setHasLoadedDraft(true); // Đánh dấu đã load nháp
+        // console.log("Loaded draft from local storage");
+        return; // Dừng lại, không load data server nữa
+      } catch (e) {
+        console.error("Error loading draft", e);
+      }
     }
-  }, [storageKey]);
 
-  useEffect(() => {
-    if (prefilled) return;
-    const profile = profileRes?.data;
-    if (!profile) return;
-    setPrefilled(true);
-    setRecruiterInfo((prev: any) => ({
-      ...prev,
-      company_name: profile.company_name || "",
-      description: profile.description || "",
-      tax_number: profile.tax_number || "",
-      phone: profile.phone || "",
-      website: profile.website || "",
-      established_at: profile.established_at || "",
-      is_verified: profile.is_verified || false,
-    }));
-    setAddressInfo({
-      street: profile.address?.street || "",
-      ward_code: profile.address?.ward_code || "",
-      province_code: profile.address?.province_code || "",
-    });
-  }, [profileRes, prefilled]);
+    // 2. Nếu không có nháp (hoặc đã xóa nháp sau khi lưu) -> Load từ Server
+    if (!hasLoadedDraft && profileRes?.data) {
+      const profile = profileRes.data;
+      setRecruiterInfo({
+        company_name: profile.company_name || "",
+        description: profile.description || "",
+        tax_number: profile.tax_number || "",
+        phone: profile.phone || "",
+        website: profile.website || "",
+        established_at: profile.established_at ? profile.established_at.split("T")[0] : "", // Format YYYY-MM-DD
+        is_verified: profile.is_verified || false,
+      });
+      
+      // Kiểm tra cấu trúc address từ API (có thể lồng trong object hoặc flatten)
+      const addr = profile.address || {}; 
+      setAddressInfo({
+        street: addr.street || "",
+        ward_code: addr.ward_code || "",
+        province_code: addr.province_code || "",
+      });
+    }
+  }, [storageKey, profileRes, user, hasLoadedDraft]);
 
   const saveDraft = () => {
     localStorage.setItem(
       storageKey,
       JSON.stringify({ recruiterInfo, addressInfo })
     );
+    setHasLoadedDraft(true); // Đảm bảo trạng thái draft được giữ
     toast.info("Đã lưu nháp trên máy.");
   };
 
@@ -88,12 +104,17 @@ const RecruiterProfile: React.FC = () => {
           province_code: addressInfo.province_code,
         },
       };
+      
       await updateProfile.mutateAsync(payload);
       toast.success("Cập nhật hồ sơ doanh nghiệp thành công.");
-      localStorage.setItem(
-        storageKey,
-        JSON.stringify({ recruiterInfo, addressInfo })
-      );
+      
+      // Quan trọng: Xóa nháp & Reset cờ để cho phép load data mới từ server
+      localStorage.removeItem(storageKey);
+      setHasLoadedDraft(false);
+      
+      // Gọi API lấy dữ liệu mới nhất
+      refetch();
+
     } catch (e: any) {
       toast.error(e?.response?.data?.msg || "Cập nhật thất bại.");
     }
@@ -111,7 +132,7 @@ const RecruiterProfile: React.FC = () => {
               <div>
                 <h1 className="text-xl font-bold text-gray-900">{title}</h1>
                 <p className="text-sm text-gray-500">
-                  Cập nhật hồ sơ qua endpoint PUT `/recruiter/profile/update`.
+                  Thông tin này sẽ được hiển thị công khai với ứng viên.
                 </p>
               </div>
             </div>
@@ -125,7 +146,6 @@ const RecruiterProfile: React.FC = () => {
           <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Thông tin doanh nghiệp</h2>
-              <p className="text-sm text-gray-500">Thông tin hiển thị công khai với ứng viên.</p>
             </div>
             <div className="flex gap-2">
               <button
@@ -218,36 +238,38 @@ const RecruiterProfile: React.FC = () => {
             </div>
           </div>
 
-          <div className="mt-6 grid gap-4 md:grid-cols-2">
-            <div className="md:col-span-2">
-              <h3 className="text-sm font-semibold text-gray-800">Địa chỉ công ty</h3>
-            </div>
-            <div className="md:col-span-2">
-              <label className="mb-1 block text-sm font-medium text-gray-700">Số nhà, tên đường</label>
-              <input
-                value={addressInfo.street}
-                onChange={(e) =>
-                  setAddressInfo((p: any) => ({ ...p, street: e.target.value }))
-                }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              />
-            </div>
-            <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
-              <ProvinceWardSelect
-                provinceCode={addressInfo.province_code}
-                wardCode={addressInfo.ward_code}
-                onProvinceChange={(code) =>
-                  setAddressInfo((p: any) => ({
-                    ...p,
-                    province_code: code,
-                    ward_code: "",
-                  }))
-                }
-                onWardChange={(code) =>
-                  setAddressInfo((p: any) => ({ ...p, ward_code: code }))
-                }
-                required
-              />
+          <div className="mt-6 pt-4 border-t border-gray-100">
+            <h3 className="text-sm font-semibold text-gray-800 mb-4 flex items-center gap-2">
+                <MapPin size={16}/> Địa chỉ trụ sở chính
+            </h3>
+            <div className="grid gap-4 md:grid-cols-2">
+                <div className="md:col-span-2">
+                <label className="mb-1 block text-sm font-medium text-gray-700">Số nhà, tên đường</label>
+                <input
+                    value={addressInfo.street}
+                    onChange={(e) =>
+                    setAddressInfo((p: any) => ({ ...p, street: e.target.value }))
+                    }
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                />
+                </div>
+                <div className="md:col-span-2 grid gap-4 md:grid-cols-2">
+                <ProvinceWardSelect
+                    provinceCode={addressInfo.province_code}
+                    wardCode={addressInfo.ward_code}
+                    onProvinceChange={(code) =>
+                    setAddressInfo((p: any) => ({
+                        ...p,
+                        province_code: code,
+                        ward_code: "",
+                    }))
+                    }
+                    onWardChange={(code) =>
+                    setAddressInfo((p: any) => ({ ...p, ward_code: code }))
+                    }
+                    required
+                />
+                </div>
             </div>
           </div>
         </section>

@@ -60,11 +60,22 @@ const getMySupportRequestsRequest = async (): Promise<
   return response.data;
 };
 
-export const useMySupportRequestsQuery = () =>
+// export const useMySupportRequestsQuery = () =>
+//   useQuery({
+//     queryKey: ["support-requests", "my"],
+//     queryFn: getMySupportRequestsRequest,
+//     staleTime: 1000 * 60,
+//   });
+  
+  export const useMySupportRequestsQuery = (userId?: string) =>
   useQuery({
-    queryKey: ["support-requests", "my"],
+    // QUAN TRỌNG: Thêm userId vào queryKey để phân biệt cache giữa các user
+    queryKey: ["my-support-requests", userId], 
     queryFn: getMySupportRequestsRequest,
-    staleTime: 1000 * 60,
+    // Chỉ fetch khi có userId (đã đăng nhập)
+    enabled: !!userId, 
+    // Không dùng cache cũ khi đổi user (thời gian cache = 0 cho key này nếu cần thiết)
+    staleTime: 1000 * 60, 
   });
 
 const getAllSupportRequestsAdminRequest = async (): Promise<

@@ -5,12 +5,14 @@ import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
 import path from "@/constants/path";
+import { useUser } from "@/context/user/user.context";
 
 const RecruiterSupportRequests: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Yêu cầu hỗ trợ";
+  const { user } = useUser(); // 2. Lấy user từ context
 
-  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery();
+  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(user?.id);
   const createMutation = useCreateSupportRequestMutation();
 
   const formatDate = (value?: string | number | Date | null) => {
