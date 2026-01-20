@@ -12,6 +12,7 @@ const InterviewList: React.FC = () => {
       title="Lịch phỏng vấn"
       activeMenu="jobs"
       activeSubmenu="interviews"
+      fullWidth={true}
     >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-gray-100 p-5">
@@ -19,8 +20,7 @@ const InterviewList: React.FC = () => {
             <h1 className="text-xl font-semibold text-gray-800">
               Tất cả lịch phỏng vấn
             </h1>
-            <p className="text-sm text-gray-500">
-            </p>
+            <p className="text-sm text-gray-500"></p>
           </div>
         </div>
 
@@ -84,9 +84,16 @@ const InterviewList: React.FC = () => {
                     <p className="text-sm text-gray-700">{itv.notes}</p>
                   )}
                   <div className="text-xs text-gray-600 flex flex-wrap gap-3">
-                    <span>Job: {itv.job_post?.position || itv.job_post_id || "—"}</span>
-                    <span>Recruiter: {itv.job_post?.recruiter?.company_name || "—"}</span>
-                    <span>Candidate: {itv.candidate?.full_name || itv.candidate_id || "—"}</span>
+                    <span>
+                      Job: {itv.job_post?.position || itv.job_post_id || "—"}
+                    </span>
+                    <span>
+                      Recruiter: {itv.job_post?.recruiter?.company_name || "—"}
+                    </span>
+                    <span>
+                      Candidate:{" "}
+                      {itv.candidate?.full_name || itv.candidate_id || "—"}
+                    </span>
                     <span>Hình thức: {itv.interview_type || "—"}</span>
                   </div>
                 </article>

@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useNavigate } from "react-router-dom";
-import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
 import { toast } from "react-toastify";
 import { useLogoutMutation } from "@/api/auth.api";
 import path from "@/constants/path";
@@ -21,6 +20,7 @@ import {
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
+import { clearAuthTokens } from "@/utils/authStorage";
 
 type Props = {
   title?: string;
@@ -67,7 +67,11 @@ const menuGroups: MenuGroup[] = [
         icon: <Briefcase size={20} />,
         link: "#",
         subItems: [
-          { id: "jobs-all", label: "Tất cả việc làm", link: path.CANDIDATE_JOBS },
+          {
+            id: "jobs-all",
+            label: "Tất cả việc làm",
+            link: path.CANDIDATE_JOBS,
+          },
           {
             id: "jobs-suggested",
             label: "Gợi ý việc làm",
@@ -133,6 +137,7 @@ export default function CandidateLayout({ title, children }: Props) {
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   // HÀM ĐĂNG XUẤT CHUẨN
   // const handleLogout = () => {
@@ -147,28 +152,28 @@ export default function CandidateLayout({ title, children }: Props) {
   //   navigate(path.login); // Chuyển về trang login
   // };
 
-    const handleLogout = async () => {
-      if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-  
-      try {
-        // 1. Xóa bản nháp Profile của Candidate này
-        if (user?.id) {
-          const draftKey = `workio_candidate_profile_draft_${user.id}`;
-          localStorage.removeItem(draftKey);
-        }
-        await logoutMutation.mutateAsync({ role: "Candidate" });
-        clearAuthTokens(); // Xóa LocalStorage
-        toast.success("Đăng xuất thành công!");
-      } catch (error) {
-        console.error("Logout error:", error);
-        toast.info("Đang đăng xuất...");
-      } finally {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setUser(null);
-        navigate(path.login); // Chuyển về trang login
+  const handleLogout = async () => {
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
+
+    try {
+      // 1. Xóa bản nháp Profile của Candidate này
+      if (user?.id) {
+        const draftKey = `workio_candidate_profile_draft_${user.id}`;
+        localStorage.removeItem(draftKey);
       }
-    };
+      await logoutMutation.mutateAsync({ role: "Candidate" });
+      clearAuthTokens(); // Xóa LocalStorage
+      toast.success("Đăng xuất thành công!");
+    } catch (error) {
+      console.error("Logout error:", error);
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
+    }
+  };
 
   useEffect(() => {
     localStorage.setItem("candidateSidebarOpen", JSON.stringify(open));
@@ -176,7 +181,7 @@ export default function CandidateLayout({ title, children }: Props) {
 
   const displayTitle = useMemo(
     () => pathtotitle[pathname] || title || "Candidate",
-    [pathname, title]
+    [pathname, title],
   );
   const avatarInitial = useMemo(() => {
     const source = user?.name || user?.email || "CA";
@@ -189,11 +194,11 @@ export default function CandidateLayout({ title, children }: Props) {
       group.items.forEach((item) => {
         if (item.subItems) {
           const hasActiveSub = item.subItems.some((sub) =>
-            currentPath.startsWith(sub.link)
+            currentPath.startsWith(sub.link),
           );
           if (hasActiveSub) {
             setOpenMenus((prev) =>
-              prev.includes(item.id) ? prev : [...prev, item.id]
+              prev.includes(item.id) ? prev : [...prev, item.id],
             );
           }
         }
@@ -203,7 +208,7 @@ export default function CandidateLayout({ title, children }: Props) {
 
   const toggleMenu = (id: string) => {
     setOpenMenus((prev) =>
-      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id],
     );
   };
 
@@ -226,7 +231,11 @@ export default function CandidateLayout({ title, children }: Props) {
               ${isExpanded ? "h-20 w-20" : "h-10 w-10"}
             `}
           >
-            <img src={LOGO_SRC} alt="Logo" className="w-full h-full object-contain" />
+            <img
+              src={LOGO_SRC}
+              alt="Logo"
+              className="w-full h-full object-contain"
+            />
           </div>
           {isExpanded && (
             <div className="mt-3 text-center">
@@ -248,14 +257,16 @@ export default function CandidateLayout({ title, children }: Props) {
               <div className="space-y-1">
                 {group.items.map((item) => {
                   const isUrlActive =
-                    item.link === path.CANDIDATE_HOME 
+                    item.link === path.CANDIDATE_HOME
                       ? pathname === item.link // Nếu là trang chủ, phải khớp chính xác 100%
                       : pathname.startsWith(item.link) && item.link !== "#"; // Các trang khác thì startsWith
 
                   const isParentActive =
                     isUrlActive ||
                     (item.subItems &&
-                      item.subItems.some((sub) => pathname.startsWith(sub.link)));
+                      item.subItems.some((sub) =>
+                        pathname.startsWith(sub.link),
+                      ));
                   const isMenuExpanded = openMenus.includes(item.id);
                   const hasSubItems = item.subItems && item.subItems.length > 0;
 
@@ -271,7 +282,9 @@ export default function CandidateLayout({ title, children }: Props) {
                         }}
                         className={`
                           flex items-center ${
-                            isExpanded ? "justify-between px-3" : "justify-center px-0"
+                            isExpanded
+                              ? "justify-between px-3"
+                              : "justify-center px-0"
                           }
                           py-2.5 rounded-lg cursor-pointer transition-all duration-200 group relative
                           ${
@@ -378,7 +391,11 @@ export default function CandidateLayout({ title, children }: Props) {
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
                 onClick={() => setOpen((v: boolean) => !v)}
               >
-                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {open ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </button>
               <div>
                 <h1 className="text-lg font-bold leading-tight text-gray-800">
@@ -391,8 +408,29 @@ export default function CandidateLayout({ title, children }: Props) {
                 <Bell size={18} />
                 <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
               </button>
-              <div className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm border border-orange-200">
-                {avatarInitial}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm border border-orange-200 hover:bg-orange-200 transition-colors"
+                >
+                  {avatarInitial}
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                    <button
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <LogOut size={16} />
+                      <span>
+                        {logoutMutation.isPending
+                          ? "Đang đăng xuất..."
+                          : "Đăng xuất"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

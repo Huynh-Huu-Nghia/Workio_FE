@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
 import { useForm } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   useCreateRecruiterJobPostMutation,
   useUpdateRecruiterJobPostMutation,
@@ -73,6 +74,18 @@ export default function RecruiterJobForm() {
   const createMutation = useCreateRecruiterJobPostMutation();
   const updateMutation = useUpdateRecruiterJobPostMutation();
   const deleteMutation = useDeleteRecruiterJobPostMutation();
+  const queryClient = useQueryClient();
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const { 
     register, 

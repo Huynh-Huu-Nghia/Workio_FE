@@ -37,14 +37,13 @@ const SocialInsuranceLookup: React.FC = () => {
   }, [records]);
 
   return (
-    <AdminLayout title="Tra cứu BHXH" activeMenu="social">
+    <AdminLayout title="Tra cứu BHXH" activeMenu="social" fullWidth={true}>
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
             Tra cứu bảo hiểm xã hội
           </h1>
-          <p className="text-sm text-gray-500">
-          </p>
+          <p className="text-sm text-gray-500"></p>
         </div>
 
         <form

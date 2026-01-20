@@ -11,6 +11,7 @@ interface AdminLayoutProps {
   title?: string; // Tên trang (VD: Thêm Mới)
   activeMenu?: string; // ID menu để highlight (VD: candidates)
   activeSubmenu?: string; // ID submenu để highlight (VD: add-candidate)
+  fullWidth?: boolean; // Cho phép full width
 }
 
 const AdminLayout: React.FC<AdminLayoutProps> = ({
@@ -19,6 +20,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
   title,
   activeMenu,
   activeSubmenu,
+  fullWidth = false,
 }) => {
   const location = useLocation(); // Lấy URL hiện tại
 
@@ -55,7 +57,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({
         />
 
         <div className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 scrollbar-thin scrollbar-thumb-gray-200 hover:scrollbar-thumb-gray-300">
-          <div className="animate-fade-in-up pb-10 w-full max-w-7xl mx-auto">
+          <div
+            className={`animate-fade-in-up pb-10 w-full ${fullWidth ? "" : "max-w-7xl mx-auto"}`}
+          >
             {children}
           </div>
         </div>

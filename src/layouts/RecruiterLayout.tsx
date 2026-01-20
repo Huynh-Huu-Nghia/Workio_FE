@@ -1,24 +1,24 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import path from "@/constants/path";
 import {
   Bell,
   Briefcase,
   CalendarDays,
+  Home,
   LifeBuoy,
-  Menu, 
+  Menu,
   LogOut,
   Sparkles,
   User,
   Users,
   X,
 } from "lucide-react";
-import { clearAuthTokens } from "@/utils/authStorage";
 import { toast } from "react-toastify";
 import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
-import { useLogoutMutation } from "@/api/auth.api";
+import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
 
 type Props = {
   title?: string;
@@ -40,6 +40,17 @@ type MenuGroup = {
 
 const recruiterMenu: MenuGroup[] = [
   {
+    title: "TỔNG QUAN",
+    items: [
+      {
+        id: "dashboard",
+        label: "Dashboard",
+        icon: <Home size={18} />,
+        link: path.RECRUITER_HOME,
+      },
+    ],
+  },
+  {
     title: "TIN & ỨNG VIÊN",
     items: [
       {
@@ -47,7 +58,11 @@ const recruiterMenu: MenuGroup[] = [
         label: "Tin tuyển dụng",
         icon: <Briefcase size={18} />,
         link: path.RECRUITER_JOBS,
-        match: [path.RECRUITER_JOBS, path.RECRUITER_JOB_CREATE, path.RECRUITER_JOB_EDIT],
+        match: [
+          path.RECRUITER_JOBS,
+          path.RECRUITER_JOB_CREATE,
+          path.RECRUITER_JOB_EDIT,
+        ],
       },
       {
         id: "job-candidates",
@@ -96,22 +111,26 @@ const recruiterMenu: MenuGroup[] = [
 
 export default function RecruiterLayout({ title, children }: Props) {
   const { pathname } = useLocation();
-  const { user } = useUser();
+  const { user, logout: contextLogout } = useUser();
   const logoutMutation = useLogoutMutation();
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
     const saved = window.localStorage.getItem("recruiterSidebarOpen");
     return saved !== null ? saved === "true" : true;
   });
+  const [showUserMenu, setShowUserMenu] = useState(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    window.localStorage.setItem("recruiterSidebarOpen", JSON.stringify(sidebarOpen));
+    window.localStorage.setItem(
+      "recruiterSidebarOpen",
+      JSON.stringify(sidebarOpen),
+    );
   }, [sidebarOpen]);
 
   const displayTitle = useMemo(
     () => pathtotitle[pathname] || title || "Không gian nhà tuyển dụng",
-    [pathname, title]
+    [pathname, title],
   );
 
   const avatarInitial = useMemo(() => {
@@ -119,9 +138,26 @@ export default function RecruiterLayout({ title, children }: Props) {
     return source.trim().charAt(0).toUpperCase();
   }, [user?.name, user?.email]);
 
+  const handleLogout = async () => {
+    if (!user?.role?.value) return;
+
+    try {
+      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
+      contextLogout();
+      window.location.href = "/login";
+      toast.success("Đăng xuất thành công!");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      contextLogout();
+      window.location.href = "/login";
+      toast.success("Đăng xuất thành công!");
+    }
+  };
+
   const isExpanded = sidebarOpen;
   const isActive = (item: MenuItem) => {
-    const targets = item.match && item.match.length > 0 ? item.match : [item.link];
+    const targets =
+      item.match && item.match.length > 0 ? item.match : [item.link];
     return targets.some((target) => {
       if (pathname === target) return true;
       if (target.includes(":")) {
@@ -132,8 +168,6 @@ export default function RecruiterLayout({ title, children }: Props) {
     });
   };
 
-  const navigate = useNavigate();
-  const { setUser } = useUser();
   const [open] = useState(true);
 
   // --- LOGIC ĐĂNG XUẤT ---
@@ -151,28 +185,6 @@ export default function RecruiterLayout({ title, children }: Props) {
   //   navigate(path.login);
   // };
 
-    const handleLogout = async () => {
-      if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-      try {
-        // 1. Xóa bản nháp Profile của Recruiter này
-        if (user?.id) {
-          const draftKey = `workio_recruiter_profile_draft_${user.id}`;
-          localStorage.removeItem(draftKey);
-        }
-        await logoutMutation.mutateAsync({ role: "Recruiter" });
-        clearAuthTokens(); // Xóa LocalStorage
-        toast.success("Đăng xuất thành công!");
-      } catch (error) {
-        console.error("Logout error:", error);
-        toast.info("Đang đăng xuất...");
-      } finally {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setUser(null);
-        navigate(path.login); // Chuyển về trang login
-      }
-    };
-
   return (
     <div className="flex min-h-screen bg-[#f5f7fb]">
       <aside
@@ -186,7 +198,11 @@ export default function RecruiterLayout({ title, children }: Props) {
               isExpanded ? "h-16 w-16" : "h-10 w-10"
             }`}
           >
-            <img src={LOGO_SRC} alt="Workio" className="h-full w-full object-contain" />
+            <img
+              src={LOGO_SRC}
+              alt="Workio"
+              className="h-full w-full object-contain"
+            />
           </div>
           {isExpanded && (
             <div className="mt-2 text-center">
@@ -222,9 +238,19 @@ export default function RecruiterLayout({ title, children }: Props) {
                           : "text-gray-500 hover:bg-gray-50"
                       }`}
                     >
-                      <span className={`flex items-center gap-3 ${isExpanded ? "" : "justify-center"}`}>
-                        <span className={active ? "text-orange-500" : "text-gray-400"}>{item.icon}</span>
-                        {isExpanded && <span className="font-medium">{item.label}</span>}
+                      <span
+                        className={`flex items-center gap-3 ${isExpanded ? "" : "justify-center"}`}
+                      >
+                        <span
+                          className={
+                            active ? "text-orange-500" : "text-gray-400"
+                          }
+                        >
+                          {item.icon}
+                        </span>
+                        {isExpanded && (
+                          <span className="font-medium">{item.label}</span>
+                        )}
                       </span>
                     </Link>
                   );
@@ -247,10 +273,15 @@ export default function RecruiterLayout({ title, children }: Props) {
       </aside>
 
       {isExpanded && (
-        <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      <div className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}>
+      <div
+        className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}
+      >
         <header className="sticky top-0 z-20 border-b border-gray-100 bg-white shadow-sm">
           <div className="mx-auto flex w-full items-center justify-between px-4 py-4">
             <div className="flex items-center gap-3">
@@ -258,13 +289,19 @@ export default function RecruiterLayout({ title, children }: Props) {
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
                 onClick={() => setSidebarOpen((prev) => !prev)}
               >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {sidebarOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </button>
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-widest text-gray-400">
                   Nhà tuyển dụng
                 </p>
-                <h1 className="text-xl font-bold text-gray-900 leading-tight">{displayTitle}</h1>
+                <h1 className="text-xl font-bold text-gray-900 leading-tight">
+                  {displayTitle}
+                </h1>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -272,8 +309,29 @@ export default function RecruiterLayout({ title, children }: Props) {
                 <Bell size={18} />
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
               </button>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600">
-                {avatarInitial}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600 hover:bg-orange-200 transition-colors"
+                >
+                  {avatarInitial}
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                    <button
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <LogOut size={16} />
+                      <span>
+                        {logoutMutation.isPending
+                          ? "Đang đăng xuất..."
+                          : "Đăng xuất"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

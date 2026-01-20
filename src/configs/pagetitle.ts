@@ -27,6 +27,7 @@ export const pathtotitle: { [key: string]: string } = {
   "/candidate/interviews": "Lịch phỏng vấn",
   "/candidate/profile": "Hồ sơ của tôi",
   "/candidate/support": "Yêu cầu hỗ trợ",
+  "/recruiter": "Dashboard",
   "/recruiter/jobs": "Tin tuyển dụng của bạn",
   "/recruiter/jobs/create": "Tin tuyển dụng của bạn",
   "/recruiter/jobs/edit/:id": "Tin tuyển dụng của bạn",

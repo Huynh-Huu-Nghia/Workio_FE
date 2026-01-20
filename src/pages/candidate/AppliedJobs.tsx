@@ -4,7 +4,6 @@ import {
   Calendar,
   ChevronDown,
   Loader2,
-  MapPin,
   Search,
   Building2,
   Filter,
@@ -25,10 +24,10 @@ const CandidateAppliedJobs: React.FC = () => {
   const title = pathtotitle[location.pathname] || "Việc đã ứng tuyển";
   const { data, isLoading, isError } = useCandidateAppliedJobsQuery();
   const apiErr = data && (data as any).err !== 0;
-  const jobs = !apiErr ? data?.data ?? [] : [];
-  
+  const jobs = !apiErr ? (data?.data ?? []) : [];
+
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  
+
   // --- State Bộ lọc ---
   const [isFilterOpen, setIsFilterOpen] = useState(false); // Mặc định đóng
   const [searchTerm, setSearchTerm] = useState("");
@@ -54,7 +53,9 @@ const CandidateAppliedJobs: React.FC = () => {
   const filteredWardOptions = useMemo(() => {
     if (!wardData) return [];
     return wardData.filter((ward) =>
-      provinceFilter ? String(ward.province_code) === String(provinceFilter) : true
+      provinceFilter
+        ? String(ward.province_code) === String(provinceFilter)
+        : true,
     );
   }, [wardData, provinceFilter]);
 
@@ -70,16 +71,21 @@ const CandidateAppliedJobs: React.FC = () => {
       const status = (job.status || "").toLowerCase();
       if (status.includes("đang mở")) counts.active += 1;
       if (status.includes("xem xét")) counts.reviewing += 1;
-      if (status.includes("tuyển") || status.includes("nhận")) counts.hired += 1;
+      if (status.includes("tuyển") || status.includes("nhận"))
+        counts.hired += 1;
     });
     return counts;
   }, [jobs]);
 
   const formatCurrency = (value?: number | string | null) => {
-    if (value === null || value === undefined || value === "") return "Thỏa thuận";
+    if (value === null || value === undefined || value === "")
+      return "Thỏa thuận";
     const num = Number(value);
     if (isNaN(num) || num === 0) return "Thỏa thuận";
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(num);
   };
 
   const formatDate = (value?: string | null) =>
@@ -120,8 +126,10 @@ const CandidateAppliedJobs: React.FC = () => {
         }
         if (jobType && job.job_type !== jobType) return false;
         if (workingTime && job.working_time !== workingTime) return false;
-        if (minSalary && Number(job.monthly_salary || 0) < Number(minSalary)) return false;
-        if (maxSalary && Number(job.monthly_salary || 0) > Number(maxSalary)) return false;
+        if (minSalary && Number(job.monthly_salary || 0) < Number(minSalary))
+          return false;
+        if (maxSalary && Number(job.monthly_salary || 0) > Number(maxSalary))
+          return false;
         const locationInfo = resolveJobLocation(job);
         if (
           provinceFilter &&
@@ -129,7 +137,10 @@ const CandidateAppliedJobs: React.FC = () => {
         ) {
           return false;
         }
-        if (wardFilter && String(locationInfo.wardCode || "") !== String(wardFilter)) {
+        if (
+          wardFilter &&
+          String(locationInfo.wardCode || "") !== String(wardFilter)
+        ) {
           return false;
         }
         return true;
@@ -138,7 +149,10 @@ const CandidateAppliedJobs: React.FC = () => {
         if (!sortBy) return 0;
         const factor = order === "ASC" ? 1 : -1;
         if (sortBy === "monthly_salary") {
-          return factor * (Number(a.monthly_salary || 0) - Number(b.monthly_salary || 0));
+          return (
+            factor *
+            (Number(a.monthly_salary || 0) - Number(b.monthly_salary || 0))
+          );
         }
         if (sortBy === "application_deadline_to") {
           return (
@@ -186,15 +200,21 @@ const CandidateAppliedJobs: React.FC = () => {
           <div className="flex flex-wrap gap-2 text-sm">
             <div className="rounded-2xl border border-gray-200 px-4 py-2 bg-white">
               <p className="text-xs text-gray-500">Tổng tin</p>
-              <p className="text-xl font-semibold text-gray-800">{statusCounts.total}</p>
+              <p className="text-xl font-semibold text-gray-800">
+                {statusCounts.total}
+              </p>
             </div>
             <div className="rounded-2xl border border-gray-200 px-4 py-2 bg-white">
               <p className="text-xs text-gray-500">Đang mở</p>
-              <p className="text-xl font-semibold text-green-600">{statusCounts.active}</p>
+              <p className="text-xl font-semibold text-green-600">
+                {statusCounts.active}
+              </p>
             </div>
             <div className="rounded-2xl border border-gray-200 px-4 py-2 bg-white">
               <p className="text-xs text-gray-500">Đang xem xét</p>
-              <p className="text-xl font-semibold text-blue-600">{statusCounts.reviewing}</p>
+              <p className="text-xl font-semibold text-blue-600">
+                {statusCounts.reviewing}
+              </p>
             </div>
           </div>
         </div>
@@ -202,20 +222,25 @@ const CandidateAppliedJobs: React.FC = () => {
         {/* --- BỘ LỌC COLLAPSIBLE --- */}
         <div className="mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
           {/* Header để bấm đóng/mở */}
-          <div 
+          <div
             className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
           >
             <div className="flex items-center gap-2 font-bold text-gray-700">
               <Filter size={20} className="text-orange-500" />
               <span>Bộ lọc tìm kiếm</span>
-              {!isFilterOpen && (searchTerm || provinceFilter || statusFilter) && (
-                <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
-                  Đang lọc...
-                </span>
-              )}
+              {!isFilterOpen &&
+                (searchTerm || provinceFilter || statusFilter) && (
+                  <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
+                    Đang lọc...
+                  </span>
+                )}
             </div>
-            {isFilterOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+            {isFilterOpen ? (
+              <ChevronUp size={20} className="text-gray-400" />
+            ) : (
+              <ChevronDown size={20} className="text-gray-400" />
+            )}
           </div>
 
           {/* Nội dung bộ lọc */}
@@ -223,7 +248,9 @@ const CandidateAppliedJobs: React.FC = () => {
             <div className="p-5 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="lg:col-span-2">
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Tìm kiếm</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Tìm kiếm
+                  </label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                     <input
@@ -236,7 +263,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Trạng thái
+                  </label>
                   <select
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
@@ -250,7 +279,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Sắp xếp</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Sắp xếp
+                  </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -263,7 +294,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Thứ tự</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Thứ tự
+                  </label>
                   <select
                     value={order}
                     onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
@@ -274,7 +307,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Tỉnh / TP</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Tỉnh / TP
+                  </label>
                   <select
                     value={provinceFilter}
                     onChange={(e) => setProvinceFilter(e.target.value)}
@@ -289,7 +324,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Phường / Xã</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Phường / Xã
+                  </label>
                   <select
                     value={wardFilter}
                     onChange={(e) => setWardFilter(e.target.value)}
@@ -307,7 +344,9 @@ const CandidateAppliedJobs: React.FC = () => {
                 <div className="md:col-span-2">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Lương từ</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Lương từ
+                      </label>
                       <input
                         type="number"
                         value={minSalary}
@@ -317,7 +356,9 @@ const CandidateAppliedJobs: React.FC = () => {
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium text-gray-700">Lương đến</label>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Lương đến
+                      </label>
                       <input
                         type="number"
                         value={maxSalary}
@@ -329,7 +370,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </div>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Loại việc</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Loại việc
+                  </label>
                   <select
                     value={jobType}
                     onChange={(e) => setJobType(e.target.value)}
@@ -343,7 +386,9 @@ const CandidateAppliedJobs: React.FC = () => {
                   </select>
                 </div>
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">Giờ làm</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Giờ làm
+                  </label>
                   <select
                     value={workingTime}
                     onChange={(e) => setWorkingTime(e.target.value)}
@@ -378,19 +423,19 @@ const CandidateAppliedJobs: React.FC = () => {
                   ))}
                 </div>
               </div>
-              
+
               <div className="mt-4 flex justify-center border-t border-gray-100 pt-3">
-                <button 
+                <button
                   onClick={() => setIsFilterOpen(false)}
                   className="text-xs text-gray-500 hover:text-orange-500 hover:underline flex items-center gap-1"
                 >
-                  <ChevronUp size={14}/> Thu gọn bộ lọc
+                  <ChevronUp size={14} /> Thu gọn bộ lọc
                 </button>
               </div>
             </div>
           )}
         </div>
-        
+
         {/* --- DANH SÁCH VIỆC LÀM --- */}
         {isLoading && (
           <div className="flex items-center justify-center h-40 text-gray-500">
@@ -399,7 +444,9 @@ const CandidateAppliedJobs: React.FC = () => {
           </div>
         )}
         {isError && (
-          <div className="text-center text-red-500">Không thể tải danh sách.</div>
+          <div className="text-center text-red-500">
+            Không thể tải danh sách.
+          </div>
         )}
 
         {!isLoading && !isError && apiErr && (
@@ -418,7 +465,8 @@ const CandidateAppliedJobs: React.FC = () => {
               filtered.map((job) => {
                 const expanded = expandedId === job.id;
                 const locationInfo = resolveJobLocation(job);
-                const locationText = locationInfo.label || "Chưa cập nhật địa điểm";
+                const locationText =
+                  locationInfo.label || "Chưa cập nhật địa điểm";
                 const recruiterId =
                   job.recruiter_id ||
                   job.recruiter?.recruiter_id ||
@@ -434,7 +482,12 @@ const CandidateAppliedJobs: React.FC = () => {
                 const recruiterIdStr = recruiterId ? String(recruiterId) : "";
                 const goToRecruiter = () => {
                   if (!canViewRecruiter) return;
-                  navigate(path.CANDIDATE_RECRUITER_VIEW.replace(":id", recruiterIdStr));
+                  navigate(
+                    path.CANDIDATE_RECRUITER_VIEW.replace(
+                      ":id",
+                      recruiterIdStr,
+                    ),
+                  );
                 };
                 return (
                   <article
@@ -447,7 +500,9 @@ const CandidateAppliedJobs: React.FC = () => {
                           <Briefcase className="h-5 w-5" />
                         </div>
                         <div>
-                          {(job.recruiter_name || job.recruiter?.company_name || canViewRecruiter) && (
+                          {(job.recruiter_name ||
+                            job.recruiter?.company_name ||
+                            canViewRecruiter) && (
                             <button
                               type="button"
                               onClick={goToRecruiter}
@@ -461,14 +516,16 @@ const CandidateAppliedJobs: React.FC = () => {
                             {job.position}
                           </h3>
                           <div className="mt-1 flex flex-wrap gap-2">
-                            {parseFields(job.fields).slice(0, 3).map((f) => (
-                              <span
-                                key={f}
-                                className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700"
-                              >
-                                {f}
-                              </span>
-                            ))}
+                            {parseFields(job.fields)
+                              .slice(0, 3)
+                              .map((f) => (
+                                <span
+                                  key={f}
+                                  className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700"
+                                >
+                                  {f}
+                                </span>
+                              ))}
                           </div>
                         </div>
                       </div>
@@ -481,7 +538,7 @@ const CandidateAppliedJobs: React.FC = () => {
                           Hạn nộp: {formatDate(job.application_deadline_to)}
                         </span>
                         <div className="flex gap-2">
-                           {canViewRecruiter && (
+                          {canViewRecruiter && (
                             <button
                               type="button"
                               onClick={goToRecruiter}
@@ -493,7 +550,9 @@ const CandidateAppliedJobs: React.FC = () => {
                           )}
                           <button
                             type="button"
-                            onClick={() => setExpandedId(expanded ? null : job.id)}
+                            onClick={() =>
+                              setExpandedId(expanded ? null : job.id)
+                            }
                             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                           >
                             <ChevronDown
@@ -508,25 +567,42 @@ const CandidateAppliedJobs: React.FC = () => {
                       <div className="mt-3 space-y-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 border border-dashed border-gray-200">
                         {/* Chi tiết tin tuyển dụng */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                           <div>
-                              <span className="font-semibold text-gray-800">Trạng thái tin: </span>
-                              {job.status || "—"}
-                           </div>
-                           <div>
-                              <span className="font-semibold text-gray-800">Hình thức: </span>
-                              {job.recruitment_type || "—"}
-                           </div>
-                           <div>
-                              <span className="font-semibold text-gray-800">Địa điểm: </span>
-                              {locationText}
-                           </div>
-                           {job.working_time && <div><span className="font-semibold text-gray-800">Thời gian:</span> {job.working_time}</div>}
+                          <div>
+                            <span className="font-semibold text-gray-800">
+                              Trạng thái tin:{" "}
+                            </span>
+                            {job.status || "—"}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-gray-800">
+                              Hình thức:{" "}
+                            </span>
+                            {job.recruitment_type || "—"}
+                          </div>
+                          <div>
+                            <span className="font-semibold text-gray-800">
+                              Địa điểm:{" "}
+                            </span>
+                            {locationText}
+                          </div>
+                          {job.working_time && (
+                            <div>
+                              <span className="font-semibold text-gray-800">
+                                Thời gian:
+                              </span>{" "}
+                              {job.working_time}
+                            </div>
+                          )}
                         </div>
                         {job.requirements && (
-                           <div className="pt-2 border-t border-gray-200 mt-2">
-                              <span className="font-semibold text-gray-800 block mb-1">Yêu cầu:</span>
-                              <p className="whitespace-pre-line text-xs">{job.requirements}</p>
-                           </div>
+                          <div className="pt-2 border-t border-gray-200 mt-2">
+                            <span className="font-semibold text-gray-800 block mb-1">
+                              Yêu cầu:
+                            </span>
+                            <p className="whitespace-pre-line text-xs">
+                              {job.requirements}
+                            </p>
+                          </div>
                         )}
                       </div>
                     )}

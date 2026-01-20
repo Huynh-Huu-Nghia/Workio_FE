@@ -6,6 +6,7 @@ import AuthLayout from "@/layouts/AuthLayout";
 import Login from "@/pages/auth/Login";
 import ForgotPassword from "@/pages/auth/ForgotPassword";
 import ResetPassword from "@/pages/auth/ResetPassword";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
 import UserManagementPage from "@/pages/admin/UserManagement";
 import CreateCandidate from "@/pages/admin/candidate/CreateCandidate";
@@ -36,6 +37,7 @@ import CandidateSupportRequests from "@/pages/candidate/SupportRequests";
 import CandidateHome from "@/pages/candidate/Home";
 import CandidateRecruiterView from "@/pages/candidate/RecruiterView";
 import CandidateCourses from "@/pages/candidate/Courses";
+import RecruiterHome from "@/pages/recruiter/Home";
 import RecruiterJobPosts from "@/pages/recruiter/JobPosts";
 import RecruiterInterviews from "@/pages/recruiter/Interviews";
 import RecruiterProfile from "@/pages/recruiter/Profile";
@@ -90,11 +92,11 @@ export const AppRouter = createBrowserRouter([
   // --- Luồng Admin ---
   {
     path: path.admin,
-    // Lưu ý: AdminLayout cần title và activeMenu props. Ta sẽ đặt giá trị mặc định ở đây
-    // và để trang con (UserManagementPage) tự cung cấp props qua HOC (nếu cần),
-    // hoặc đơn giản là dùng AdminLayout component trực tiếp trong trang con (như đã làm).
-    // Ở đây ta đặt layout ở ngoài để dùng chung cho tất cả luồng admin.
-    element: <Outlet />,
+    element: (
+      <ProtectedRoute requiredRole="Admin">
+        <Outlet />
+      </ProtectedRoute>
+    ),
     children: [
       {
         path: path.ADMIN_DASHBOARD,
@@ -223,26 +225,41 @@ export const AppRouter = createBrowserRouter([
   // --- Luồng Candidate ---
   {
     path: path.CANDIDATE_HOME,
-    element: <Outlet />,
+    element: (
+      <ProtectedRoute requiredRole="Candidate">
+        <Outlet />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <CandidateHome /> },
       { path: path.CANDIDATE_HOME, element: <CandidateHome /> },
       { path: path.CANDIDATE_JOBS, element: <CandidateJobBoard /> },
-      { path: path.CANDIDATE_SUGGESTED_JOBS, element: <CandidateSuggestedJobs /> },
+      {
+        path: path.CANDIDATE_SUGGESTED_JOBS,
+        element: <CandidateSuggestedJobs />,
+      },
       { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
       { path: "courses", element: <CandidateCourses /> },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },
       { path: path.CANDIDATE_SUPPORT, element: <CandidateSupportRequests /> },
-      { path: path.CANDIDATE_RECRUITER_VIEW, element: <CandidateRecruiterView /> },
+      {
+        path: path.CANDIDATE_RECRUITER_VIEW,
+        element: <CandidateRecruiterView />,
+      },
     ],
   },
 
   // --- Luồng Recruiter ---
   {
     path: path.RECRUITER_HOME,
-    element: <Outlet />,
+    element: (
+      <ProtectedRoute requiredRole="Recruiter">
+        <Outlet />
+      </ProtectedRoute>
+    ),
     children: [
+      { index: true, element: <RecruiterHome /> },
       { path: path.RECRUITER_JOBS, element: <RecruiterJobPosts /> },
       { path: path.RECRUITER_JOB_CREATE, element: <RecruiterJobForm /> },
       { path: path.RECRUITER_JOB_EDIT, element: <RecruiterJobForm /> },
@@ -261,7 +278,11 @@ export const AppRouter = createBrowserRouter([
   // --- Luồng Center (placeholder) ---
   {
     path: path.CENTER_HOME,
-    element: <Outlet />,
+    element: (
+      <ProtectedRoute requiredRole="Center">
+        <Outlet />
+      </ProtectedRoute>
+    ),
     children: [
       { index: true, element: <CenterDashboard /> },
       { path: path.CENTER_COURSES, element: <CenterCourses /> },

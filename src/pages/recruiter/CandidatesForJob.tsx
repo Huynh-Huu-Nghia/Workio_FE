@@ -64,6 +64,7 @@ const CandidatesForJob: React.FC = () => {
     setSearchParams({ job_post_id: newId });
   };
 
+
   const { data: candidatesRes, isFetching: candidatesLoading, refetch } = useCandidatesOfJobQuery(selectedJobId);
   const candidates = Array.isArray(candidatesRes?.data) ? candidatesRes.data : [];
 
@@ -92,8 +93,8 @@ const CandidatesForJob: React.FC = () => {
             <div>
               <h1 className="text-xl font-bold text-gray-900">{title}</h1>
               <p className="text-sm text-gray-500">Quản lý hồ sơ ứng viên đã nộp đơn.</p>
-            </div>
-            
+
+            </div>    
             <div className="w-full md:w-72">
               <select
                 value={selectedJobId}
@@ -111,8 +112,7 @@ const CandidatesForJob: React.FC = () => {
                 }
               </select>
             </div>
-          </div>
-          
+          </div>          
           {selectedJobId && (
              <div className="mt-4 flex items-center justify-end">
                 <Link

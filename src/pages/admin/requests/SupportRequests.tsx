@@ -17,11 +17,15 @@ const SupportRequests: React.FC = () => {
   const deleteRequest = useDeleteSupportRequestAdminMutation();
 
   const [query, setQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<SupportRequestStatus | "all">("all");
-  const [priorityFilter, setPriorityFilter] = useState<SupportRequestPriority | "all">("all");
-  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc" | "priority" | "status">(
-    "created_desc"
-  );
+  const [statusFilter, setStatusFilter] = useState<
+    SupportRequestStatus | "all"
+  >("all");
+  const [priorityFilter, setPriorityFilter] = useState<
+    SupportRequestPriority | "all"
+  >("all");
+  const [sortBy, setSortBy] = useState<
+    "created_desc" | "created_asc" | "priority" | "status"
+  >("created_desc");
 
   const items: SupportRequest[] = data?.data ?? [];
 
@@ -51,7 +55,8 @@ const SupportRequests: React.FC = () => {
         return false;
       }
       if (statusFilter !== "all" && it.status !== statusFilter) return false;
-      if (priorityFilter !== "all" && it.priority !== priorityFilter) return false;
+      if (priorityFilter !== "all" && it.priority !== priorityFilter)
+        return false;
       return true;
     });
     const sorted = [...filteredList];
@@ -74,7 +79,11 @@ const SupportRequests: React.FC = () => {
       }
 
       if (sortBy === "status") {
-        const order: Record<string, number> = { open: 0, in_progress: 1, resolved: 2 };
+        const order: Record<string, number> = {
+          open: 0,
+          in_progress: 1,
+          resolved: 2,
+        };
         const sa = order[a.status] ?? 99;
         const sb = order[b.status] ?? 99;
         if (sa !== sb) return sa - sb;
@@ -179,10 +188,12 @@ const SupportRequests: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Yêu cầu hỗ trợ" activeMenu="request">
+    <AdminLayout title="Yêu cầu hỗ trợ" activeMenu="request" fullWidth={true}>
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
-          <h1 className="text-xl font-semibold text-gray-800">Yêu cầu hỗ trợ</h1>
+          <h1 className="text-xl font-semibold text-gray-800">
+            Yêu cầu hỗ trợ
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             Admin quản lý danh sách; các role khác có thể tạo yêu cầu.
           </p>
@@ -209,7 +220,9 @@ const SupportRequests: React.FC = () => {
                 <select
                   value={statusFilter}
                   onChange={(e) =>
-                    setStatusFilter((e.target.value as SupportRequestStatus | "all") || "all")
+                    setStatusFilter(
+                      (e.target.value as SupportRequestStatus | "all") || "all",
+                    )
                   }
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
                 >
@@ -221,7 +234,10 @@ const SupportRequests: React.FC = () => {
                 <select
                   value={priorityFilter}
                   onChange={(e) =>
-                    setPriorityFilter((e.target.value as SupportRequestPriority | "all") || "all")
+                    setPriorityFilter(
+                      (e.target.value as SupportRequestPriority | "all") ||
+                        "all",
+                    )
                   }
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
                 >
@@ -234,8 +250,11 @@ const SupportRequests: React.FC = () => {
                   value={sortBy}
                   onChange={(e) =>
                     setSortBy(
-                      (e.target.value as "created_desc" | "created_asc" | "priority" | "status") ||
-                        "created_desc"
+                      (e.target.value as
+                        | "created_desc"
+                        | "created_asc"
+                        | "priority"
+                        | "status") || "created_desc",
                     )
                   }
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
@@ -288,22 +307,33 @@ const SupportRequests: React.FC = () => {
                         <div className="flex flex-col gap-2">
                           {/* Priority Tags */}
                           <div>
-                            <p className="mb-1 text-xs font-semibold text-gray-600">Ưu tiên:</p>
+                            <p className="mb-1 text-xs font-semibold text-gray-600">
+                              Ưu tiên:
+                            </p>
                             <TagSelector
                               options={priorityOptions}
                               selectedValue={it.priority}
-                              onSelect={(p) => updatePriority(it.id, p as SupportRequestPriority)}
+                              onSelect={(p) =>
+                                updatePriority(
+                                  it.id,
+                                  p as SupportRequestPriority,
+                                )
+                              }
                               size="sm"
                             />
                           </div>
 
                           {/* Status Tags */}
                           <div>
-                            <p className="mb-1 text-xs font-semibold text-gray-600">Trạng thái:</p>
+                            <p className="mb-1 text-xs font-semibold text-gray-600">
+                              Trạng thái:
+                            </p>
                             <TagSelector
                               options={statusOptions}
                               selectedValue={it.status}
-                              onSelect={(s) => updateStatus(it.id, s as SupportRequestStatus)}
+                              onSelect={(s) =>
+                                updateStatus(it.id, s as SupportRequestStatus)
+                              }
                               size="sm"
                             />
                           </div>

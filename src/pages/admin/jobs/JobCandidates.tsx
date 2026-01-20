@@ -15,14 +15,13 @@ const JobCandidates: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Ứng viên của tin" activeMenu="jobs">
+    <AdminLayout title="Ứng viên của tin" activeMenu="jobs" fullWidth={true}>
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
             Ứng viên ứng tuyển tin
           </h1>
-          <p className="text-sm text-gray-500">
-          </p>
+          <p className="text-sm text-gray-500"></p>
         </div>
         <form
           onSubmit={onSubmit}

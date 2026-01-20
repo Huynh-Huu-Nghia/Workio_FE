@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useMonthlyReportQuery } from "@/api/report.api";
+import { Link } from "react-router-dom";
 
 const Dashboard: React.FC = () => {
   const today = new Date();
@@ -30,7 +31,7 @@ const Dashboard: React.FC = () => {
   const handleRefresh = () => refetch();
 
   return (
-    <AdminLayout title="Tổng quan" activeMenu="dashboard">
+    <AdminLayout title="Tổng quan" activeMenu="dashboard" fullWidth={true}>
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-sm text-gray-500">Báo cáo tháng</p>
@@ -146,9 +147,9 @@ const StatCard: React.FC<StatCardProps> = ({
 
   if (href) {
     return (
-      <a href={href} className="block">
+      <Link to={href} className="block">
         {content}
-      </a>
+      </Link>
     );
   }
 

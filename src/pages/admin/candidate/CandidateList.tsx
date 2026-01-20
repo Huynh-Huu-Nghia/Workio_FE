@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 export default function CandidateList() {
   const navigate = useNavigate();
@@ -39,9 +40,25 @@ export default function CandidateList() {
   const [fields, setFields] = useState<string[]>([]);
   const [awaitingInterview, setAwaitingInterview] = useState(false);
   const [employed, setEmployed] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // 🔥 GỌI API LẤY DANH SÁCH
-  const { data: apiResponse, isLoading, isError, refetch } = useGetAllCandidatesQuery({
+  const {
+    data: apiResponse,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetAllCandidatesQuery({
     search: searchTerm || undefined,
     sort_by: sortBy || undefined,
     order,
@@ -109,120 +126,60 @@ export default function CandidateList() {
     return true;
   });
 
-  const printCandidateProfile = (user: any, password?: string) => {
-    const html = `
-      <html>
-        <head>
-          <title>Hồ sơ ứng viên - ${user.full_name || ""}</title>
-          <style>
-            body { font-family: Arial, sans-serif; padding: 24px; color: #111; }
-            h1 { margin-bottom: 8px; }
-            .section { margin-bottom: 16px; }
-            .label { font-weight: bold; }
-            .tag { display: inline-block; padding: 4px 8px; background: #eef2ff; color: #4338ca; border-radius: 6px; margin-right: 4px; margin-bottom: 4px; font-size: 12px; }
-          </style>
-        </head>
-        <body>
-          <h1>Hồ sơ ứng viên</h1>
-          <div class="section">
-            <div><span class="label">Họ tên:</span> ${user.full_name || ""}</div>
-            <div><span class="label">Email:</span> ${user.email || ""}</div>
-            <div><span class="label">SĐT:</span> ${user.phone || ""}</div>
-            <div><span class="label">Mật khẩu:</span> ${password || "—"}</div>
-            <div><span class="label">Giới tính:</span> ${user.gender || "—"}</div>
-            <div><span class="label">Ngày sinh:</span> ${user.date_of_birth || "—"}</div>
-            <div><span class="label">Nơi sinh:</span> ${user.place_of_birth || "—"}</div>
-            <div><span class="label">Dân tộc:</span> ${user.ethnicity || "—"}</div>
-          </div>
-          <div class="section">
-            <div><span class="label">Trình độ:</span> ${user.graduation_rank || "-"}</div>
-            <div><span class="label">Mức lương mong muốn:</span> ${formatCurrency(user.minimum_income)}</div>
-            <div><span class="label">Loại công việc:</span> ${user.job_type || "-"}</div>
-            <div><span class="label">Thời gian làm việc:</span> ${user.working_time || "-"}</div>
-            <div><span class="label">Phương tiện:</span> ${user.transport || "-"}</div>
-            <div><span class="label">Kỹ năng tin học:</span> ${user.computer_skill || "-"}</div>
-            <div><span class="label">Tin học khác:</span> ${user.other_computer_skill || "-"}</div>
-          </div>
-          <div class="section">
-            <div><span class="label">Ngôn ngữ:</span> ${(user.languguages || []).join(", ") || "-"}</div>
-            <div class="label">Ngành mong muốn:</div>
-            <div>${parseTags(user.fields_wish)
-              .map((t: string) => `<span class="tag">${t}</span>`)
-              .join("") || "-"}</div>
-          </div>
-          <div class="section">
-            <div class="label">Học vấn:</div>
-            <div>
-              ${(user.studyHistories || [])
-                .map(
-                  (edu: any) =>
-                    `<div> - ${edu.degree || ""} tại ${edu.school_name || ""} (${edu.start_year || ""} - ${edu.end_year || ""})</div>`
-                )
-                .join("") || "—"}
-            </div>
-          </div>
-          <div class="section">
-            <div class="label">Kinh nghiệm:</div>
-            <div>
-              ${(user.workExperiences || [])
-                .map(
-                  (exp: any) =>
-                    `<div> - ${exp.position || ""} @ ${exp.company_name || ""} (${exp.start_date || ""} - ${exp.end_date || ""})</div>`
-                )
-                .join("") || "—"}
-            </div>
-          </div>
-          <div class="section">
-            <div><span class="label">Địa chỉ:</span> ${user.street || ""} ${user.ward_code || ""} ${user.province_code || ""}</div>
-          </div>
-        </body>
-      </html>
-    `;
-    const win = window.open("", "_blank");
-    if (!win) return;
-    win.document.write(html);
-    win.document.close();
-    win.focus();
-    win.print();
-    win.close();
+  const handleDeleteOne = (candidateId: string, candidateName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa ứng viên",
+      message: `Bạn có chắc muốn xóa ứng viên "${candidateName}" không?`,
+      onConfirm: async () => {
+        try {
+          const res = await deleteMutation.mutateAsync(candidateId);
+          if (res?.err === 0) {
+            toast.info(res?.mes || "Đã xóa ứng viên.");
+            setSelectedRows((prev) => prev.filter((id) => id !== candidateId));
+            await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+          } else {
+            toast.error(res?.mes || "Xóa thất bại.");
+          }
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
-  const handleDeleteOne = async (candidateId: string) => {
-    const ok = window.confirm("Bạn có chắc muốn xóa ứng viên này không?");
-    if (!ok) return;
-
-    try {
-      const res = await deleteMutation.mutateAsync(candidateId);
-      if (res?.err === 0) {
-        toast.info(res?.mes || "Đã xóa ứng viên.");
-        setSelectedRows((prev) => prev.filter((id) => id !== candidateId));
-        await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        return;
-      }
-      toast.error(res?.mes || "Xóa thất bại.");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
-  };
-
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
-    const ok = window.confirm(
-      `Bạn có chắc muốn xóa ${selectedRows.length} ứng viên đã chọn không?`
-    );
-    if (!ok) return;
-
-    try {
-      const ids = [...selectedRows];
-      for (const id of ids) {
-        await deleteMutation.mutateAsync(id);
-      }
-      toast.info("Đã xóa các ứng viên đã chọn.");
-      setSelectedRows([]);
-      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa nhiều ứng viên",
+      message: `Bạn có chắc muốn xóa ${selectedRows.length} ứng viên đã chọn không?`,
+      onConfirm: async () => {
+        try {
+          const ids = [...selectedRows];
+          for (const id of ids) {
+            await deleteMutation.mutateAsync(id);
+          }
+          toast.info("Đã xóa các ứng viên đã chọn.");
+          setSelectedRows([]);
+          await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
   const [showCreate, setShowCreate] = useState(false);
@@ -253,7 +210,13 @@ export default function CandidateList() {
     { school_name: "", major: "", degree: "", start_year: "", end_year: "" },
   ]);
   const [experiences, setExperiences] = useState([
-    { company_name: "", position: "", description: "", start_date: "", end_date: "" },
+    {
+      company_name: "",
+      position: "",
+      description: "",
+      start_date: "",
+      end_date: "",
+    },
   ]);
   const SELECT_OPTIONS = {
     graduation_rank: ["Cấp 1", "Cấp 2", "Cấp 3", "Đại học"],
@@ -268,9 +231,10 @@ export default function CandidateList() {
   const generatePassword = () => {
     const chars =
       "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz0123456789!@#$%";
-    return Array.from({ length: 10 }, () => chars[Math.floor(Math.random() * chars.length)]).join(
-      ""
-    );
+    return Array.from(
+      { length: 10 },
+      () => chars[Math.floor(Math.random() * chars.length)],
+    ).join("");
   };
 
   const handleCreate = async (e: React.FormEvent) => {
@@ -297,8 +261,12 @@ export default function CandidateList() {
           job_type: newJobType || undefined,
           working_time: newWorkingTime || undefined,
           transport: newTransport || undefined,
-          minimum_income: newMinimumIncome ? Number(newMinimumIncome) : undefined,
-          experience_years: newExperienceYears ? Number(newExperienceYears) : undefined,
+          minimum_income: newMinimumIncome
+            ? Number(newMinimumIncome)
+            : undefined,
+          experience_years: newExperienceYears
+            ? Number(newExperienceYears)
+            : undefined,
           fields_wish: newFields.length ? newFields : undefined,
         },
         addressInfo: {
@@ -309,7 +277,11 @@ export default function CandidateList() {
         studyHistories: educations
           .filter(
             (e) =>
-              e.school_name || e.major || e.degree || e.start_year || e.end_year
+              e.school_name ||
+              e.major ||
+              e.degree ||
+              e.start_year ||
+              e.end_year,
           )
           .map((e) => ({
             school_name: e.school_name,
@@ -321,7 +293,11 @@ export default function CandidateList() {
         workExperiences: experiences
           .filter(
             (w) =>
-              w.company_name || w.position || w.start_date || w.end_date || w.description
+              w.company_name ||
+              w.position ||
+              w.start_date ||
+              w.end_date ||
+              w.description,
           )
           .map((w) => ({
             company_name: w.company_name,
@@ -357,9 +333,23 @@ export default function CandidateList() {
         setNewAddressStreet("");
         setNewAddressProvince("");
         setNewAddressWard("");
-        setEducations([{ school_name: "", major: "", degree: "", start_year: "", end_year: "" }]);
+        setEducations([
+          {
+            school_name: "",
+            major: "",
+            degree: "",
+            start_year: "",
+            end_year: "",
+          },
+        ]);
         setExperiences([
-          { company_name: "", position: "", description: "", start_date: "", end_date: "" },
+          {
+            company_name: "",
+            position: "",
+            description: "",
+            start_date: "",
+            end_date: "",
+          },
         ]);
         await queryClient.invalidateQueries({ queryKey: ["candidates"] });
       } else {
@@ -374,16 +364,310 @@ export default function CandidateList() {
     refetch();
   };
 
+  const printCandidateProfile = (candidate: any, password?: string) => {
+    const html = `
+      <!DOCTYPE html>
+      <html lang="vi">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Hồ sơ Ứng viên - ${candidate.full_name || ""}</title>
+          <style>
+            @page {
+              size: A4;
+              margin: 2cm;
+            }
+            * {
+              box-sizing: border-box;
+            }
+            body {
+              font-family: 'Times New Roman', serif;
+              font-size: 14px;
+              line-height: 1.6;
+              color: #333;
+              margin: 0;
+              padding: 0;
+              background: white;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #2563eb;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              font-size: 24px;
+              font-weight: bold;
+              color: #1e40af;
+              margin: 0 0 10px 0;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            }
+            .header .subtitle {
+              font-size: 16px;
+              color: #64748b;
+              margin: 0;
+            }
+            .section {
+              margin-bottom: 25px;
+              padding: 20px;
+              background: #f8fafc;
+              border-radius: 8px;
+              border-left: 4px solid #2563eb;
+            }
+            .section-title {
+              font-size: 16px;
+              font-weight: bold;
+              color: #1e40af;
+              margin-bottom: 15px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              border-bottom: 1px solid #e2e8f0;
+              padding-bottom: 5px;
+            }
+            .info-row {
+              display: flex;
+              margin-bottom: 8px;
+              align-items: flex-start;
+            }
+            .info-row:last-child {
+              margin-bottom: 0;
+            }
+            .label {
+              font-weight: bold;
+              color: #374151;
+              min-width: 140px;
+              flex-shrink: 0;
+              margin-right: 15px;
+            }
+            .value {
+              color: #111827;
+              flex: 1;
+            }
+            .status-badge {
+              display: inline-block;
+              padding: 4px 12px;
+              border-radius: 20px;
+              font-size: 12px;
+              font-weight: bold;
+              text-transform: uppercase;
+            }
+            .status-verified {
+              background: #dcfce7;
+              color: #166534;
+            }
+            .status-pending {
+              background: #fef3c7;
+              color: #92400e;
+            }
+            .education-item, .experience-item {
+              margin-bottom: 12px;
+              padding: 12px;
+              background: white;
+              border-radius: 6px;
+              border: 1px solid #e2e8f0;
+            }
+            .education-item:last-child, .experience-item:last-child {
+              margin-bottom: 0;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e2e8f0;
+              text-align: center;
+              font-size: 12px;
+              color: #64748b;
+            }
+            .print-date {
+              font-style: italic;
+            }
+            @media print {
+              body {
+                -webkit-print-color-adjust: exact;
+                color-adjust: exact;
+              }
+              .section {
+                page-break-inside: avoid;
+              }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Hồ sơ Ứng viên</h1>
+            <p class="subtitle">Thông tin cá nhân và kinh nghiệm làm việc</p>
+          </div>
+
+          <div class="section">
+            <div class="section-title">👤 Thông tin cá nhân</div>
+            <div class="info-row">
+              <span class="label">Họ và tên:</span>
+              <span class="value">${candidate.full_name || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Email:</span>
+              <span class="value">${candidate.user?.email || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Số điện thoại:</span>
+              <span class="value">${candidate.phone || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Mật khẩu:</span>
+              <span class="value">${password || "Đã được mã hóa"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Ngày sinh:</span>
+              <span class="value">${candidate.date_of_birth ? new Date(candidate.date_of_birth).toLocaleDateString("vi-VN") : "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Giới tính:</span>
+              <span class="value">${candidate.gender === "Nam" ? "Nam" : candidate.gender === "Nu" ? "Nữ" : "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Nơi sinh:</span>
+              <span class="value">${candidate.place_of_birth || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Dân tộc:</span>
+              <span class="value">${candidate.ethnicity || "Chưa cập nhật"}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">🎓 Học vấn</div>
+            <div class="info-row">
+              <span class="label">Trình độ học vấn:</span>
+              <span class="value">${candidate.graduation_rank || "Chưa cập nhật"}</span>
+            </div>
+            ${
+              candidate.study_history && candidate.study_history.length > 0
+                ? candidate.study_history
+                    .map(
+                      (edu: any) => `
+              <div class="education-item">
+                <div><strong>${edu.school_name || "Chưa cập nhật"}</strong></div>
+                <div>Chuyên ngành: ${edu.major || "Chưa cập nhật"}</div>
+                <div>Bằng cấp: ${edu.degree || "Chưa cập nhật"}</div>
+                <div>Thời gian: ${edu.start_year || "?"} - ${edu.end_year || "nay"}</div>
+              </div>
+            `,
+                    )
+                    .join("")
+                : '<div class="education-item">Chưa cập nhật thông tin học vấn</div>'
+            }
+          </div>
+
+          <div class="section">
+            <div class="section-title">💼 Kinh nghiệm làm việc</div>
+            ${
+              candidate.work_experience && candidate.work_experience.length > 0
+                ? candidate.work_experience
+                    .map(
+                      (exp: any) => `
+              <div class="experience-item">
+                <div><strong>${exp.company_name || "Chưa cập nhật"}</strong></div>
+                <div>Vị trí: ${exp.position || "Chưa cập nhật"}</div>
+                <div>Mô tả: ${exp.description || "Chưa cập nhật"}</div>
+                <div>Thời gian: ${exp.start_date ? new Date(exp.start_date).toLocaleDateString("vi-VN") : "?"} - ${exp.end_date ? new Date(exp.end_date).toLocaleDateString("vi-VN") : "nay"}</div>
+              </div>
+            `,
+                    )
+                    .join("")
+                : '<div class="experience-item">Chưa có kinh nghiệm làm việc</div>'
+            }
+          </div>
+
+          <div class="section">
+            <div class="section-title">💻 Kỹ năng và nhu cầu</div>
+            <div class="info-row">
+              <span class="label">Tin học:</span>
+              <span class="value">${candidate.computer_skill || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Tin học khác:</span>
+              <span class="value">${candidate.other_computer_skill || "Không có"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Loại công việc:</span>
+              <span class="value">${candidate.job_type || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Thời gian làm việc:</span>
+              <span class="value">${candidate.working_time || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Phương tiện:</span>
+              <span class="value">${candidate.transport || "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Mức lương mong muốn:</span>
+              <span class="value">${candidate.minimum_income ? candidate.minimum_income.toLocaleString("vi-VN") + " VNĐ" : "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Ngôn ngữ:</span>
+              <span class="value">${candidate.languages && candidate.languages.length > 0 ? candidate.languages.join(", ") : "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Ngành nghề quan tâm:</span>
+              <span class="value">${candidate.fields_wish && candidate.fields_wish.length > 0 ? candidate.fields_wish.join(", ") : "Chưa cập nhật"}</span>
+            </div>
+            <div class="info-row">
+              <span class="label">Trạng thái xác thực:</span>
+              <span class="status-badge ${candidate.user?.is_verified ? "status-verified" : "status-pending"}">
+                ${candidate.user?.is_verified ? "✓ Đã xác thực" : "⏳ Chờ xác thực"}
+              </span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">📍 Địa chỉ liên hệ</div>
+            <div class="info-row">
+              <span class="label">Địa chỉ:</span>
+              <span class="value">
+                ${candidate.address?.street || ""}${candidate.address?.street && (candidate.address?.ward_code || candidate.address?.province_code) ? ", " : ""}
+                ${candidate.address?.ward_code ? "Phường/Xã " + candidate.address?.ward_code : ""}${candidate.address?.ward_code && candidate.address?.province_code ? ", " : ""}
+                ${candidate.address?.province_code ? "Tỉnh/TP " + candidate.address?.province_code : ""}
+                ${!candidate.address?.street && !candidate.address?.ward_code && !candidate.address?.province_code ? "Chưa cập nhật" : ""}
+              </span>
+            </div>
+          </div>
+
+          <div class="footer">
+            <div class="print-date">
+              In ngày: ${new Date().toLocaleDateString("vi-VN")} lúc ${new Date().toLocaleTimeString("vi-VN")}
+            </div>
+            <div style="margin-top: 10px;">
+              Hệ thống quản lý tuyển dụng Workio
+            </div>
+          </div>
+        </body>
+      </html>
+    `;
+    const win = window.open("", "_blank");
+    if (!win) return;
+    win.document.write(html);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+      win.print();
+      win.close();
+    }, 500);
+  };
+
   return (
     <AdminLayout
       title="DANH SÁCH ỨNG VIÊN"
       activeMenu="candidates"
       activeSubmenu="list-candidates"
+      fullWidth={true}
     >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">Quản lý Ứng viên</h1>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Quản lý Ứng viên
+            </h1>
             <p className="text-sm text-gray-500 mt-1">
               Theo dõi nguồn ứng viên, trạng thái xác thực và nhu cầu việc làm.
             </p>
@@ -475,7 +759,7 @@ export default function CandidateList() {
                               ward_code: newAddressWard,
                               province_code: newAddressProvince,
                             },
-                            newPassword
+                            newPassword,
                           )
                         }
                         className="whitespace-nowrap rounded-lg border border-gray-200 px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
@@ -485,7 +769,9 @@ export default function CandidateList() {
                     </div>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Số điện thoại</label>
+                    <label className="text-sm text-gray-600">
+                      Số điện thoại
+                    </label>
                     <input
                       value={newPhone}
                       onChange={(e) => setNewPhone(e.target.value)}
@@ -546,7 +832,9 @@ export default function CandidateList() {
                           <button
                             type="button"
                             onClick={() =>
-                              setNewLanguages(newLanguages.filter((l) => l !== lang))
+                              setNewLanguages(
+                                newLanguages.filter((l) => l !== lang),
+                              )
                             }
                             className="text-orange-500 hover:text-orange-700"
                           >
@@ -568,7 +856,11 @@ export default function CandidateList() {
                           }
                         }}
                         className="flex-1 min-w-[120px] border-none outline-none"
-                        placeholder={newLanguages.length ? "" : "Ví dụ: Tiếng Việt, Tiếng Anh"}
+                        placeholder={
+                          newLanguages.length
+                            ? ""
+                            : "Ví dụ: Tiếng Việt, Tiếng Anh"
+                        }
                       />
                     </div>
                   </div>
@@ -588,7 +880,9 @@ export default function CandidateList() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Kỹ năng tin học</label>
+                    <label className="text-sm text-gray-600">
+                      Kỹ năng tin học
+                    </label>
                     <select
                       value={newComputerSkill}
                       onChange={(e) => setNewComputerSkill(e.target.value)}
@@ -603,7 +897,9 @@ export default function CandidateList() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Tin học khác</label>
+                    <label className="text-sm text-gray-600">
+                      Tin học khác
+                    </label>
                     <input
                       value={newOtherComputerSkill}
                       onChange={(e) => setNewOtherComputerSkill(e.target.value)}
@@ -612,7 +908,9 @@ export default function CandidateList() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Loại công việc</label>
+                    <label className="text-sm text-gray-600">
+                      Loại công việc
+                    </label>
                     <select
                       value={newJobType}
                       onChange={(e) => setNewJobType(e.target.value)}
@@ -627,7 +925,9 @@ export default function CandidateList() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Thời gian làm việc</label>
+                    <label className="text-sm text-gray-600">
+                      Thời gian làm việc
+                    </label>
                     <select
                       value={newWorkingTime}
                       onChange={(e) => setNewWorkingTime(e.target.value)}
@@ -657,7 +957,9 @@ export default function CandidateList() {
                     </select>
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Mức lương mong muốn</label>
+                    <label className="text-sm text-gray-600">
+                      Mức lương mong muốn
+                    </label>
                     <input
                       type="number"
                       value={newMinimumIncome}
@@ -667,7 +969,9 @@ export default function CandidateList() {
                     />
                   </div>
                   <div>
-                    <label className="text-sm text-gray-600">Số năm kinh nghiệm</label>
+                    <label className="text-sm text-gray-600">
+                      Số năm kinh nghiệm
+                    </label>
                     <input
                       type="number"
                       value={newExperienceYears}
@@ -679,13 +983,17 @@ export default function CandidateList() {
                 </div>
 
                 <div className="relative">
-                  <label className="text-sm text-gray-600">Ngành mong muốn *</label>
+                  <label className="text-sm text-gray-600">
+                    Ngành mong muốn *
+                  </label>
                   <button
                     type="button"
                     onClick={() => setShowFieldDropdown((v) => !v)}
                     className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 text-sm text-left focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 bg-white"
                   >
-                    {newFields.length ? `${newFields.length} ngành đã chọn` : "Chọn ngành"}
+                    {newFields.length
+                      ? `${newFields.length} ngành đã chọn`
+                      : "Chọn ngành"}
                   </button>
                   {showFieldDropdown && (
                     <div className="absolute z-50 mt-2 w-full rounded-lg border border-gray-200 bg-white shadow-lg max-h-52 overflow-y-auto">
@@ -698,8 +1006,12 @@ export default function CandidateList() {
                             type="checkbox"
                             checked={newFields.includes(opt)}
                             onChange={(e) => {
-                              if (e.target.checked) setNewFields([...newFields, opt]);
-                              else setNewFields(newFields.filter((f) => f !== opt));
+                              if (e.target.checked)
+                                setNewFields([...newFields, opt]);
+                              else
+                                setNewFields(
+                                  newFields.filter((f) => f !== opt),
+                                );
                             }}
                             className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                           />
@@ -716,13 +1028,21 @@ export default function CandidateList() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   <div className="rounded-lg border border-gray-100 p-3 bg-gray-50/60">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-700">Học vấn</span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Học vấn
+                      </span>
                       <button
                         type="button"
                         onClick={() =>
                           setEducations([
                             ...educations,
-                            { school_name: "", major: "", degree: "", start_year: "", end_year: "" },
+                            {
+                              school_name: "",
+                              major: "",
+                              degree: "",
+                              start_year: "",
+                              end_year: "",
+                            },
                           ])
                         }
                         className="text-xs text-orange-600 hover:underline"
@@ -732,15 +1052,20 @@ export default function CandidateList() {
                     </div>
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                       {educations.map((edu, idx) => (
-                        <div key={idx} className="grid grid-cols-1 gap-2 border rounded-md p-2 bg-white">
+                        <div
+                          key={idx}
+                          className="grid grid-cols-1 gap-2 border rounded-md p-2 bg-white"
+                        >
                           <input
                             placeholder="Trường"
                             value={edu.school_name}
                             onChange={(e) =>
                               setEducations(
                                 educations.map((item, i) =>
-                                  i === idx ? { ...item, school_name: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, school_name: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -751,8 +1076,10 @@ export default function CandidateList() {
                             onChange={(e) =>
                               setEducations(
                                 educations.map((item, i) =>
-                                  i === idx ? { ...item, major: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, major: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -763,8 +1090,10 @@ export default function CandidateList() {
                             onChange={(e) =>
                               setEducations(
                                 educations.map((item, i) =>
-                                  i === idx ? { ...item, degree: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, degree: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -776,8 +1105,10 @@ export default function CandidateList() {
                               onChange={(e) =>
                                 setEducations(
                                   educations.map((item, i) =>
-                                    i === idx ? { ...item, start_year: e.target.value } : item
-                                  )
+                                    i === idx
+                                      ? { ...item, start_year: e.target.value }
+                                      : item,
+                                  ),
                                 )
                               }
                               className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -788,8 +1119,10 @@ export default function CandidateList() {
                               onChange={(e) =>
                                 setEducations(
                                   educations.map((item, i) =>
-                                    i === idx ? { ...item, end_year: e.target.value } : item
-                                  )
+                                    i === idx
+                                      ? { ...item, end_year: e.target.value }
+                                      : item,
+                                  ),
                                 )
                               }
                               className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -801,7 +1134,9 @@ export default function CandidateList() {
                   </div>
                   <div className="rounded-lg border border-gray-100 p-3 bg-gray-50/60">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-semibold text-gray-700">Kinh nghiệm</span>
+                      <span className="text-sm font-semibold text-gray-700">
+                        Kinh nghiệm
+                      </span>
                       <button
                         type="button"
                         onClick={() =>
@@ -823,15 +1158,20 @@ export default function CandidateList() {
                     </div>
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                       {experiences.map((exp, idx) => (
-                        <div key={idx} className="grid grid-cols-1 gap-2 border rounded-md p-2 bg-white">
+                        <div
+                          key={idx}
+                          className="grid grid-cols-1 gap-2 border rounded-md p-2 bg-white"
+                        >
                           <input
                             placeholder="Công ty"
                             value={exp.company_name}
                             onChange={(e) =>
                               setExperiences(
                                 experiences.map((item, i) =>
-                                  i === idx ? { ...item, company_name: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, company_name: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -842,8 +1182,10 @@ export default function CandidateList() {
                             onChange={(e) =>
                               setExperiences(
                                 experiences.map((item, i) =>
-                                  i === idx ? { ...item, position: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, position: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -854,8 +1196,10 @@ export default function CandidateList() {
                             onChange={(e) =>
                               setExperiences(
                                 experiences.map((item, i) =>
-                                  i === idx ? { ...item, description: e.target.value } : item
-                                )
+                                  i === idx
+                                    ? { ...item, description: e.target.value }
+                                    : item,
+                                ),
                               )
                             }
                             className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -869,8 +1213,10 @@ export default function CandidateList() {
                               onChange={(e) =>
                                 setExperiences(
                                   experiences.map((item, i) =>
-                                    i === idx ? { ...item, start_date: e.target.value } : item
-                                  )
+                                    i === idx
+                                      ? { ...item, start_date: e.target.value }
+                                      : item,
+                                  ),
                                 )
                               }
                               className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -882,8 +1228,10 @@ export default function CandidateList() {
                               onChange={(e) =>
                                 setExperiences(
                                   experiences.map((item, i) =>
-                                    i === idx ? { ...item, end_date: e.target.value } : item
-                                  )
+                                    i === idx
+                                      ? { ...item, end_date: e.target.value }
+                                      : item,
+                                  ),
                                 )
                               }
                               className="rounded border border-gray-200 px-2 py-1 text-xs"
@@ -933,7 +1281,8 @@ export default function CandidateList() {
                           ?.filter(
                             (w) =>
                               !newAddressProvince ||
-                              String(w.province_code) === String(newAddressProvince)
+                              String(w.province_code) ===
+                                String(newAddressProvince),
                           )
                           .map((w) => (
                             <option key={w.code} value={w.code}>
@@ -1248,7 +1597,7 @@ export default function CandidateList() {
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/admin/candidates/view/${user.candidate_id}`
+                                  `/admin/candidates/view/${user.candidate_id}`,
                                 )
                               }
                               className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
@@ -1266,7 +1615,7 @@ export default function CandidateList() {
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/admin/candidates/edit/${user.candidate_id}`
+                                  `/admin/candidates/edit/${user.candidate_id}`,
                                 )
                               }
                               className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
@@ -1277,7 +1626,7 @@ export default function CandidateList() {
                             <button
                               onClick={() =>
                                 navigate(
-                                  `/admin/jobs/suggested?candidate_id=${user.candidate_id}`
+                                  `/admin/jobs/suggested?candidate_id=${user.candidate_id}`,
                                 )
                               }
                               className="p-2 text-gray-400 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-all"
@@ -1289,7 +1638,14 @@ export default function CandidateList() {
                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Xóa"
                               disabled={deleteMutation.isPending}
-                              onClick={() => handleDeleteOne(user.candidate_id)}
+                              onClick={() =>
+                                handleDeleteOne(
+                                  user.candidate_id,
+                                  user.full_name ||
+                                    user.email ||
+                                    "Ứng viên này",
+                                )
+                              }
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1311,6 +1667,20 @@ export default function CandidateList() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </AdminLayout>
   );
 }

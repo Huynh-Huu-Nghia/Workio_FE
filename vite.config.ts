@@ -26,41 +26,11 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // 👇 THÊM ĐOẠN NÀY ĐỂ API "/admin/..." CHẠY ĐƯỢC
-      "/admin": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
-      "/admin-auth": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
-      "/recruiter": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
-      "/candidate": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
-      "/center": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
-      },
       "/api": {
         target: "http://localhost:3000",
         changeOrigin: true,
         secure: false,
-      },
-      "/requests": {
-        target: "http://localhost:3000",
-        changeOrigin: true,
-        secure: false,
+        rewrite: (path) => path.replace(/^\/api/, ""),
       },
     },
   },

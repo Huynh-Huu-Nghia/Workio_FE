@@ -94,7 +94,7 @@ export default function CreateCandidate() {
           date_of_birth: safeFormatDate(formData.candidateInfo.date_of_birth),
           languguages: formData.candidateInfo.languguages || [],
           fields_wish: (formData.candidateInfo.fields_wish || []).filter((f) =>
-            INDUSTRY_OPTIONS.includes(f)
+            INDUSTRY_OPTIONS.includes(f),
           ),
         },
 
@@ -150,6 +150,7 @@ export default function CreateCandidate() {
       title="THÊM ỨNG VIÊN"
       activeMenu="candidates"
       activeSubmenu="add-candidate"
+      fullWidth={true}
     >
       <div className="min-h-screen bg-slate-50 pb-20 pt-6">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -166,101 +167,99 @@ export default function CreateCandidate() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="lg:col-span-2 space-y-6">
-                <SectionWrapper
-                  title="Thông Tin Tài Khoản"
-                  description="Email & mật khẩu đăng nhập hệ thống."
-                  icon={<Shield className="text-orange-500" />}
+            {/* FORM NHẬP - FULL WIDTH */}
+            <div className="space-y-6">
+              <SectionWrapper
+                title="Thông Tin Tài Khoản"
+                description="Email & mật khẩu đăng nhập hệ thống."
+                icon={<Shield className="text-orange-500" />}
+              >
+                <AccountSection register={register} errors={errors} />
+              </SectionWrapper>
+
+              <SectionWrapper
+                title="Thông Tin Cá Nhân"
+                description="Dữ liệu giúp xác định ứng viên."
+                icon={<User className="text-blue-500" />}
+              >
+                <PersonalSection
+                  register={register}
+                  errors={errors}
+                  control={control as any}
+                  setValue={setValue}
+                  watch={watch}
+                />
+              </SectionWrapper>
+
+              <SectionWrapper
+                title="Địa Chỉ Liên Hệ"
+                description="Nơi ở hiện tại của ứng viên."
+                icon={<MapPin className="text-red-500" />}
+              >
+                <AddressSection
+                  register={register}
+                  errors={errors}
+                  watch={watch}
+                  setValue={setValue}
+                />
+              </SectionWrapper>
+
+              <SectionWrapper
+                title="Lịch Sử Học Vấn"
+                description="Bằng cấp & đào tạo."
+                icon={<BookOpen className="text-purple-500" />}
+              >
+                <EducationSection
+                  control={control as any}
+                  register={register}
+                  errors={errors}
+                />
+              </SectionWrapper>
+
+              <SectionWrapper
+                title="Kinh Nghiệm Làm Việc"
+                description="Công việc từng đảm nhiệm."
+                icon={<Briefcase className="text-green-500" />}
+              >
+                <ExperienceSection
+                  control={control as any}
+                  register={register}
+                  errors={errors}
+                />
+              </SectionWrapper>
+            </div>
+
+            {/* NÚT SAVE Ở CUỐI */}
+            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-gray-800 mb-4">
+                Hoàn tất hồ sơ
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Kiểm tra lại thông tin trước khi lưu.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white shadow-md hover:bg-orange-600 transition disabled:bg-gray-300"
                 >
-                  <AccountSection register={register} errors={errors} />
-                </SectionWrapper>
+                  {mutation.isPending ? (
+                    "Đang xử lý..."
+                  ) : (
+                    <>
+                      <Save size={18} /> Lưu Hồ Sơ
+                    </>
+                  )}
+                </button>
 
-                <SectionWrapper
-                  title="Thông Tin Cá Nhân"
-                  description="Dữ liệu giúp xác định ứng viên."
-                  icon={<User className="text-blue-500" />}
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="w-full rounded-lg border bg-gray-50 px-4 py-3 font-medium text-gray-600 hover:bg-gray-100 transition"
                 >
-                  <PersonalSection
-                    register={register}
-                    errors={errors}
-                    control={control as any}
-                    setValue={setValue}
-                    watch={watch}
-                  />
-                </SectionWrapper>
-
-                <SectionWrapper
-                  title="Địa Chỉ Liên Hệ"
-                  description="Nơi ở hiện tại của ứng viên."
-                  icon={<MapPin className="text-red-500" />}
-                >
-                  <AddressSection
-                    register={register}
-                    errors={errors}
-                    watch={watch}
-                    setValue={setValue}
-                  />
-                </SectionWrapper>
-
-                <SectionWrapper
-                  title="Lịch Sử Học Vấn"
-                  description="Bằng cấp & đào tạo."
-                  icon={<BookOpen className="text-purple-500" />}
-                >
-                  <EducationSection
-                    control={control as any}
-                    register={register}
-                    errors={errors}
-                  />
-                </SectionWrapper>
-
-                <SectionWrapper
-                  title="Kinh Nghiệm Làm Việc"
-                  description="Công việc từng đảm nhiệm."
-                  icon={<Briefcase className="text-green-500" />}
-                >
-                  <ExperienceSection
-                    control={control as any}
-                    register={register}
-                    errors={errors}
-                  />
-                </SectionWrapper>
-              </div>
-
-              <div className="space-y-6">
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 sticky top-6">
-                  <h3 className="font-semibold text-gray-800 mb-4">
-                    Hoàn tất hồ sơ
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-6">
-                    Kiểm tra lại thông tin trước khi lưu.
-                  </p>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="submit"
-                      disabled={mutation.isPending}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-orange-500 px-4 py-3 font-semibold text-white shadow-md hover:bg-orange-600 transition disabled:bg-gray-300"
-                    >
-                      {mutation.isPending ? (
-                        "Đang xử lý..."
-                      ) : (
-                        <>
-                          <Save size={18} /> Lưu Hồ Sơ
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => navigate(-1)}
-                      className="w-full rounded-lg border bg-gray-50 px-4 py-3 font-medium text-gray-600 hover:bg-gray-100 transition"
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                </div>
+                  Hủy
+                </button>
               </div>
             </div>
           </form>

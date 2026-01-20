@@ -25,7 +25,11 @@ const STUDENT_STATUS = {
 
 type StudentStatus = (typeof STUDENT_STATUS)[keyof typeof STUDENT_STATUS];
 type StatusKey = StudentStatus | "default";
-type CourseSortKey = "students_desc" | "students_asc" | "name_asc" | "name_desc";
+type CourseSortKey =
+  | "students_desc"
+  | "students_asc"
+  | "name_asc"
+  | "name_desc";
 type StudentSortKey = "recent" | "oldest" | "name";
 type StudentFilterValue = StudentStatus | "all";
 
@@ -103,7 +107,9 @@ const STUDENT_FILTER_OPTIONS: { value: StudentFilterValue; label: string }[] = [
 
 const normalizeStatus = (status?: string | null): StatusKey => {
   const normalized = (status || "").toLowerCase();
-  return STUDENT_STATUS_META[normalized] ? normalized : "default";
+  return STUDENT_STATUS_META[normalized as StatusKey]
+    ? (normalized as StatusKey)
+    : "default";
 };
 
 const formatDateTime = (value?: string | null) =>
@@ -149,7 +155,7 @@ const summarizeCourse = (course: any) => {
       else if (status === STUDENT_STATUS.REJECTED) summary.rejected += 1;
       return summary;
     },
-    { pending: 0, learning: 0, completed: 0, rejected: 0 }
+    { pending: 0, learning: 0, completed: 0, rejected: 0 },
   );
 };
 
@@ -169,10 +175,13 @@ export default function CenterView() {
   const [studentStatusFilter, setStudentStatusFilter] =
     useState<StudentFilterValue>("all");
   const [studentSort, setStudentSort] = useState<StudentSortKey>("recent");
-  const [selectedCourseDetail, setSelectedCourseDetail] = useState<any | null>(null);
-  const [selectedStudentDetail, setSelectedStudentDetail] = useState<
-    { course: any; student: any } | null
-  >(null);
+  const [selectedCourseDetail, setSelectedCourseDetail] = useState<any | null>(
+    null,
+  );
+  const [selectedStudentDetail, setSelectedStudentDetail] = useState<{
+    course: any;
+    student: any;
+  } | null>(null);
   const hasCourses = courses.length > 0;
 
   const filteredCourses = useMemo(() => {
@@ -193,7 +202,9 @@ export default function CenterView() {
       }
       const nameA = (a?.name || "").toLowerCase();
       const nameB = (b?.name || "").toLowerCase();
-      const comparison = nameA.localeCompare(nameB, "vi", { sensitivity: "base" });
+      const comparison = nameA.localeCompare(nameB, "vi", {
+        sensitivity: "base",
+      });
       return courseSort === "name_desc" ? -comparison : comparison;
     });
   }, [courses, courseSearch, courseSort]);
@@ -217,7 +228,8 @@ export default function CenterView() {
   const handleCloseStudentDetail = () => setSelectedStudentDetail(null);
 
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -232,7 +244,9 @@ export default function CenterView() {
     const meta = STUDENT_STATUS_META[statusKey];
     const { email, phone } = getCandidateContacts(student);
     const requestedAt = formatDateTime(student?.requested_at);
-    const signedAt = student?.signed_at ? formatDateTime(student.signed_at) : null;
+    const signedAt = student?.signed_at
+      ? formatDateTime(student.signed_at)
+      : null;
     const attendanceValue =
       typeof student?.attendance === "number"
         ? `${Math.max(0, Math.min(100, student.attendance))}%`
@@ -248,7 +262,9 @@ export default function CenterView() {
                 Chi tiết học viên
               </p>
               <h3 className="text-xl font-bold text-gray-900">{name}</h3>
-              <p className="text-sm text-gray-500">Thuộc khóa học: {selectedCourse?.name}</p>
+              <p className="text-sm text-gray-500">
+                Thuộc khóa học: {selectedCourse?.name}
+              </p>
             </div>
             <button
               type="button"
@@ -261,7 +277,9 @@ export default function CenterView() {
 
           <div className="space-y-4">
             <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500">Trạng thái</p>
+              <p className="text-xs font-semibold uppercase text-gray-500">
+                Trạng thái
+              </p>
               <p
                 className={`mt-2 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}
               >
@@ -272,30 +290,52 @@ export default function CenterView() {
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Email</p>
-                <p className="mt-1 text-sm font-semibold text-gray-800">{email || "Chưa cập nhật"}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Email
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {email || "Chưa cập nhật"}
+                </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Điện thoại</p>
-                <p className="mt-1 text-sm font-semibold text-gray-800">{phone || "Chưa cập nhật"}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Điện thoại
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {phone || "Chưa cập nhật"}
+                </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Gửi yêu cầu</p>
-                <p className="mt-1 text-sm font-semibold text-gray-800">{requestedAt}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Gửi yêu cầu
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {requestedAt}
+                </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Ngày ký cam kết</p>
-                <p className="mt-1 text-sm font-semibold text-gray-800">{signedAt || "Chưa cập nhật"}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Ngày ký cam kết
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {signedAt || "Chưa cập nhật"}
+                </p>
               </div>
             </div>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Điểm danh</p>
-                <p className="mt-1 text-sm font-semibold text-gray-800">{attendanceValue}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Điểm danh
+                </p>
+                <p className="mt-1 text-sm font-semibold text-gray-800">
+                  {attendanceValue}
+                </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Học phí</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Học phí
+                </p>
                 <p className="mt-1 text-sm font-semibold text-gray-800">
                   {student?.tuition_confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
                 </p>
@@ -304,7 +344,9 @@ export default function CenterView() {
 
             {student?.notes && (
               <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Ghi chú</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Ghi chú
+                </p>
                 <p className="mt-1 text-sm text-gray-700">{student.notes}</p>
               </div>
             )}
@@ -322,7 +364,7 @@ export default function CenterView() {
       .filter((student) =>
         studentStatusFilter === "all"
           ? true
-          : normalizeStatus(student.status) === studentStatusFilter
+          : normalizeStatus(student.status) === studentStatusFilter,
       )
       .sort((a, b) => {
         if (studentSort === "recent") {
@@ -332,9 +374,13 @@ export default function CenterView() {
           return getRequestedTimestamp(a) - getRequestedTimestamp(b);
         }
         if (studentSort === "name") {
-          const compare = getCandidateName(a).localeCompare(getCandidateName(b), "vi", {
-            sensitivity: "base",
-          });
+          const compare = getCandidateName(a).localeCompare(
+            getCandidateName(b),
+            "vi",
+            {
+              sensitivity: "base",
+            },
+          );
           if (compare !== 0) return compare;
         }
         return (
@@ -348,12 +394,16 @@ export default function CenterView() {
         <div className="flex h-full w-full max-w-4xl flex-col overflow-hidden bg-white shadow-2xl sm:rounded-3xl">
           <div className="flex items-center justify-between border-b border-gray-100 p-4 sm:p-6">
             <div>
-              <p className="text-xs font-semibold uppercase text-gray-400">Chi tiết khóa học</p>
+              <p className="text-xs font-semibold uppercase text-gray-400">
+                Chi tiết khóa học
+              </p>
               <h3 className="text-xl font-bold text-gray-900">
                 {selectedCourseDetail?.name || "Chưa đặt tên"}
               </h3>
               {selectedCourseDetail?.description && (
-                <p className="text-sm text-gray-500">{selectedCourseDetail.description}</p>
+                <p className="text-sm text-gray-500">
+                  {selectedCourseDetail.description}
+                </p>
               )}
             </div>
             <button
@@ -372,27 +422,41 @@ export default function CenterView() {
                     {center.name?.charAt(0) || "C"}
                   </div>
                   <div>
-                    <h4 className="text-lg font-semibold text-gray-900">{center.name || "Chưa cập nhật"}</h4>
-                    <p className="text-sm text-gray-500">{center.center?.email || center.email || "—"}</p>
+                    <h4 className="text-lg font-semibold text-gray-900">
+                      {center.name || "Chưa cập nhật"}
+                    </h4>
+                    <p className="text-sm text-gray-500">
+                      {center.center?.email || center.email || "—"}
+                    </p>
                   </div>
                 </div>
                 <div className="mt-4 grid gap-3 text-sm md:grid-cols-2">
                   <div>
                     <div className="text-gray-500">Điện thoại</div>
-                    <div className="font-semibold text-gray-800">{center.phone || "—"}</div>
+                    <div className="font-semibold text-gray-800">
+                      {center.phone || "—"}
+                    </div>
                   </div>
                   <div>
                     <div className="text-gray-500">Website</div>
-                    <div className="font-semibold text-gray-800">{center.website || "—"}</div>
+                    <div className="font-semibold text-gray-800">
+                      {center.website || "—"}
+                    </div>
                   </div>
                   <div>
                     <div className="text-gray-500">Trạng thái</div>
-                    <div className="font-semibold text-gray-800">{center.is_active ? "Hoạt động" : "Đang khóa"}</div>
+                    <div className="font-semibold text-gray-800">
+                      {center.is_active ? "Hoạt động" : "Đang khóa"}
+                    </div>
                   </div>
                   <div>
                     <div className="text-gray-500">Địa chỉ</div>
                     <div className="font-semibold text-gray-800">
-                      {[center.address?.street, center.address?.ward_code, center.address?.province_code]
+                      {[
+                        center.address?.street,
+                        center.address?.ward_code,
+                        center.address?.province_code,
+                      ]
                         .filter(Boolean)
                         .join(", ") || "—"}
                     </div>
@@ -404,14 +468,21 @@ export default function CenterView() {
             <div className="rounded-2xl border border-orange-100 bg-orange-50/70 p-4">
               <div className="grid gap-3 sm:grid-cols-2">
                 <div>
-                  <p className="text-xs font-semibold uppercase text-orange-600">Thời gian</p>
+                  <p className="text-xs font-semibold uppercase text-orange-600">
+                    Thời gian
+                  </p>
                   <p className="text-sm font-semibold text-gray-800">
-                    {selectedCourseDetail?.start_date || "—"} → {selectedCourseDetail?.end_date || "—"}
+                    {selectedCourseDetail?.start_date || "—"} →{" "}
+                    {selectedCourseDetail?.end_date || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase text-orange-600">Tổng học viên</p>
-                  <p className="text-2xl font-bold text-orange-700">{students.length}</p>
+                  <p className="text-xs font-semibold uppercase text-orange-600">
+                    Tổng học viên
+                  </p>
+                  <p className="text-2xl font-bold text-orange-700">
+                    {students.length}
+                  </p>
                 </div>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-4 text-center text-sm font-semibold">
@@ -425,7 +496,9 @@ export default function CenterView() {
                 </div>
                 <div className="rounded-2xl border border-emerald-100 bg-white/70 p-3">
                   <p className="text-xs text-emerald-600">Hoàn thành</p>
-                  <p className="text-2xl text-emerald-700">{summary.completed}</p>
+                  <p className="text-2xl text-emerald-700">
+                    {summary.completed}
+                  </p>
                 </div>
                 <div className="rounded-2xl border border-rose-100 bg-white/70 p-3">
                   <p className="text-xs text-rose-600">Từ chối</p>
@@ -440,7 +513,11 @@ export default function CenterView() {
                   <Filter className="h-4 w-4 text-blue-500" />
                   <select
                     value={studentStatusFilter}
-                    onChange={(e) => setStudentStatusFilter(e.target.value as StudentFilterValue)}
+                    onChange={(e) =>
+                      setStudentStatusFilter(
+                        e.target.value as StudentFilterValue,
+                      )
+                    }
                     className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
                   >
                     {STUDENT_FILTER_OPTIONS.map((option) => (
@@ -454,7 +531,9 @@ export default function CenterView() {
                   <ArrowUpDown className="h-4 w-4 text-purple-500" />
                   <select
                     value={studentSort}
-                    onChange={(e) => setStudentSort(e.target.value as StudentSortKey)}
+                    onChange={(e) =>
+                      setStudentSort(e.target.value as StudentSortKey)
+                    }
                     className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
                   >
                     {STUDENT_SORT_OPTIONS.map((option) => (
@@ -465,17 +544,25 @@ export default function CenterView() {
                   </select>
                 </label>
               </div>
-              <p className="mt-2 text-[11px] text-gray-500">Bộ lọc áp dụng cho danh sách học viên bên dưới.</p>
+              <p className="mt-2 text-[11px] text-gray-500">
+                Bộ lọc áp dụng cho danh sách học viên bên dưới.
+              </p>
             </div>
 
             <div className="rounded-2xl border border-gray-200 bg-white p-4">
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                   <Users className="h-4 w-4 text-gray-500" />
-                  Học viên hiển thị ({filteredStudents.length}/{students.length})
+                  Học viên hiển thị ({filteredStudents.length}/{students.length}
+                  )
                 </div>
                 <span className="text-xs text-gray-500">
-                  Sắp xếp: {STUDENT_SORT_OPTIONS.find((opt) => opt.value === studentSort)?.label}
+                  Sắp xếp:{" "}
+                  {
+                    STUDENT_SORT_OPTIONS.find(
+                      (opt) => opt.value === studentSort,
+                    )?.label
+                  }
                 </span>
               </div>
               {filteredStudents.length === 0 ? (
@@ -496,10 +583,16 @@ export default function CenterView() {
                       >
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-semibold text-gray-900">{displayName}</p>
-                            <p className="text-[11px] text-gray-500">ID: {student.candidate_id}</p>
+                            <p className="truncate text-sm font-semibold text-gray-900">
+                              {displayName}
+                            </p>
+                            <p className="text-[11px] text-gray-500">
+                              ID: {student.candidate_id}
+                            </p>
                           </div>
-                          <span className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${meta.tone}`}>
+                          <span
+                            className={`whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold ${meta.tone}`}
+                          >
                             {meta.label}
                           </span>
                         </div>
@@ -513,7 +606,12 @@ export default function CenterView() {
                         <div className="mt-3 flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => handleOpenStudentDetail(selectedCourseDetail, student)}
+                            onClick={() =>
+                              handleOpenStudentDetail(
+                                selectedCourseDetail,
+                                student,
+                              )
+                            }
                             className="rounded-lg border border-gray-200 px-3 py-1 text-[11px] font-semibold text-gray-700 transition hover:bg-gray-50"
                           >
                             Xem chi tiết
@@ -524,8 +622,8 @@ export default function CenterView() {
                               navigate(
                                 path.ADMIN_CANDIDATE_VIEW.replace(
                                   ":id",
-                                  student.candidate_id
-                                )
+                                  student.candidate_id,
+                                ),
                               )
                             }
                             className="rounded-lg border border-orange-200 px-3 py-1 text-[11px] font-semibold text-orange-700 transition hover:bg-orange-50"
@@ -546,7 +644,11 @@ export default function CenterView() {
   };
 
   return (
-    <AdminLayout title="Chi tiết Trung tâm" activeMenu="center">
+    <AdminLayout
+      title="Chi tiết Trung tâm"
+      activeMenu="center"
+      fullWidth={true}
+    >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
@@ -577,20 +679,29 @@ export default function CenterView() {
                   {center.name?.charAt(0) || "C"}
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-800">{center.name || "Chưa cập nhật"}</h2>
-                  <p className="text-sm text-gray-500">{center.center?.email || center.email || "—"}</p>
+                  <h2 className="text-lg font-bold text-gray-800">
+                    {center.name || "Chưa cập nhật"}
+                  </h2>
+                  <p className="text-sm text-gray-500">
+                    {center.center?.email || center.email || "—"}
+                  </p>
                 </div>
               </div>
               <p className="mt-3 text-xs text-gray-500">
-                Giao diện này chỉ hiển thị danh sách khóa học. Chọn “Chi tiết” trong từng thẻ để mở thông tin trung tâm và học viên của khóa.
+                Giao diện này chỉ hiển thị danh sách khóa học. Chọn “Chi tiết”
+                trong từng thẻ để mở thông tin trung tâm và học viên của khóa.
               </p>
             </div>
 
             <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-base font-bold text-gray-900">Khóa học</h3>
-                  <p className="text-xs text-gray-500">Theo dõi chương trình đào tạo của trung tâm</p>
+                  <h3 className="text-base font-bold text-gray-900">
+                    Khóa học
+                  </h3>
+                  <p className="text-xs text-gray-500">
+                    Theo dõi chương trình đào tạo của trung tâm
+                  </p>
                 </div>
                 {loadingCourses && (
                   <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-3 py-1 text-xs font-semibold text-orange-600">
@@ -623,7 +734,9 @@ export default function CenterView() {
                         <SlidersHorizontal className="h-4 w-4 text-orange-500" />
                         <select
                           value={courseSort}
-                          onChange={(e) => setCourseSort(e.target.value as CourseSortKey)}
+                          onChange={(e) =>
+                            setCourseSort(e.target.value as CourseSortKey)
+                          }
                           className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
                         >
                           {COURSE_SORT_OPTIONS.map((option) => (
@@ -634,7 +747,10 @@ export default function CenterView() {
                         </select>
                       </label>
                     </div>
-                    <p className="mt-2 text-[11px] text-gray-500">Tìm kiếm và sắp xếp được áp dụng cho danh sách khóa học bên dưới.</p>
+                    <p className="mt-2 text-[11px] text-gray-500">
+                      Tìm kiếm và sắp xếp được áp dụng cho danh sách khóa học
+                      bên dưới.
+                    </p>
                   </div>
 
                   {filteredCourses.length === 0 ? (
@@ -646,18 +762,28 @@ export default function CenterView() {
                       {filteredCourses.map((course: any, index: number) => {
                         const summary = summarizeCourse(course);
                         const students = getCourseCandidates(course);
-                        const courseKey = course?.id || course?.course_id || `${course?.name || "course"}-${index}`;
+                        const courseKey =
+                          course?.id ||
+                          course?.course_id ||
+                          `${course?.name || "course"}-${index}`;
                         return (
-                          <div key={courseKey} className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
+                          <div
+                            key={courseKey}
+                            className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                          >
                             <div className="bg-gradient-to-r from-orange-500 to-orange-600 p-4 text-white">
                               <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div>
-                                  <p className="text-xs uppercase text-white/70">Khóa học</p>
+                                  <p className="text-xs uppercase text-white/70">
+                                    Khóa học
+                                  </p>
                                   <h4 className="text-xl font-semibold leading-tight">
                                     {course?.name || "Chưa đặt tên"}
                                   </h4>
                                   {course?.description && (
-                                    <p className="text-sm text-white/80">{course.description}</p>
+                                    <p className="text-sm text-white/80">
+                                      {course.description}
+                                    </p>
                                   )}
                                 </div>
                                 <div className="rounded-2xl bg-white/15 px-4 py-2 text-sm font-semibold">
@@ -665,31 +791,49 @@ export default function CenterView() {
                                 </div>
                               </div>
                               <p className="mt-2 text-xs text-white/70">
-                                {course?.start_date || "—"} → {course?.end_date || "—"}
+                                {course?.start_date || "—"} →{" "}
+                                {course?.end_date || "—"}
                               </p>
                             </div>
                             <div className="p-4 space-y-4">
                               <div className="grid gap-3 text-center text-sm font-semibold sm:grid-cols-4">
                                 <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-                                  <p className="text-xs text-amber-600">Chờ duyệt</p>
-                                  <p className="text-2xl text-amber-700">{summary.pending}</p>
+                                  <p className="text-xs text-amber-600">
+                                    Chờ duyệt
+                                  </p>
+                                  <p className="text-2xl text-amber-700">
+                                    {summary.pending}
+                                  </p>
                                 </div>
                                 <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
-                                  <p className="text-xs text-blue-600">Đang học</p>
-                                  <p className="text-2xl text-blue-700">{summary.learning}</p>
+                                  <p className="text-xs text-blue-600">
+                                    Đang học
+                                  </p>
+                                  <p className="text-2xl text-blue-700">
+                                    {summary.learning}
+                                  </p>
                                 </div>
                                 <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-                                  <p className="text-xs text-emerald-600">Hoàn thành</p>
-                                  <p className="text-2xl text-emerald-700">{summary.completed}</p>
+                                  <p className="text-xs text-emerald-600">
+                                    Hoàn thành
+                                  </p>
+                                  <p className="text-2xl text-emerald-700">
+                                    {summary.completed}
+                                  </p>
                                 </div>
                                 <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
-                                  <p className="text-xs text-rose-600">Từ chối</p>
-                                  <p className="text-2xl text-rose-700">{summary.rejected}</p>
+                                  <p className="text-xs text-rose-600">
+                                    Từ chối
+                                  </p>
+                                  <p className="text-2xl text-rose-700">
+                                    {summary.rejected}
+                                  </p>
                                 </div>
                               </div>
                               <div className="flex flex-wrap items-center justify-between gap-3">
                                 <div className="text-sm text-gray-500">
-                                  Nhấn “Chi tiết” để xem học viên và thông tin trung tâm.
+                                  Nhấn “Chi tiết” để xem học viên và thông tin
+                                  trung tâm.
                                 </div>
                                 <button
                                   type="button"

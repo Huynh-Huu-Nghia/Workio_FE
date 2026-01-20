@@ -13,7 +13,7 @@ const PlaceholderPage: React.FC<PlaceholderPageProps> = ({
   hint,
 }) => {
   return (
-    <AdminLayout title={title}>
+    <AdminLayout title={title} fullWidth={true}>
       <div className="bg-white border border-dashed border-gray-200 rounded-2xl p-8 shadow-sm text-center">
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-orange-50 text-orange-500 text-lg font-bold">
           *

@@ -1,5 +1,4 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { clearAuthTokens } from "@/utils/authStorage"; // Kiểm tra đường dẫn
 import { toast } from "react-toastify";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
@@ -17,7 +16,7 @@ import {
 import LOGO_SRC from "@/assets/networking.png";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useUser } from "@/context/user/user.context";
-import { useLogoutMutation } from "@/api/auth.api";
+import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
 
 type Props = {
   title?: string;
@@ -105,7 +104,7 @@ export default function CenterLayout({ title, children }: Props) {
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
   const { pathname, hash } = location;
-  const { user, setUser } = useUser();
+  const { user, logout: contextLogout } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true;
@@ -114,21 +113,28 @@ export default function CenterLayout({ title, children }: Props) {
     return saved !== null ? saved === "true" : true;
   });
   const [openMenus, setOpenMenus] = useState<string[]>([]);
-
+  const [showUserMenu, setShowUserMenu] = useState(false);
   useEffect(() => {
     if (typeof window === "undefined") {
       return;
     }
-    window.localStorage.setItem("centerSidebarOpen", JSON.stringify(sidebarOpen));
+    window.localStorage.setItem(
+      "centerSidebarOpen",
+      JSON.stringify(sidebarOpen),
+    );
   }, [sidebarOpen]);
 
   useEffect(() => {
     centerMenu.forEach((group) => {
       group.items.forEach((item) => {
         if (item.subItems) {
-          const match = item.subItems.some((sub) => pathname.startsWith(sub.link));
+          const match = item.subItems.some((sub) =>
+            pathname.startsWith(sub.link),
+          );
           if (match) {
-            setOpenMenus((prev) => (prev.includes(item.id) ? prev : [...prev, item.id]));
+            setOpenMenus((prev) =>
+              prev.includes(item.id) ? prev : [...prev, item.id],
+            );
           }
         }
       });
@@ -144,8 +150,26 @@ export default function CenterLayout({ title, children }: Props) {
     return source.trim().charAt(0).toUpperCase();
   }, [user?.name, user?.email]);
 
+  const handleLogout = async () => {
+    if (!user?.role?.value) return;
+
+    try {
+      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
+      contextLogout();
+      window.location.href = "/login";
+      toast.success("Đăng xuất thành công!");
+    } catch (error: any) {
+      console.error("Logout error:", error);
+      contextLogout();
+      window.location.href = "/login";
+      toast.success("Đăng xuất thành công!");
+    }
+  };
+
   const toggleMenu = (id: string) => {
-    setOpenMenus((prev) => (prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]));
+    setOpenMenus((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id],
+    );
   };
 
   const resolveLink = (link: string, hashFragment?: string) =>
@@ -154,7 +178,8 @@ export default function CenterLayout({ title, children }: Props) {
   const isExpanded = sidebarOpen;
 
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -162,36 +187,18 @@ export default function CenterLayout({ title, children }: Props) {
     navigate(path.CENTER_HOME);
   };
 
-  const handleLogout = async () => {
-      if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
-  
-      try {
-        await logoutMutation.mutateAsync({ role: "Center" });
-        clearAuthTokens(); // Xóa LocalStorage
-        toast.success("Đăng xuất thành công!");
-      } catch (error) {
-        console.error("Logout error:", error);
-        toast.info("Đang đăng xuất...");
-      } finally {
-        localStorage.removeItem("access_token");
-        localStorage.removeItem("refresh_token");
-        setUser(null);
-        navigate(path.login); // Chuyển về trang login
-      }
-    };
-
-    // // HÀM ĐĂNG XUẤT CHUẨN
-    // const handleLogout = () => {
-    //   // 1. Xóa bản nháp của user hiện tại (nếu có)
-    //   if (user?.id) {
-    //       const draftKey = `workio_center_profile_draft_${user.id}`;
-    //       localStorage.removeItem(draftKey);
-    //   }
-    //   clearAuthTokens(); // Xóa LocalStorage
-    //   setUser(null); // Xóa Context
-    //   toast.success("Đăng xuất thành công");
-    //   navigate(path.login); // Chuyển về trang login
-    // };
+  // // HÀM ĐĂNG XUẤT CHUẨN
+  // const handleLogout = () => {
+  //   // 1. Xóa bản nháp của user hiện tại (nếu có)
+  //   if (user?.id) {
+  //       const draftKey = `workio_center_profile_draft_${user.id}`;
+  //       localStorage.removeItem(draftKey);
+  //   }
+  //   clearAuthTokens(); // Xóa LocalStorage
+  //   setUser(null); // Xóa Context
+  //   toast.success("Đăng xuất thành công");
+  //   navigate(path.login); // Chuyển về trang login
+  // };
 
   return (
     <div className="flex min-h-screen bg-[#f5f7fb]">
@@ -206,7 +213,11 @@ export default function CenterLayout({ title, children }: Props) {
               isExpanded ? "h-20 w-20" : "h-10 w-10"
             }`}
           >
-            <img src={LOGO_SRC} alt="Logo" className="h-full w-full object-contain" />
+            <img
+              src={LOGO_SRC}
+              alt="Logo"
+              className="h-full w-full object-contain"
+            />
           </div>
           {isExpanded && (
             <div className="mt-3 text-center">
@@ -228,10 +239,14 @@ export default function CenterLayout({ title, children }: Props) {
               )}
               <div className="space-y-1">
                 {group.items.map((item) => {
-                  const isUrlActive = pathname.startsWith(item.link) && item.link !== "#";
+                  const isUrlActive =
+                    pathname.startsWith(item.link) && item.link !== "#";
                   const isMenuActive =
                     isUrlActive ||
-                    (item.subItems && item.subItems.some((sub) => pathname.startsWith(sub.link)));
+                    (item.subItems &&
+                      item.subItems.some((sub) =>
+                        pathname.startsWith(sub.link),
+                      ));
                   const hasSubItems = item.subItems && item.subItems.length > 0;
                   const expanded = openMenus.includes(item.id);
                   const firstSubItem = hasSubItems ? item.subItems![0] : null;
@@ -239,7 +254,11 @@ export default function CenterLayout({ title, children }: Props) {
                   return (
                     <div key={item.id}>
                       <Link
-                        to={firstSubItem ? resolveLink(firstSubItem.link, firstSubItem.hash) : item.link}
+                        to={
+                          firstSubItem
+                            ? resolveLink(firstSubItem.link, firstSubItem.hash)
+                            : item.link
+                        }
                         onClick={(event) => {
                           if (hasSubItems) {
                             event.preventDefault();
@@ -247,15 +266,29 @@ export default function CenterLayout({ title, children }: Props) {
                           }
                         }}
                         className={`flex items-center ${
-                          isExpanded ? "justify-between px-3" : "justify-center px-0"
+                          isExpanded
+                            ? "justify-between px-3"
+                            : "justify-center px-0"
                         } py-2.5 rounded-lg transition-all duration-200 ${
-                          isMenuActive ? "bg-orange-50 text-orange-600" : "text-gray-500 hover:bg-gray-50"
+                          isMenuActive
+                            ? "bg-orange-50 text-orange-600"
+                            : "text-gray-500 hover:bg-gray-50"
                         }`}
                         title={!isExpanded ? item.label : ""}
                       >
-                        <div className={`flex items-center ${isExpanded ? "gap-3" : "gap-0"}`}>
-                          <span className={isMenuActive ? "text-orange-500" : "text-gray-400"}>{item.icon}</span>
-                          {isExpanded && <span className="font-medium">{item.label}</span>}
+                        <div
+                          className={`flex items-center ${isExpanded ? "gap-3" : "gap-0"}`}
+                        >
+                          <span
+                            className={
+                              isMenuActive ? "text-orange-500" : "text-gray-400"
+                            }
+                          >
+                            {item.icon}
+                          </span>
+                          {isExpanded && (
+                            <span className="font-medium">{item.label}</span>
+                          )}
                         </div>
                         {hasSubItems && isExpanded && (
                           <svg
@@ -274,15 +307,21 @@ export default function CenterLayout({ title, children }: Props) {
                       {hasSubItems && isExpanded && (
                         <div
                           className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                            expanded ? "max-h-40 opacity-100 mt-1" : "max-h-0 opacity-0"
+                            expanded
+                              ? "max-h-40 opacity-100 mt-1"
+                              : "max-h-0 opacity-0"
                           }`}
                         >
                           <div className="ml-4 space-y-1 border-l-2 border-orange-100 pl-3">
                             {item.subItems!.map((sub) => {
                               const matchesHash = sub.hash
-                                ? hash === `#${sub.hash}` || (!hash && defaultSubHash && sub.hash === defaultSubHash)
+                                ? hash === `#${sub.hash}` ||
+                                  (!hash &&
+                                    defaultSubHash &&
+                                    sub.hash === defaultSubHash)
                                 : true;
-                              const isSubActive = pathname === sub.link && matchesHash;
+                              const isSubActive =
+                                pathname === sub.link && matchesHash;
                               return (
                                 <Link
                                   key={sub.id}
@@ -322,10 +361,15 @@ export default function CenterLayout({ title, children }: Props) {
       </aside>
 
       {isExpanded && (
-        <div className="fixed inset-0 z-30 bg-black/20 lg:hidden" onClick={() => setSidebarOpen(false)} />
+        <div
+          className="fixed inset-0 z-30 bg-black/20 lg:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
       )}
 
-      <div className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}>
+      <div
+        className={`flex-1 transition-all duration-200 ${isExpanded ? "lg:pl-64" : "lg:pl-20"}`}
+      >
         <header className="sticky top-0 z-20 flex h-16 items-center border-b border-gray-100 bg-white shadow-sm">
           <div className="mx-auto flex w-full items-center justify-between px-4 sm:px-6">
             <div className="flex items-center gap-3">
@@ -339,11 +383,19 @@ export default function CenterLayout({ title, children }: Props) {
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 transition hover:bg-gray-50"
                 onClick={() => setSidebarOpen((prev) => !prev)}
               >
-                {sidebarOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+                {sidebarOpen ? (
+                  <X className="h-5 w-5" />
+                ) : (
+                  <Menu className="h-5 w-5" />
+                )}
               </button>
               <div>
-                <h1 className="text-lg font-bold leading-tight text-gray-800">{displayTitle}</h1>
-                <p className="text-xs text-gray-500">Không gian quản trị trung tâm</p>
+                <h1 className="text-lg font-bold leading-tight text-gray-800">
+                  {displayTitle}
+                </h1>
+                <p className="text-xs text-gray-500">
+                  Không gian quản trị trung tâm
+                </p>
               </div>
             </div>
             <div className="flex items-center gap-3">
@@ -351,8 +403,29 @@ export default function CenterLayout({ title, children }: Props) {
                 <Bell size={18} />
                 <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
               </button>
-              <div className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600">
-                {avatarInitial}
+              <div className="relative">
+                <button
+                  onClick={() => setShowUserMenu(!showUserMenu)}
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600 hover:bg-orange-200 transition-colors"
+                >
+                  {avatarInitial}
+                </button>
+                {showUserMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
+                    <button
+                      onClick={handleLogout}
+                      disabled={logoutMutation.isPending}
+                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <LogOut size={16} />
+                      <span>
+                        {logoutMutation.isPending
+                          ? "Đang đăng xuất..."
+                          : "Đăng xuất"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

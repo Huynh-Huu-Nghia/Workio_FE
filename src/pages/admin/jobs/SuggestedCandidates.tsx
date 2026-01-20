@@ -24,7 +24,7 @@ const AdminSuggestedCandidates: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Gợi ý ứng viên" activeMenu="jobs">
+    <AdminLayout title="Gợi ý ứng viên" activeMenu="jobs" fullWidth={true}>
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
@@ -99,4 +99,3 @@ const AdminSuggestedCandidates: React.FC = () => {
 };
 
 export default AdminSuggestedCandidates;
-
