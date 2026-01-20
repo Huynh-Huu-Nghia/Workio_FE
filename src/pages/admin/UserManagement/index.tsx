@@ -8,6 +8,7 @@ export default function UserManagementPage() {
       title="Quản lý người dùng"
       activeMenu="users"
       activeSubmenu="all-users"
+      fullWidth={true}
     >
       <FilterSection />
       <UserTable />

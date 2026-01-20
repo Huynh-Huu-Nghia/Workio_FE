@@ -18,10 +18,12 @@ import {
   useAdminSuggestedCandidatesQuery,
 } from "@/api/job-post.api";
 import { Link, useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 import path from "@/constants/path";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 import { useGetAllRecruitersQuery } from "@/api/recruiter.api";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 const JobList: React.FC = () => {
   const navigate = useNavigate();
@@ -54,6 +56,17 @@ const JobList: React.FC = () => {
   const [activeSuggestJobId, setActiveSuggestJobId] = useState<string | null>(
     null,
   );
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
   const {
     data: suggestData,
     isFetching: suggestLoading,
@@ -304,8 +317,9 @@ const JobList: React.FC = () => {
       title="Tin tuyển dụng"
       activeMenu="jobs"
       activeSubmenu="all-jobs"
+      fullWidth={true}
     >
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+      <div className="w-full rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="p-5">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -1046,8 +1060,21 @@ const JobList: React.FC = () => {
                       <div className="flex flex-wrap gap-2 pt-1">
                         <Link
                           to={`/admin/jobs/edit/${job.id}`}
-                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                          title="Chỉnh sửa tin"
+                          className={`inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 ${
+                            job.status === "Đã tuyển"
+                              ? "cursor-not-allowed opacity-60"
+                              : ""
+                          }`}
+                          title={
+                            job.status === "Đã tuyển"
+                              ? "Không thể chỉnh sửa tin đã tuyển"
+                              : "Chỉnh sửa tin"
+                          }
+                          onClick={(e) => {
+                            if (job.status === "Đã tuyển") {
+                              e.preventDefault();
+                            }
+                          }}
                         >
                           Sửa
                         </Link>
@@ -1064,8 +1091,17 @@ const JobList: React.FC = () => {
                         <button
                           type="button"
                           onClick={() => setActiveSuggestJobId(job.id)}
-                          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                          title="Gợi ý ứng viên phù hợp"
+                          disabled={job.status === "Đã tuyển"}
+                          className={`inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60 ${
+                            job.status === "Đã tuyển"
+                              ? "cursor-not-allowed opacity-60"
+                              : ""
+                          }`}
+                          title={
+                            job.status === "Đã tuyển"
+                              ? "Không thể gợi ý cho tin đã tuyển"
+                              : "Gợi ý ứng viên phù hợp"
+                          }
                         >
                           <Sparkles className="h-4 w-4 text-orange-500" />
                           Gợi ý ứng viên
@@ -1081,25 +1117,37 @@ const JobList: React.FC = () => {
                         </button>
                         <button
                           type="button"
-                          onClick={async () => {
-                            if (!window.confirm("Xóa tin tuyển dụng này?"))
-                              return;
-                            try {
-                              const res = await deleteMutation.mutateAsync(
-                                job.id,
-                              );
-                              if ((res as any)?.err === 0) {
-                                await refetch();
-                              } else {
-                                window.alert(
-                                  (res as any)?.mes || "Xóa thất bại",
-                                );
-                              }
-                            } catch (e: any) {
-                              window.alert(
-                                e?.response?.data?.mes || "Xóa thất bại",
-                              );
-                            }
+                          onClick={() => {
+                            setConfirmDialog({
+                              isOpen: true,
+                              title: "Xóa tin tuyển dụng",
+                              message: `Bạn có chắc muốn xóa tin "${job.position}" không?`,
+                              onConfirm: async () => {
+                                try {
+                                  const res = await deleteMutation.mutateAsync(
+                                    job.id,
+                                  );
+                                  if ((res as any)?.err === 0) {
+                                    await refetch();
+                                    toast.success("Đã xóa tin tuyển dụng");
+                                  } else {
+                                    toast.error(
+                                      (res as any)?.mes || "Xóa thất bại",
+                                    );
+                                  }
+                                } catch (e: any) {
+                                  toast.error(
+                                    e?.response?.data?.mes || "Xóa thất bại",
+                                  );
+                                }
+                                setConfirmDialog({
+                                  isOpen: false,
+                                  title: "",
+                                  message: "",
+                                  onConfirm: () => {},
+                                });
+                              },
+                            });
                           }}
                           className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-white px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-50"
                           title="Xóa tin"
@@ -1167,6 +1215,20 @@ const JobList: React.FC = () => {
           )}
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </AdminLayout>
   );
 };

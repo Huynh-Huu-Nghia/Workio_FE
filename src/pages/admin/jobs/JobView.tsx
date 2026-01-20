@@ -10,7 +10,8 @@ export default function JobView() {
   const { data, isLoading, isError } = useAdminJobPostDetailQuery(id);
   const job = data?.data as any;
   const handleBack = () => {
-    const canUseHistory = typeof window !== "undefined" && window.history.length > 1;
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
     if (canUseHistory) {
       navigate(-1);
       return;
@@ -19,7 +20,11 @@ export default function JobView() {
   };
 
   return (
-    <AdminLayout title="Chi tiết tin tuyển dụng" activeMenu="jobs">
+    <AdminLayout
+      title="Chi tiết tin tuyển dụng"
+      activeMenu="jobs"
+      fullWidth={true}
+    >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
@@ -45,7 +50,9 @@ export default function JobView() {
         {!isLoading && !isError && job && (
           <div className="grid gap-5 lg:grid-cols-3">
             <div className="lg:col-span-2 rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
-              <h1 className="text-2xl font-bold text-gray-800">{job.position}</h1>
+              <h1 className="text-2xl font-bold text-gray-800">
+                {job.position}
+              </h1>
               <p className="text-sm text-gray-500 mb-3">
                 Trạng thái: {job.status || "—"}
               </p>
@@ -77,7 +84,9 @@ export default function JobView() {
 
             <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm space-y-3">
               <div>
-                <p className="text-xs uppercase text-gray-400">Nhà tuyển dụng</p>
+                <p className="text-xs uppercase text-gray-400">
+                  Nhà tuyển dụng
+                </p>
                 <p className="text-sm font-semibold text-gray-800">
                   {job.recruiter?.company_name || job.recruiter_id || "—"}
                 </p>
@@ -93,11 +102,17 @@ export default function JobView() {
                     job.recruiter?.recruiter_id ||
                     job.recruiter?.recruiter?.id;
                   if (recruiterId) {
-                    navigate(path.ADMIN_RECRUITER_VIEW.replace(":id", recruiterId));
+                    navigate(
+                      path.ADMIN_RECRUITER_VIEW.replace(":id", recruiterId),
+                    );
                   }
                 }}
                 disabled={
-                  !(job.recruiter_id || job.recruiter?.recruiter_id || job.recruiter?.recruiter?.id)
+                  !(
+                    job.recruiter_id ||
+                    job.recruiter?.recruiter_id ||
+                    job.recruiter?.recruiter?.id
+                  )
                 }
                 className="inline-flex w-full items-center justify-center gap-2 rounded-lg border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
@@ -132,25 +147,33 @@ export default function JobView() {
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase text-gray-400">Kỹ năng máy tính</p>
+                  <p className="text-xs uppercase text-gray-400">
+                    Kỹ năng máy tính
+                  </p>
                   <p className="text-gray-800 font-medium">
                     {job.computer_skill || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase text-gray-400">Trình độ yêu cầu</p>
+                  <p className="text-xs uppercase text-gray-400">
+                    Trình độ yêu cầu
+                  </p>
                   <p className="text-gray-800 font-medium">
                     {job.graduation_rank || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase text-gray-400">Loại công việc</p>
+                  <p className="text-xs uppercase text-gray-400">
+                    Loại công việc
+                  </p>
                   <p className="text-gray-800 font-medium">
                     {job.job_type || "—"}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs uppercase text-gray-400">Thời gian làm việc</p>
+                  <p className="text-xs uppercase text-gray-400">
+                    Thời gian làm việc
+                  </p>
                   <p className="text-gray-800 font-medium">
                     {job.working_time || "—"}
                   </p>

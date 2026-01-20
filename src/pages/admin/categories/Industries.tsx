@@ -39,13 +39,19 @@ const Industries: React.FC = () => {
   const add = () => {
     const value = name.trim();
     if (!value) return;
-    const exists = items.some((it) => it.name.toLowerCase() === value.toLowerCase());
+    const exists = items.some(
+      (it) => it.name.toLowerCase() === value.toLowerCase(),
+    );
     if (exists) {
       toast.info("Ngành nghề đã tồn tại.");
       return;
     }
     const next = [
-      { id: crypto.randomUUID(), name: value, createdAt: new Date().toISOString() },
+      {
+        id: crypto.randomUUID(),
+        name: value,
+        createdAt: new Date().toISOString(),
+      },
       ...items,
     ];
     setItems(next);
@@ -61,10 +67,12 @@ const Industries: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Ngành nghề" activeMenu="categories">
-      <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
+    <AdminLayout title="Ngành nghề" activeMenu="categories" fullWidth={true}>
+      <div className="w-full rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
-          <h1 className="text-xl font-semibold text-gray-800">Danh mục ngành nghề</h1>
+          <h1 className="text-xl font-semibold text-gray-800">
+            Danh mục ngành nghề
+          </h1>
           <p className="mt-1 text-sm text-gray-500">
             Backend chưa có endpoints danh mục, tạm lưu local để hoàn thiện UX.
           </p>
@@ -72,7 +80,9 @@ const Industries: React.FC = () => {
 
         <div className="grid gap-4 p-5 lg:grid-cols-3">
           <div className="lg:col-span-1 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
-            <h2 className="text-sm font-semibold text-gray-800">Thêm ngành nghề</h2>
+            <h2 className="text-sm font-semibold text-gray-800">
+              Thêm ngành nghề
+            </h2>
             <div className="mt-3 space-y-2">
               <input
                 value={name}
@@ -115,7 +125,9 @@ const Industries: React.FC = () => {
                     className="flex items-center justify-between rounded-xl border border-gray-100 bg-white px-4 py-3 shadow-sm"
                   >
                     <div>
-                      <div className="text-sm font-semibold text-gray-900">{it.name}</div>
+                      <div className="text-sm font-semibold text-gray-900">
+                        {it.name}
+                      </div>
                       <div className="text-xs text-gray-400">
                         {new Date(it.createdAt).toLocaleString("vi-VN")}
                       </div>

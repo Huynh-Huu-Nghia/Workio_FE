@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import React, { useEffect } from "react";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
 import { useForm } from "react-hook-form";
 import {
@@ -11,6 +11,8 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { pathtotitle } from "@/configs/pagetitle";
 import path from "@/constants/path";
+import { useQueryClient } from "@tanstack/react-query";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 type FormValues = {
   position: string;
@@ -34,6 +36,18 @@ export default function RecruiterJobForm() {
   const createMutation = useCreateRecruiterJobPostMutation();
   const updateMutation = useUpdateRecruiterJobPostMutation();
   const deleteMutation = useDeleteRecruiterJobPostMutation();
+  const queryClient = useQueryClient();
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const { register, handleSubmit, reset } = useForm<FormValues>({
     defaultValues: {
@@ -49,6 +63,13 @@ export default function RecruiterJobForm() {
 
   useEffect(() => {
     if (!job || !isEdit) return;
+
+    if (job.status === "Đã tuyển") {
+      toast.error("Không thể chỉnh sửa bài đăng đã tuyển");
+      navigate(path.RECRUITER_JOBS);
+      return;
+    }
+
     reset({
       position: job.position || "",
       available_quantity:
@@ -69,15 +90,27 @@ export default function RecruiterJobForm() {
   const onSubmit = handleSubmit(async (values) => {
     try {
       if (isEdit && id) {
-        const res = await updateMutation.mutateAsync({ jobPostId: id, payload: values });
+        const res = await updateMutation.mutateAsync({
+          jobPostId: id,
+          payload: values,
+        });
         if ((res as any)?.err === 0) {
           toast.success((res as any)?.mes || "Cập nhật tin thành công");
+          await queryClient.invalidateQueries({
+            queryKey: ["recruiter-job-posts"],
+          });
+          await queryClient.invalidateQueries({
+            queryKey: ["recruiter-job-post", id],
+          });
           navigate(path.RECRUITER_JOBS);
         } else toast.error((res as any)?.mes || "Cập nhật thất bại");
       } else {
         const res = await createMutation.mutateAsync(values as any);
         if ((res as any)?.err === 0) {
           toast.success((res as any)?.mes || "Tạo tin thành công");
+          await queryClient.invalidateQueries({
+            queryKey: ["recruiter-job-posts"],
+          });
           navigate(path.RECRUITER_JOBS);
         } else toast.error((res as any)?.mes || "Tạo tin thất bại");
       }
@@ -86,18 +119,35 @@ export default function RecruiterJobForm() {
     }
   });
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!id) return;
-    if (!window.confirm("Xóa tin này?")) return;
-    try {
-      const res = await deleteMutation.mutateAsync(id);
-      if ((res as any)?.err === 0) {
-        toast.info((res as any)?.mes || "Đã xóa tin.");
-        navigate(path.RECRUITER_JOBS);
-      } else toast.error((res as any)?.mes || "Xóa thất bại.");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa tin tuyển dụng",
+      message: `Bạn có chắc muốn xóa tin "${job?.position || "này"}" không?`,
+      onConfirm: async () => {
+        try {
+          const res = await deleteMutation.mutateAsync(id);
+          if ((res as any)?.err === 0) {
+            toast.info((res as any)?.mes || "Đã xóa tin.");
+            await queryClient.invalidateQueries({
+              queryKey: ["recruiter-job-posts"],
+            });
+            navigate(path.RECRUITER_JOBS);
+          } else {
+            toast.error((res as any)?.mes || "Xóa thất bại.");
+          }
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
   return (
@@ -106,7 +156,9 @@ export default function RecruiterJobForm() {
         <div className="border-b border-gray-100 p-5 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-semibold text-gray-800">{title}</h1>
-            <p className="text-sm text-gray-500">Điền thông tin cơ bản cho tin tuyển dụng.</p>
+            <p className="text-sm text-gray-500">
+              Điền thông tin cơ bản cho tin tuyển dụng.
+            </p>
           </div>
           {isEdit && (
             <button
@@ -121,14 +173,18 @@ export default function RecruiterJobForm() {
 
         <form onSubmit={onSubmit} className="grid gap-4 p-5 sm:grid-cols-2">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Vị trí *</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Vị trí *
+            </label>
             <input
               {...register("position", { required: true })}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Số lượng</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Số lượng
+            </label>
             <input
               type="number"
               {...register("available_quantity", { valueAsNumber: true })}
@@ -136,7 +192,9 @@ export default function RecruiterJobForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Mức lương</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Mức lương
+            </label>
             <input
               type="number"
               {...register("monthly_salary", { valueAsNumber: true })}
@@ -144,7 +202,9 @@ export default function RecruiterJobForm() {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Hình thức</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Hình thức
+            </label>
             <select
               {...register("recruitment_type")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -155,7 +215,9 @@ export default function RecruiterJobForm() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Trạng thái</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Trạng thái
+            </label>
             <select
               {...register("status")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5 bg-white"
@@ -168,7 +230,7 @@ export default function RecruiterJobForm() {
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
-              Hạn nộp 
+              Hạn nộp
             </label>
             <input
               type="date"
@@ -177,7 +239,9 @@ export default function RecruiterJobForm() {
             />
           </div>
           <div className="sm:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Yêu cầu</label>
+            <label className="block text-sm font-medium text-gray-700">
+              Yêu cầu
+            </label>
             <textarea
               {...register("requirements")}
               className="mt-1 w-full rounded-lg border border-gray-300 p-2.5"
@@ -196,12 +260,26 @@ export default function RecruiterJobForm() {
                   ? "Đang lưu..."
                   : "Lưu thay đổi"
                 : createMutation.isPending
-                ? "Đang tạo..."
-                : "Tạo tin"}
+                  ? "Đang tạo..."
+                  : "Tạo tin"}
             </button>
           </div>
         </form>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </RecruiterLayout>
   );
 }

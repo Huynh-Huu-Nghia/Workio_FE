@@ -1,3 +1,4 @@
+import React from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import path from "@/constants/path";
 import {
@@ -7,9 +8,20 @@ import {
   useGetCandidateDetailAdminQuery,
 } from "@/api/candidate.api";
 import { useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookOpen, Loader2, Trash2 } from "lucide-react";
+import {
+  ArrowLeft,
+  BookOpen,
+  Briefcase,
+  CalendarClock,
+  ClipboardList,
+  Loader2,
+  Mail,
+  Phone,
+  Trash2,
+} from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 const COURSE_STATUS_LABELS: Record<string, string> = {
   dang_hoc: "Đang học",
@@ -130,6 +142,17 @@ export default function CandidateView() {
     isError,
   } = useGetCandidateDetailAdminQuery(id);
   const deleteMutation = useDeleteCandidateAdminMutation();
+  const [confirmDialog, setConfirmDialog] = React.useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const candidate = apiResponse?.data as AdminCandidateDetail | undefined;
   const trainingHistory: CandidateTrainingRecord[] = Array.isArray(
@@ -147,24 +170,73 @@ export default function CandidateView() {
     const status = course?.participation?.status ?? "";
     return !["dang_hoc", "da_hoc"].includes(status);
   });
+  const interviewCount = Array.isArray(candidate?.interview)
+    ? candidate.interview.length
+    : 0;
+  const appliedCount = Array.isArray(candidate?.applied_jobs)
+    ? candidate.applied_jobs.length
+    : 0;
+  const profileEmail = candidate?.candidate?.email || candidate?.email || "—";
+  const summaryStats = candidate
+    ? [
+        {
+          id: "interviews",
+          label: "Phỏng vấn",
+          value: interviewCount,
+          icon: CalendarClock,
+          tone: "bg-blue-50 text-blue-600",
+        },
+        {
+          id: "applications",
+          label: "Ứng tuyển",
+          value: appliedCount,
+          icon: ClipboardList,
+          tone: "bg-amber-50 text-amber-600",
+        },
+        {
+          id: "courses",
+          label: "Khóa học",
+          value: trainingHistory.length,
+          icon: BookOpen,
+          tone: "bg-emerald-50 text-emerald-600",
+        },
+        {
+          id: "status",
+          label: "Tình trạng",
+          value: candidate.is_employed ? "Đã có việc" : "Đang tìm việc",
+          icon: Briefcase,
+          tone: "bg-slate-100 text-slate-600",
+        },
+      ]
+    : [];
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     if (!id) return;
-    const ok = window.confirm("Bạn có chắc muốn xóa ứng viên này không?");
-    if (!ok) return;
-
-    try {
-      const res = await deleteMutation.mutateAsync(id);
-      if (res?.err === 0) {
-        toast.info(res?.mes || "Đã xóa ứng viên.");
-        await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        navigate(path.ADMIN_USER_CANDIDATE_LIST);
-        return;
-      }
-      toast.error(res?.mes || "Xóa thất bại.");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa ứng viên",
+      message: `Bạn có chắc muốn xóa ứng viên "${candidate?.full_name || candidate?.email || "này"}" không?`,
+      onConfirm: async () => {
+        try {
+          const res = await deleteMutation.mutateAsync(id);
+          if (res?.err === 0) {
+            toast.info(res?.mes || "Đã xóa ứng viên.");
+            await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+            navigate(path.ADMIN_USER_CANDIDATE_LIST);
+          } else {
+            toast.error(res?.mes || "Xóa thất bại.");
+          }
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
   const handleBack = () => {
@@ -182,94 +254,129 @@ export default function CandidateView() {
       title="CHI TIẾT ỨNG VIÊN"
       activeMenu="candidates"
       activeSubmenu="list-candidates"
+      fullWidth={true}
     >
-      <div className="min-h-screen bg-slate-50 p-6">
-        <div className="mb-5 flex items-center justify-between gap-3">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeft size={16} /> Quay lại danh sách
-          </button>
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <button
+          onClick={handleBack}
+          className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        >
+          <ArrowLeft size={16} /> Quay lại danh sách
+        </button>
 
-          <button
-            onClick={handleDelete}
-            disabled={deleteMutation.isPending}
-            className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
-          >
-            {deleteMutation.isPending ? (
-              <Loader2 size={16} className="animate-spin" />
-            ) : (
-              <Trash2 size={16} />
-            )}
-            Xóa ứng viên
-          </button>
+        <button
+          onClick={handleDelete}
+          disabled={deleteMutation.isPending}
+          className="inline-flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white hover:bg-red-700 disabled:opacity-60"
+        >
+          {deleteMutation.isPending ? (
+            <Loader2 size={16} className="animate-spin" />
+          ) : (
+            <Trash2 size={16} />
+          )}
+          Xóa ứng viên
+        </button>
+      </div>
+
+      {isLoading && (
+        <div className="flex flex-col items-center justify-center h-64 text-gray-500">
+          <Loader2 size={40} className="animate-spin text-orange-500 mb-2" />
+          <p>Đang tải dữ liệu...</p>
         </div>
+      )}
 
-        {isLoading && (
-          <div className="flex flex-col items-center justify-center h-64 text-gray-500">
-            <Loader2 size={40} className="animate-spin text-orange-500 mb-2" />
-            <p>Đang tải dữ liệu...</p>
-          </div>
-        )}
+      {isError && (
+        <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-700">
+          Không thể tải chi tiết ứng viên. Vui lòng thử lại sau.
+        </div>
+      )}
 
-        {isError && (
-          <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-700">
-            Không thể tải chi tiết ứng viên. Vui lòng thử lại sau.
-          </div>
-        )}
+      {!isLoading && !isError && apiResponse?.err !== 0 && (
+        <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-700">
+          {apiResponse?.mes || "Không tìm thấy ứng viên."}
+        </div>
+      )}
 
-        {!isLoading && !isError && apiResponse?.err !== 0 && (
-          <div className="rounded-xl border border-red-100 bg-red-50 p-5 text-red-700">
-            {apiResponse?.mes || "Không tìm thấy ứng viên."}
-          </div>
-        )}
-
-        {!isLoading && !isError && candidate && (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-5">
-            <div className="lg:col-span-1 rounded-xl border border-gray-200/60 bg-white p-4 shadow-sm">
-              <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-orange-100 to-orange-200 text-orange-700 flex items-center justify-center font-bold text-lg border border-orange-100">
-                  {candidate.full_name?.charAt(0) || "U"}
+      {!isLoading && !isError && candidate && (
+        <div className="space-y-5">
+          <div className="overflow-hidden rounded-2xl border border-gray-200/70 bg-white shadow-sm">
+            <div className="bg-gradient-to-r from-orange-50 via-white to-white px-5 py-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-100 to-orange-200 text-xl font-bold text-orange-700">
+                    {candidate.full_name?.charAt(0) || "U"}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-bold text-gray-900">
+                        {candidate.full_name}
+                      </h2>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          candidate.is_verified
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {candidate.is_verified
+                          ? "Đã xác thực"
+                          : "Chưa xác thực"}
+                      </span>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          candidate.is_employed
+                            ? "bg-blue-50 text-blue-700"
+                            : "bg-slate-100 text-slate-700"
+                        }`}
+                      >
+                        {candidate.is_employed ? "Đã có việc" : "Đang tìm việc"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">{profileEmail}</p>
+                  </div>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-base font-bold text-gray-800 truncate">
-                    {candidate.full_name}
-                  </h2>
-                  <p className="text-sm text-gray-500 truncate">
-                    {candidate.candidate?.email || candidate.email || "—"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between gap-2">
-                  <span className="text-gray-500">SĐT</span>
-                  <span className="font-medium text-gray-800 truncate">
+                <div className="flex flex-wrap gap-2 text-sm text-gray-600">
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-gray-700 shadow-sm">
+                    <Phone className="h-4 w-4 text-gray-400" />
                     {candidate.phone || "—"}
                   </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-gray-500">Xác thực</span>
-                  <span className="font-medium text-gray-800">
-                    {candidate.is_verified ? "✓" : "✗"}
-                  </span>
-                </div>
-                <div className="flex justify-between gap-2">
-                  <span className="text-gray-500">Việc làm</span>
-                  <span className="font-medium text-gray-800">
-                    {candidate.is_employed ? "Có" : "Tìm"}
+                  <span className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3 py-1 text-gray-700 shadow-sm">
+                    <Mail className="h-4 w-4 text-gray-400" />
+                    {profileEmail}
                   </span>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="lg:col-span-3 space-y-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {summaryStats.map((stat) => (
+              <div
+                key={stat.id}
+                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
+                <div
+                  className={`mb-3 inline-flex h-10 w-10 items-center justify-center rounded-xl ${stat.tone}`}
+                >
+                  <stat.icon className="h-5 w-5" />
+                </div>
+                <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
+                  {stat.label}
+                </p>
+                <p className="mt-1 text-lg font-bold text-gray-900">
+                  {stat.value}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-3 items-start">
+            <div className="space-y-5">
               <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-800 mb-3">
                   Địa chỉ
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                <div className="grid grid-cols-1 gap-3 text-sm">
                   <div>
                     <div className="text-gray-500">Đường</div>
                     <div className="font-medium text-gray-800">
@@ -295,71 +402,112 @@ export default function CandidateView() {
 
               <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
                 <h3 className="text-sm font-bold text-gray-800 mb-3">
-                  Học vấn / Kinh nghiệm
+                  Thông tin bổ sung
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <div className="font-semibold text-gray-800 mb-2">
-                      Học vấn
+                <div className="grid grid-cols-1 gap-3 text-sm">
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Ngành nghề mong muốn</div>
+                    <div className="font-medium text-gray-800">
+                      {Array.isArray(candidate.fields_wish)
+                        ? candidate.fields_wish.join(", ")
+                        : candidate.fields_wish || "—"}
                     </div>
-                    {Array.isArray(candidate.study_history) &&
-                    candidate.study_history.length > 0 ? (
-                      <ul className="space-y-2">
-                        {candidate.study_history.map((item: any) => (
-                          <li
-                            key={
-                              item?.id ||
-                              `${item?.school_name}-${item?.start_year}`
-                            }
-                            className="rounded-lg bg-slate-50 p-3 border border-gray-100"
-                          >
-                            <div className="font-medium text-gray-800">
-                              {item?.school_name || "—"}
-                            </div>
-                            <div className="text-gray-600">
-                              {item?.field_of_study || item?.major || "—"} •{" "}
-                              {item?.start_date || item?.start_year || "—"} -{" "}
-                              {item?.end_date || item?.end_year || "—"}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="text-gray-500">Chưa có dữ liệu.</div>
-                    )}
                   </div>
-
-                  <div>
-                    <div className="font-semibold text-gray-800 mb-2">
-                      Kinh nghiệm
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Ngôn ngữ</div>
+                    <div className="font-medium text-gray-800">
+                      {Array.isArray(candidate.languguages)
+                        ? candidate.languguages.join(", ")
+                        : candidate.languguages || "—"}
                     </div>
-                    {Array.isArray(candidate.work_experience) &&
-                    candidate.work_experience.length > 0 ? (
-                      <ul className="space-y-2">
-                        {candidate.work_experience.map((item: any) => (
-                          <li
-                            key={
-                              item?.id ||
-                              `${item?.company_name}-${item?.start_date}`
-                            }
-                            className="rounded-lg bg-slate-50 p-3 border border-gray-100"
-                          >
-                            <div className="font-medium text-gray-800">
-                              {item?.company_name || "—"}
-                            </div>
-                            <div className="text-gray-600">
-                              {item?.position || "—"} •{" "}
-                              {item?.start_date || "—"} -{" "}
-                              {item?.end_date || "—"}
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <div className="text-gray-500">Chưa có dữ liệu.</div>
-                    )}
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Loại công việc</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.job_type || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Thời gian làm việc</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.working_time || "—"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Xác thực</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.is_verified ? "Đã xác thực" : "Chưa xác thực"}
+                    </div>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="text-gray-500">Tình trạng việc làm</div>
+                    <div className="font-medium text-gray-800">
+                      {candidate.is_employed ? "Đã có việc" : "Đang tìm việc"}
+                    </div>
                   </div>
                 </div>
+              </div>
+            </div>
+
+            <div className="lg:col-span-2 space-y-5">
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">
+                  Học vấn
+                </h3>
+                {Array.isArray(candidate.study_history) &&
+                candidate.study_history.length > 0 ? (
+                  <ul className="space-y-2 text-sm">
+                    {candidate.study_history.map((item: any) => (
+                      <li
+                        key={
+                          item?.id || `${item?.school_name}-${item?.start_year}`
+                        }
+                        className="rounded-lg border border-gray-100 bg-slate-50 p-3"
+                      >
+                        <div className="font-medium text-gray-800">
+                          {item?.school_name || "—"}
+                        </div>
+                        <div className="text-gray-600">
+                          {item?.field_of_study || item?.major || "—"} •{" "}
+                          {item?.start_date || item?.start_year || "—"} -{" "}
+                          {item?.end_date || item?.end_year || "—"}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 text-sm">Chưa có dữ liệu.</div>
+                )}
+              </div>
+
+              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
+                <h3 className="text-sm font-bold text-gray-800 mb-3">
+                  Kinh nghiệm
+                </h3>
+                {Array.isArray(candidate.work_experience) &&
+                candidate.work_experience.length > 0 ? (
+                  <ul className="space-y-2 text-sm">
+                    {candidate.work_experience.map((item: any) => (
+                      <li
+                        key={
+                          item?.id ||
+                          `${item?.company_name}-${item?.start_date}`
+                        }
+                        className="rounded-lg border border-gray-100 bg-slate-50 p-3"
+                      >
+                        <div className="font-medium text-gray-800">
+                          {item?.company_name || "—"}
+                        </div>
+                        <div className="text-gray-600">
+                          {item?.position || "—"} • {item?.start_date || "—"} -{" "}
+                          {item?.end_date || "—"}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <div className="text-gray-500 text-sm">Chưa có dữ liệu.</div>
+                )}
               </div>
 
               <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
@@ -483,58 +631,24 @@ export default function CandidateView() {
                   <div className="text-gray-500 text-sm">Chưa có dữ liệu.</div>
                 )}
               </div>
-
-              <div className="rounded-xl border border-gray-200/60 bg-white p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-gray-800 mb-3">
-                  Thông tin bổ sung
-                </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Ngành nghề mong muốn</div>
-                    <div className="font-medium text-gray-800">
-                      {Array.isArray(candidate.fields_wish)
-                        ? candidate.fields_wish.join(", ")
-                        : candidate.fields_wish || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Ngôn ngữ</div>
-                    <div className="font-medium text-gray-800">
-                      {Array.isArray(candidate.languguages)
-                        ? candidate.languguages.join(", ")
-                        : candidate.languguages || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Loại công việc</div>
-                    <div className="font-medium text-gray-800">
-                      {candidate.job_type || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Thời gian làm việc</div>
-                    <div className="font-medium text-gray-800">
-                      {candidate.working_time || "—"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Xác thực</div>
-                    <div className="font-medium text-gray-800">
-                      {candidate.is_verified ? "Đã xác thực" : "Chưa xác thực"}
-                    </div>
-                  </div>
-                  <div className="space-y-1">
-                    <div className="text-gray-500">Tình trạng việc làm</div>
-                    <div className="font-medium text-gray-800">
-                      {candidate.is_employed ? "Đã có việc" : "Đang tìm việc"}
-                    </div>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </AdminLayout>
   );
 }

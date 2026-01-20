@@ -92,8 +92,9 @@ export default function RecruiterView() {
       title="Chi tiết Nhà tuyển dụng"
       activeMenu="recruiters"
       activeSubmenu="all-recruiters"
+      fullWidth={true}
     >
-      <div className="min-h-screen bg-slate-50 p-6">
+      <div className="bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
             onClick={handleBack}
@@ -123,7 +124,55 @@ export default function RecruiterView() {
 
         {!isLoading && !isError && recruiter && (
           <>
-            <div className="mb-5 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+            <div className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-orange-100 text-2xl font-bold text-orange-600">
+                    {recruiter.company_name?.charAt(0) || "N"}
+                  </div>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-lg font-bold text-gray-900">
+                        {recruiter.company_name || "Chưa cập nhật"}
+                      </h2>
+                      <span
+                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
+                          recruiter.is_verified
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-amber-50 text-amber-700"
+                        }`}
+                      >
+                        {recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"}
+                      </span>
+                    </div>
+                    <p className="text-sm text-gray-500">
+                      {recruiter?.user?.email || recruiter.email || "—"}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-2 text-xs font-semibold text-gray-600">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-3 py-1">
+                    MST: {recruiter.tax_number || "Chưa cập nhật"}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
+                  <Phone className="h-4 w-4 text-gray-400" />
+                  {recruiter.phone || "—"}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
+                  <Mail className="h-4 w-4 text-gray-400" />
+                  {recruiter?.user?.email || recruiter.email || "—"}
+                </span>
+                <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
+                  <Globe className="h-4 w-4 text-gray-400" />
+                  {recruiter.website || "—"}
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 mb-6 grid gap-4 md:grid-cols-2 xl:grid-cols-5 items-start">
               {[
                 {
                   id: "status",
@@ -182,55 +231,8 @@ export default function RecruiterView() {
               ))}
             </div>
 
-            <div className="grid gap-5 lg:grid-cols-3">
+            <div className="grid gap-5 lg:grid-cols-3 items-start">
               <div className="space-y-5">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-14 w-14 items-center justify-center rounded-2xl border border-orange-100 bg-gradient-to-br from-orange-50 to-orange-100 text-2xl font-bold text-orange-600">
-                      {recruiter.company_name?.charAt(0) || "N"}
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-orange-600">
-                        Doanh nghiệp đối tác
-                      </p>
-                      <h2 className="text-lg font-bold text-gray-900">
-                        {recruiter.company_name || "Chưa cập nhật"}
-                      </h2>
-                      <p className="text-sm text-gray-500">
-                        {recruiter?.user?.email || "—"}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="mt-5 grid gap-4 text-sm">
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2">
-                      <Phone className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-800">
-                        {recruiter.phone || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2">
-                      <Globe className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-800">
-                        {recruiter.website || "—"}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 rounded-xl bg-slate-50 px-3 py-2">
-                      <Mail className="h-4 w-4 text-gray-400" />
-                      <span className="font-medium text-gray-800">
-                        {recruiter?.user?.email || recruiter.email || "—"}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="mt-5 rounded-xl border border-dashed border-gray-200 p-4">
-                    <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">
-                      Mã số thuế
-                    </p>
-                    <p className="text-lg font-bold text-gray-900">
-                      {recruiter.tax_number || "Chưa cập nhật"}
-                    </p>
-                  </div>
-                </div>
-
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <h3 className="text-sm font-bold text-gray-900 mb-4">
                     Trạng thái kiểm duyệt
@@ -256,6 +258,33 @@ export default function RecruiterView() {
                     Trạng thái được đồng bộ từ hệ thống quản trị dựa trên giấy
                     tờ pháp lý và lịch sử hợp tác với Workio.
                   </p>
+                </div>
+
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">
+                    Thông tin liên hệ
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <InfoItem label="Website" value={recruiter.website} />
+                    <InfoItem
+                      label="Email liên hệ"
+                      value={recruiter?.user?.email || recruiter.email}
+                    />
+                    <InfoItem label="Điện thoại" value={recruiter.phone} />
+                  </div>
+                  <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
+                    <InfoItem label="Mã số thuế" value={recruiter.tax_number} />
+                    <InfoItem
+                      label="Đã tuyển"
+                      value={formatNumber(recruiter.hired_count)}
+                    />
+                    <InfoItem
+                      label="Trạng thái"
+                      value={
+                        recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"
+                      }
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -284,31 +313,6 @@ export default function RecruiterView() {
                   </div>
                   <div className="mt-5">
                     <TagGroup label="Ngành ưu tiên" items={industries} />
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">
-                    Thông tin liên hệ & pháp lý
-                  </h3>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <InfoItem label="Website" value={recruiter.website} />
-                    <InfoItem
-                      label="Email liên hệ"
-                      value={recruiter?.user?.email || recruiter.email}
-                    />
-                    <InfoItem label="Điện thoại" value={recruiter.phone} />
-                    <InfoItem label="Mã số thuế" value={recruiter.tax_number} />
-                    <InfoItem
-                      label="Đã tuyển"
-                      value={formatNumber(recruiter.hired_count)}
-                    />
-                    <InfoItem
-                      label="Trạng thái"
-                      value={
-                        recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"
-                      }
-                    />
                   </div>
                 </div>
 

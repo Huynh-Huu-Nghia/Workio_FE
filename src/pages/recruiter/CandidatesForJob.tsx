@@ -43,14 +43,15 @@ const CandidatesForJob: React.FC = () => {
     if (!candidateSearch.trim()) return candidates;
     const q = candidateSearch.trim().toLowerCase();
     return candidates.filter((c: any) => {
-      const haystack = `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
+      const haystack =
+        `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
       return haystack.includes(q);
     });
   }, [candidates, candidateSearch]);
 
   const selectedJob = useMemo(
     () => jobPosts.find((job: any) => job.id === selectedJobId),
-    [jobPosts, selectedJobId]
+    [jobPosts, selectedJobId],
   );
 
   const handleCreateInterview = async (candidate: any) => {
@@ -58,9 +59,13 @@ const CandidatesForJob: React.FC = () => {
       toast.info("Vui lòng chọn tin tuyển dụng trước.");
       return;
     }
-    const when = window.prompt("Nhập thời gian phỏng vấn (YYYY-MM-DD HH:mm)", "");
+    const when = window.prompt(
+      "Nhập thời gian phỏng vấn (YYYY-MM-DD HH:mm)",
+      "",
+    );
     if (!when) return;
-    const locationInput = window.prompt("Địa điểm (Online/Offline)", "Online") || "Online";
+    const locationInput =
+      window.prompt("Địa điểm (Online/Offline)", "Online") || "Online";
     try {
       const res = await createInterview.mutateAsync({
         job_post_id: selectedJobId,
@@ -91,9 +96,12 @@ const CandidatesForJob: React.FC = () => {
               <p className="text-xs uppercase tracking-widest text-gray-400">
                 Chọn tin tuyển dụng
               </p>
-              <h2 className="text-xl font-bold text-gray-900">Liệt kê ứng viên đã ứng tuyển</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Liệt kê ứng viên đã ứng tuyển
+              </h2>
               <p className="text-sm text-gray-500">
-                Hệ thống tự động lấy ứng viên dựa trên API `/recruiter/candidates-of-job-post`.
+                Hệ thống tự động lấy ứng viên dựa trên API
+                `/recruiter/candidates-of-job-post`.
               </p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
@@ -103,11 +111,13 @@ const CandidatesForJob: React.FC = () => {
                 className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[240px]"
               >
                 <option value="">Chọn tin tuyển dụng</option>
-                {jobPosts.map((job: any) => (
-                  <option key={job.id} value={job.id}>
-                    {job.position} • {job.status || "Chưa rõ"}
-                  </option>
-                ))}
+                {jobPosts
+                  .filter((job: any) => job.status !== "Đã tuyển")
+                  .map((job: any) => (
+                    <option key={job.id} value={job.id}>
+                      {job.position} • {job.status || "Chưa rõ"}
+                    </option>
+                  ))}
               </select>
               <Link
                 to={path.RECRUITER_JOB_CREATE}
@@ -124,27 +134,32 @@ const CandidatesForJob: React.FC = () => {
             </div>
           ) : jobPosts.length === 0 ? (
             <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-500">
-              Bạn chưa có tin tuyển dụng nào. Hãy tạo tin mới để xem danh sách ứng viên.
+              Bạn chưa có tin tuyển dụng nào. Hãy tạo tin mới để xem danh sách
+              ứng viên.
             </div>
           ) : selectedJob ? (
             <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {[{
-                label: "Trạng thái",
-                value: selectedJob.status || "Chưa rõ",
-              },
-              {
-                label: "Chỉ tiêu",
-                value: selectedJob.available_quantity ?? "—",
-              },
-              {
-                label: "Hạn nộp",
-                value: formatDate(selectedJob.application_deadline_to),
-              }].map((item) => (
+              {[
+                {
+                  label: "Trạng thái",
+                  value: selectedJob.status || "Chưa rõ",
+                },
+                {
+                  label: "Chỉ tiêu",
+                  value: selectedJob.available_quantity ?? "—",
+                },
+                {
+                  label: "Hạn nộp",
+                  value: formatDate(selectedJob.application_deadline_to),
+                },
+              ].map((item) => (
                 <div key={item.label} className="rounded-xl bg-slate-50 p-4">
                   <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                     {item.label}
                   </p>
-                  <p className="mt-1 text-lg font-bold text-gray-900">{item.value}</p>
+                  <p className="mt-1 text-lg font-bold text-gray-900">
+                    {item.value}
+                  </p>
                 </div>
               ))}
             </div>
@@ -154,8 +169,12 @@ const CandidatesForJob: React.FC = () => {
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Lọc ứng viên</p>
-              <h3 className="text-lg font-bold text-gray-900">Kết quả cho tin đang chọn</h3>
+              <p className="text-xs uppercase tracking-widest text-gray-400">
+                Lọc ứng viên
+              </p>
+              <h3 className="text-lg font-bold text-gray-900">
+                Kết quả cho tin đang chọn
+              </h3>
             </div>
             <div className="relative w-full md:w-64">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -197,7 +216,8 @@ const CandidatesForJob: React.FC = () => {
                           {candidate.full_name || "Chưa cập nhật tên"}
                         </p>
                         <p className="text-xs text-gray-500">
-                          Email: {candidate.email || candidate.user?.email || "—"}
+                          Email:{" "}
+                          {candidate.email || candidate.user?.email || "—"}
                         </p>
                       </div>
                     </div>

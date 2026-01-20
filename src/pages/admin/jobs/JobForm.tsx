@@ -10,6 +10,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
 import { toast } from "react-toastify";
 import { useGetAllRecruitersQuery } from "@/api/recruiter.api";
+import { useQueryClient } from "@tanstack/react-query";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 
 type FormValues = {
@@ -35,6 +36,7 @@ export default function JobFormAdmin() {
   const { id } = useParams();
   const isEdit = Boolean(id);
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const { data: detailRes } = useAdminJobPostDetailQuery(id);
   const createMutation = useCreateAdminJobPostMutation();
@@ -72,6 +74,13 @@ export default function JobFormAdmin() {
     if (!detailRes?.data || !isEdit) return;
     console.log("Detail data:", detailRes.data);
     const job = detailRes.data as any;
+
+    if (job.status === "Đã tuyển") {
+      toast.error("Không thể chỉnh sửa bài đăng đã tuyển");
+      navigate(path.ADMIN_JOB_LIST);
+      return;
+    }
+
     reset({
       position: job.position || "",
       recruiter_id: job.recruiter_id || "",
@@ -127,7 +136,10 @@ export default function JobFormAdmin() {
         benefits,
         fields,
         languages,
+        application_deadline_from: values.application_deadline_from || null,
+        application_deadline_to: values.application_deadline_to || null,
       } as any;
+      console.log("Submitting payload:", payload);
 
       if (isEdit && id) {
         const res = await updateMutation.mutateAsync({
@@ -137,6 +149,10 @@ export default function JobFormAdmin() {
 
         if ((res as any)?.err === 0) {
           toast.success((res as any)?.mes || "Cập nhật tin thành công");
+          await queryClient.invalidateQueries({ queryKey: ["job-posts"] });
+          await queryClient.invalidateQueries({
+            queryKey: ["admin-job-post", id],
+          });
           navigate(path.ADMIN_JOB_LIST);
         } else {
           toast.error((res as any)?.mes || "Cập nhật thất bại");
@@ -149,6 +165,7 @@ export default function JobFormAdmin() {
 
         if ((res as any)?.err === 0) {
           toast.success((res as any)?.mes || "Tạo tin thành công");
+          await queryClient.invalidateQueries({ queryKey: ["job-posts"] });
           navigate(path.ADMIN_JOB_LIST);
         } else {
           toast.error((res as any)?.mes || "Tạo tin thất bại");
@@ -163,6 +180,7 @@ export default function JobFormAdmin() {
     <AdminLayout
       title={isEdit ? "Sửa tin tuyển dụng" : "Thêm tin tuyển dụng"}
       activeMenu="jobs"
+      fullWidth={true}
     >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">

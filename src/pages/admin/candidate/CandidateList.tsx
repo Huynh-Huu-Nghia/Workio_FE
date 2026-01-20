@@ -22,6 +22,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-toastify";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 
 export default function CandidateList() {
   const navigate = useNavigate();
@@ -39,6 +40,17 @@ export default function CandidateList() {
   const [fields, setFields] = useState<string[]>([]);
   const [awaitingInterview, setAwaitingInterview] = useState(false);
   const [employed, setEmployed] = useState("");
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   // 🔥 GỌI API LẤY DANH SÁCH
   const {
@@ -114,42 +126,60 @@ export default function CandidateList() {
     return true;
   });
 
-  const handleDeleteOne = async (candidateId: string) => {
-    const ok = window.confirm("Bạn có chắc muốn xóa ứng viên này không?");
-    if (!ok) return;
-
-    try {
-      const res = await deleteMutation.mutateAsync(candidateId);
-      if (res?.err === 0) {
-        toast.info(res?.mes || "Đã xóa ứng viên.");
-        setSelectedRows((prev) => prev.filter((id) => id !== candidateId));
-        await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-        return;
-      }
-      toast.error(res?.mes || "Xóa thất bại.");
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+  const handleDeleteOne = (candidateId: string, candidateName: string) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa ứng viên",
+      message: `Bạn có chắc muốn xóa ứng viên "${candidateName}" không?`,
+      onConfirm: async () => {
+        try {
+          const res = await deleteMutation.mutateAsync(candidateId);
+          if (res?.err === 0) {
+            toast.info(res?.mes || "Đã xóa ứng viên.");
+            setSelectedRows((prev) => prev.filter((id) => id !== candidateId));
+            await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+          } else {
+            toast.error(res?.mes || "Xóa thất bại.");
+          }
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     if (selectedRows.length === 0) return;
-    const ok = window.confirm(
-      `Bạn có chắc muốn xóa ${selectedRows.length} ứng viên đã chọn không?`,
-    );
-    if (!ok) return;
-
-    try {
-      const ids = [...selectedRows];
-      for (const id of ids) {
-        await deleteMutation.mutateAsync(id);
-      }
-      toast.info("Đã xóa các ứng viên đã chọn.");
-      setSelectedRows([]);
-      await queryClient.invalidateQueries({ queryKey: ["candidates"] });
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa nhiều ứng viên",
+      message: `Bạn có chắc muốn xóa ${selectedRows.length} ứng viên đã chọn không?`,
+      onConfirm: async () => {
+        try {
+          const ids = [...selectedRows];
+          for (const id of ids) {
+            await deleteMutation.mutateAsync(id);
+          }
+          toast.info("Đã xóa các ứng viên đã chọn.");
+          setSelectedRows([]);
+          await queryClient.invalidateQueries({ queryKey: ["candidates"] });
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
   const [showCreate, setShowCreate] = useState(false);
@@ -630,6 +660,7 @@ export default function CandidateList() {
       title="DANH SÁCH ỨNG VIÊN"
       activeMenu="candidates"
       activeSubmenu="list-candidates"
+      fullWidth={true}
     >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-6 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -1607,7 +1638,14 @@ export default function CandidateList() {
                               className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
                               title="Xóa"
                               disabled={deleteMutation.isPending}
-                              onClick={() => handleDeleteOne(user.candidate_id)}
+                              onClick={() =>
+                                handleDeleteOne(
+                                  user.candidate_id,
+                                  user.full_name ||
+                                    user.email ||
+                                    "Ứng viên này",
+                                )
+                              }
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1629,6 +1667,20 @@ export default function CandidateList() {
           </div>
         </div>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </AdminLayout>
   );
 }

@@ -5,6 +5,7 @@ import {
   Bell,
   Briefcase,
   CalendarDays,
+  Home,
   LifeBuoy,
   Menu,
   LogOut,
@@ -38,6 +39,17 @@ type MenuGroup = {
 };
 
 const recruiterMenu: MenuGroup[] = [
+  {
+    title: "TỔNG QUAN",
+    items: [
+      {
+        id: "dashboard",
+        label: "Dashboard",
+        icon: <Home size={18} />,
+        link: path.RECRUITER_HOME,
+      },
+    ],
+  },
   {
     title: "TIN & ỨNG VIÊN",
     items: [

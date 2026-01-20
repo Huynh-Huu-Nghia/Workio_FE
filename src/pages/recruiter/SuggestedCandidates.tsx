@@ -36,7 +36,8 @@ const SuggestedCandidates: React.FC = () => {
     if (!keyword.trim()) return candidates;
     const q = keyword.trim().toLowerCase();
     return candidates.filter((c: any) => {
-      const haystack = `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
+      const haystack =
+        `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
       return haystack.includes(q);
     });
   }, [candidates, keyword]);
@@ -50,9 +51,12 @@ const SuggestedCandidates: React.FC = () => {
               <p className="text-xs uppercase tracking-widest text-gray-400">
                 Chọn tin tuyển dụng
               </p>
-              <h2 className="text-xl font-bold text-gray-900">Gợi ý ứng viên phù hợp</h2>
+              <h2 className="text-xl font-bold text-gray-900">
+                Gợi ý ứng viên phù hợp
+              </h2>
               <p className="text-sm text-gray-500">
-                Dữ liệu lấy từ API `/recruiter/suggested-candidates` dựa trên tiêu chí của tin.
+                Dữ liệu lấy từ API `/recruiter/suggested-candidates` dựa trên
+                tiêu chí của tin.
               </p>
             </div>
             <select
@@ -61,11 +65,13 @@ const SuggestedCandidates: React.FC = () => {
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[260px]"
             >
               <option value="">Chọn tin tuyển dụng</option>
-              {jobPosts.map((job: any) => (
-                <option key={job.id} value={job.id}>
-                  {job.position} • {job.status || "Chưa rõ"}
-                </option>
-              ))}
+              {jobPosts
+                .filter((job: any) => job.status !== "Đã tuyển")
+                .map((job: any) => (
+                  <option key={job.id} value={job.id}>
+                    {job.position} • {job.status || "Chưa rõ"}
+                  </option>
+                ))}
             </select>
           </div>
           {jobsLoading && (
@@ -78,8 +84,12 @@ const SuggestedCandidates: React.FC = () => {
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Bộ lọc</p>
-              <h3 className="text-lg font-bold text-gray-900">Danh sách gợi ý</h3>
+              <p className="text-xs uppercase tracking-widest text-gray-400">
+                Bộ lọc
+              </p>
+              <h3 className="text-lg font-bold text-gray-900">
+                Danh sách gợi ý
+              </h3>
             </div>
             <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -122,7 +132,8 @@ const SuggestedCandidates: React.FC = () => {
                             {candidate.full_name || "Chưa cập nhật tên"}
                           </p>
                           <p className="text-xs text-gray-500">
-                            Email: {candidate.email || candidate.user?.email || "—"}
+                            Email:{" "}
+                            {candidate.email || candidate.user?.email || "—"}
                           </p>
                         </div>
                         {typeof candidate.match_score === "number" && (
@@ -141,7 +152,10 @@ const SuggestedCandidates: React.FC = () => {
                             .filter(Boolean)
                             .slice(0, 5)
                             .map((skill: string) => (
-                              <span key={skill} className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
+                              <span
+                                key={skill}
+                                className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700"
+                              >
                                 {skill.trim()}
                               </span>
                             ))}

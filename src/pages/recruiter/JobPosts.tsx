@@ -18,6 +18,7 @@ import { Link, useLocation } from "react-router-dom";
 import path from "@/constants/path";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
 import { toast } from "react-toastify";
+import ConfirmDialog from "@/components/common/ConfirmDialog";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 
 type StatusValue = "all" | "Đang mở" | "Đang xem xét" | "Đã tuyển" | "Đã hủy";
@@ -31,11 +32,13 @@ const STATUS_TABS: Array<{ label: string; value: StatusValue }> = [
 ];
 
 const parseTags = (value: unknown): string[] => {
-  if (Array.isArray(value)) return value.map((item) => String(item).trim()).filter(Boolean);
+  if (Array.isArray(value))
+    return value.map((item) => String(item).trim()).filter(Boolean);
   if (typeof value === "string") {
     try {
       const parsed = JSON.parse(value);
-      if (Array.isArray(parsed)) return parsed.map((item) => String(item).trim()).filter(Boolean);
+      if (Array.isArray(parsed))
+        return parsed.map((item) => String(item).trim()).filter(Boolean);
     } catch {
       return value
         .split(/[,;|]/)
@@ -48,7 +51,8 @@ const parseTags = (value: unknown): string[] => {
 };
 
 const formatCurrency = (value?: number | string | null) => {
-  if (value === null || value === undefined || value === "") return "Thoả thuận";
+  if (value === null || value === undefined || value === "")
+    return "Thoả thuận";
   return new Intl.NumberFormat("vi-VN", {
     style: "currency",
     currency: "VND",
@@ -67,7 +71,9 @@ const StatusBadge = ({ status }: { status?: string | null }) => {
     "Đã hủy": "bg-red-50 text-red-700",
   };
   return (
-    <span className={`rounded-full px-3 py-1 text-xs font-semibold ${map[status || ""] || "bg-gray-100 text-gray-600"}`}>
+    <span
+      className={`rounded-full px-3 py-1 text-xs font-semibold ${map[status || ""] || "bg-gray-100 text-gray-600"}`}
+    >
       {status || "Chưa cập nhật"}
     </span>
   );
@@ -79,12 +85,25 @@ const RecruiterJobPosts: React.FC = () => {
   const { data, isLoading, isError, refetch } = useRecruiterJobPostsQuery();
   const jobs = data?.data ?? [];
   const deleteMutation = useDeleteRecruiterJobPostMutation();
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusValue>("all");
   const [typeFilter, setTypeFilter] = useState("all");
   const [workingTimeFilter, setWorkingTimeFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"updated_at" | "created_at" | "position" | "deadline">("updated_at");
+  const [sortBy, setSortBy] = useState<
+    "updated_at" | "created_at" | "position" | "deadline"
+  >("updated_at");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
   const [jobTypeFilter, setJobTypeFilter] = useState("all");
   const [minSalary, setMinSalary] = useState("");
@@ -101,7 +120,9 @@ const RecruiterJobPosts: React.FC = () => {
   const filteredWardOptions = useMemo(() => {
     if (!wardData) return [];
     return wardData.filter((ward) =>
-      provinceFilter ? String(ward.province_code) === String(provinceFilter) : true
+      provinceFilter
+        ? String(ward.province_code) === String(provinceFilter)
+        : true,
     );
   }, [wardData, provinceFilter]);
 
@@ -114,7 +135,13 @@ const RecruiterJobPosts: React.FC = () => {
       const diff = new Date(job.application_deadline_to).getTime();
       return diff > 0 && diff <= 1000 * 60 * 60 * 24 * 7;
     });
-    return { total: jobs.length, active: active.length, pending: pending.length, hired: hired.length, closingSoon: closingSoon.length };
+    return {
+      total: jobs.length,
+      active: active.length,
+      pending: pending.length,
+      hired: hired.length,
+      closingSoon: closingSoon.length,
+    };
   }, [jobs]);
 
   const statusCounts = useMemo(() => {
@@ -126,7 +153,9 @@ const RecruiterJobPosts: React.FC = () => {
       "Đã hủy": 0,
     };
     jobs.forEach((job: any) => {
-      const statusKey = STATUS_TABS.find((tab) => tab.value === job.status)?.value;
+      const statusKey = STATUS_TABS.find(
+        (tab) => tab.value === job.status,
+      )?.value;
       if (statusKey && statusKey !== "all") {
         counts[statusKey] += 1;
       }
@@ -161,16 +190,20 @@ const RecruiterJobPosts: React.FC = () => {
   const filteredJobs = useMemo(() => {
     return jobs.filter((job: any) => {
       if (statusFilter !== "all" && job.status !== statusFilter) return false;
-      if (typeFilter !== "all" && job.recruitment_type !== typeFilter) return false;
-      if (workingTimeFilter !== "all" && job.working_time !== workingTimeFilter) return false;
-      if (jobTypeFilter !== "all" && job.job_type !== jobTypeFilter) return false;
+      if (typeFilter !== "all" && job.recruitment_type !== typeFilter)
+        return false;
+      if (workingTimeFilter !== "all" && job.working_time !== workingTimeFilter)
+        return false;
+      if (jobTypeFilter !== "all" && job.job_type !== jobTypeFilter)
+        return false;
       const salaryValue = Number(job.monthly_salary || 0);
       if (minSalary && salaryValue < Number(minSalary)) return false;
       if (maxSalary && salaryValue > Number(maxSalary)) return false;
       if (search.trim()) {
         const keyword = search.trim().toLowerCase();
         const fields = parseTags(job.fields).join(" ").toLowerCase();
-        const haystack = `${job.position || ""} ${job.requirements || ""} ${fields}`.toLowerCase();
+        const haystack =
+          `${job.position || ""} ${job.requirements || ""} ${fields}`.toLowerCase();
         if (!haystack.includes(keyword)) return false;
       }
       const jobProvince =
@@ -179,14 +212,19 @@ const RecruiterJobPosts: React.FC = () => {
         job.recruiter?.province_code ??
         job.province_code ??
         null;
-      if (provinceFilter && String(jobProvince || "") !== String(provinceFilter)) return false;
+      if (
+        provinceFilter &&
+        String(jobProvince || "") !== String(provinceFilter)
+      )
+        return false;
       const jobWard =
         job.address?.ward_code ??
         job.recruiter?.address?.ward_code ??
         job.recruiter?.ward_code ??
         job.ward_code ??
         null;
-      if (wardFilter && String(jobWard || "") !== String(wardFilter)) return false;
+      if (wardFilter && String(jobWard || "") !== String(wardFilter))
+        return false;
       return true;
     });
   }, [
@@ -205,18 +243,25 @@ const RecruiterJobPosts: React.FC = () => {
   const sortedJobs = useMemo(() => {
     const list = [...filteredJobs];
     const direction = sortOrder === "asc" ? 1 : -1;
-    const parseDate = (value?: string | null) => (value ? new Date(value).getTime() : 0);
+    const parseDate = (value?: string | null) =>
+      value ? new Date(value).getTime() : 0;
     list.sort((a: any, b: any) => {
       let comparison = 0;
       switch (sortBy) {
         case "position":
-          comparison = (a.position || "").localeCompare(b.position || "", "vi", { sensitivity: "base" });
+          comparison = (a.position || "").localeCompare(
+            b.position || "",
+            "vi",
+            { sensitivity: "base" },
+          );
           break;
         case "created_at":
           comparison = parseDate(a.created_at) - parseDate(b.created_at);
           break;
         case "deadline":
-          comparison = parseDate(a.application_deadline_to) - parseDate(b.application_deadline_to);
+          comparison =
+            parseDate(a.application_deadline_to) -
+            parseDate(b.application_deadline_to);
           break;
         case "updated_at":
         default:
@@ -242,20 +287,31 @@ const RecruiterJobPosts: React.FC = () => {
     setSortOrder("desc");
   };
 
-  const handleDelete = async (jobId: string) => {
-    const ok = window.confirm("Xóa tin tuyển dụng này?");
-    if (!ok) return;
-    try {
-      const res = await deleteMutation.mutateAsync(jobId);
-      if ((res as any)?.err === 0) {
-        toast.info((res as any)?.mes || "Đã xóa tin.");
-        await refetch();
-      } else {
-        toast.error((res as any)?.mes || "Xóa thất bại.");
-      }
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-    }
+  const handleDelete = (job: any) => {
+    setConfirmDialog({
+      isOpen: true,
+      title: "Xóa tin tuyển dụng",
+      message: `Bạn có chắc muốn xóa tin "${job.position}" không?`,
+      onConfirm: async () => {
+        try {
+          const res = await deleteMutation.mutateAsync(job.id);
+          if ((res as any)?.err === 0) {
+            toast.info((res as any)?.mes || "Đã xóa tin.");
+            await refetch();
+          } else {
+            toast.error((res as any)?.mes || "Xóa thất bại.");
+          }
+        } catch (e: any) {
+          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+        }
+        setConfirmDialog({
+          isOpen: false,
+          title: "",
+          message: "",
+          onConfirm: () => {},
+        });
+      },
+    });
   };
 
   const isFiltered =
@@ -314,7 +370,9 @@ const RecruiterJobPosts: React.FC = () => {
                 <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
                   {stat.label}
                 </p>
-                <p className="mt-2 text-2xl font-bold text-gray-900">{stat.value}</p>
+                <p className="mt-2 text-2xl font-bold text-gray-900">
+                  {stat.value}
+                </p>
               </div>
             ))}
           </div>
@@ -456,7 +514,15 @@ const RecruiterJobPosts: React.FC = () => {
               </select>
               <select
                 value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "updated_at" | "created_at" | "position" | "deadline")}
+                onChange={(e) =>
+                  setSortBy(
+                    e.target.value as
+                      | "updated_at"
+                      | "created_at"
+                      | "position"
+                      | "deadline",
+                  )
+                }
                 className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               >
                 <option value="updated_at">Sắp xếp theo ngày cập nhật</option>
@@ -497,7 +563,8 @@ const RecruiterJobPosts: React.FC = () => {
             </div>
           )}
 
-          {!isLoading && !isError &&
+          {!isLoading &&
+            !isError &&
             sortedJobs.map((job: any) => {
               const tags = parseTags(job.fields);
               return (
@@ -519,10 +586,12 @@ const RecruiterJobPosts: React.FC = () => {
                         </h3>
                         <div className="flex flex-wrap gap-3 text-sm text-gray-600">
                           <span className="inline-flex items-center gap-1">
-                            <Users className="h-4 w-4 text-gray-400" /> SL cần: {job.available_quantity ?? "—"}
+                            <Users className="h-4 w-4 text-gray-400" /> SL cần:{" "}
+                            {job.available_quantity ?? "—"}
                           </span>
                           <span className="inline-flex items-center gap-1">
-                            <Clock className="h-4 w-4 text-gray-400" /> {job.working_time || "Chưa rõ"}
+                            <Clock className="h-4 w-4 text-gray-400" />{" "}
+                            {job.working_time || "Chưa rõ"}
                           </span>
                           <span className="inline-flex items-center gap-1">
                             {job.recruitment_type || "Hình thức khác"}
@@ -546,7 +615,10 @@ const RecruiterJobPosts: React.FC = () => {
 
                   <div className="mt-3 flex flex-wrap gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
                     {tags.slice(0, 6).map((tag) => (
-                      <span key={tag} className="rounded-full bg-orange-50 px-3 py-1 text-[11px] text-orange-700">
+                      <span
+                        key={tag}
+                        className="rounded-full bg-orange-50 px-3 py-1 text-[11px] text-orange-700"
+                      >
                         {tag}
                       </span>
                     ))}
@@ -555,15 +627,21 @@ const RecruiterJobPosts: React.FC = () => {
                   <div className="mt-4 grid gap-3 text-sm text-gray-600 sm:grid-cols-3">
                     <div>
                       <p className="text-gray-400">Thu nhập dự kiến</p>
-                      <p className="font-semibold text-gray-900">{formatCurrency(job.monthly_salary)}</p>
+                      <p className="font-semibold text-gray-900">
+                        {formatCurrency(job.monthly_salary)}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-400">Thời lượng tuyển</p>
-                      <p className="font-semibold text-gray-900">{job.duration || "Không rõ"}</p>
+                      <p className="font-semibold text-gray-900">
+                        {job.duration || "Không rõ"}
+                      </p>
                     </div>
                     <div>
                       <p className="text-gray-400">Ngày cập nhật</p>
-                      <p className="font-semibold text-gray-900">{formatDate(job.updated_at)}</p>
+                      <p className="font-semibold text-gray-900">
+                        {formatDate(job.updated_at)}
+                      </p>
                     </div>
                   </div>
 
@@ -582,7 +660,7 @@ const RecruiterJobPosts: React.FC = () => {
                     </Link>
                     <button
                       type="button"
-                      onClick={() => handleDelete(job.id)}
+                      onClick={() => handleDelete(job)}
                       className="rounded-lg border border-red-200 bg-white px-4 py-2 font-semibold text-red-600 transition hover:bg-red-50"
                     >
                       Xóa tin
@@ -593,6 +671,20 @@ const RecruiterJobPosts: React.FC = () => {
             })}
         </section>
       </div>
+      <ConfirmDialog
+        isOpen={confirmDialog.isOpen}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() =>
+          setConfirmDialog({
+            isOpen: false,
+            title: "",
+            message: "",
+            onConfirm: () => {},
+          })
+        }
+      />
     </RecruiterLayout>
   );
 };

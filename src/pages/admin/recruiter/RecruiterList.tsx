@@ -442,6 +442,7 @@ const RecruiterList: React.FC = () => {
       title="Danh sách Nhà tuyển dụng"
       activeMenu="recruiters"
       activeSubmenu="all-recruiters"
+      fullWidth={true}
     >
       {showCreate && (
         <div className="fixed inset-0 z-50 flex items-start justify-center bg-black/30 backdrop-blur-sm overflow-y-auto py-10">

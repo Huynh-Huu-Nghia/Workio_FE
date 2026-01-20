@@ -1,7 +1,10 @@
 import React, { useMemo, useState } from "react";
 import { BarChart3, FileText, RefreshCw } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { downloadMonthlyReportDoc, useMonthlyReportQuery } from "@/api/report.api";
+import {
+  downloadMonthlyReportDoc,
+  useMonthlyReportQuery,
+} from "@/api/report.api";
 import { toast } from "react-toastify";
 import { AxiosError } from "axios";
 
@@ -37,7 +40,7 @@ const ReportOverview: React.FC = () => {
         note: "Ứng viên đã nhận việc",
       },
     ],
-    [report]
+    [report],
   );
 
   const onDownloadDocx = async () => {
@@ -61,7 +64,11 @@ const ReportOverview: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Báo cáo tuyển dụng" activeMenu="reports">
+    <AdminLayout
+      title="Báo cáo tuyển dụng"
+      activeMenu="reports"
+      fullWidth={true}
+    >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="flex flex-col gap-3 border-b border-gray-100 p-5 md:flex-row md:items-center md:justify-between">
           <div>
@@ -166,8 +173,7 @@ const ReportOverview: React.FC = () => {
               <h2 className="text-lg font-semibold text-gray-800">
                 Xuất báo cáo
               </h2>
-              <p className="text-sm text-gray-500">
-              </p>
+              <p className="text-sm text-gray-500"></p>
             </div>
           </div>
           <div className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
@@ -180,8 +186,7 @@ const ReportOverview: React.FC = () => {
               <FileText className="h-4 w-4" />
               {isDownloading ? "Đang tạo file..." : "Tải báo cáo .docx"}
             </button>
-            <p className="text-xs text-gray-500">
-            </p>
+            <p className="text-xs text-gray-500"></p>
           </div>
         </div>
       </div>

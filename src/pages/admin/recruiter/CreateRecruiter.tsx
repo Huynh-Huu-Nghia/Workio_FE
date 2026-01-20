@@ -21,6 +21,7 @@ import {
 } from "@/api/recruiter.api";
 
 import AdminLayout from "@/layouts/AdminLayout";
+import { useQueryClient } from "@tanstack/react-query";
 
 // Sections (Tái sử dụng Account & Address, Import mới CompanyInfo)
 import AccountSection from "../sections/AccountSection"; // Reuse
@@ -29,6 +30,7 @@ import CompanyInfoSection from "../sections/CompanyInfoSection"; // New
 
 export default function CreateRecruiter() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const mutation = useCreateRecruiterMutation();
 
   const {
@@ -96,7 +98,9 @@ export default function CreateRecruiter() {
         onSuccess: (res) => {
           if (res.err === 0) {
             toast.success("Thêm nhà tuyển dụng thành công! 🎉");
-            // Điều hướng về danh sách hoặc trang nào đó
+            // Invalidate cache để refresh danh sách
+            queryClient.invalidateQueries({ queryKey: ["recruiters"] });
+            // Điều hướng về danh sách
             navigate("/admin/recruiters");
           } else {
             toast.error(res.mes || "Có lỗi từ server");
@@ -119,6 +123,7 @@ export default function CreateRecruiter() {
       title="THÊM NHÀ TUYỂN DỤNG"
       activeMenu="recruiters"
       activeSubmenu="add-recruiter"
+      fullWidth={true}
     >
       <div className="min-h-screen bg-slate-50 pb-20 pt-6">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
@@ -136,79 +141,75 @@ export default function CreateRecruiter() {
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              {/* ⬅ CỘT TRÁI - FORM NHẬP */}
-              <div className="lg:col-span-2 space-y-6">
-                {/* 1. Account (Dùng lại của Candidate được vì giống nhau) */}
-                <SectionWrapper
-                  title="Thông Tin Tài Khoản"
-                  description="Email & mật khẩu đăng nhập."
-                  icon={<Shield className="text-orange-500" />}
+            {/* FORM NHẬP - FULL WIDTH */}
+            <div className="space-y-6">
+              {/* 1. Account (Dùng lại của Candidate được vì giống nhau) */}
+              <SectionWrapper
+                title="Thông Tin Tài Khoản"
+                description="Email & mật khẩu đăng nhập."
+                icon={<Shield className="text-orange-500" />}
+              >
+                <AccountSection
+                  register={register as any}
+                  errors={errors as any}
+                />
+              </SectionWrapper>
+
+              {/* 2. Company Info (Mới) */}
+              <SectionWrapper
+                title="Thông Tin Công Ty"
+                description="Tên, MST, Website và các thông tin pháp lý."
+                icon={<Building2 className="text-blue-500" />}
+              >
+                <CompanyInfoSection register={register} errors={errors} />
+              </SectionWrapper>
+
+              {/* 3. Address (Dùng lại của Candidate) */}
+              <SectionWrapper
+                title="Địa Chỉ Trụ Sở"
+                description="Địa chỉ đăng ký kinh doanh."
+                icon={<MapPin className="text-red-500" />}
+              >
+                <AddressSection
+                  register={register as any}
+                  errors={errors as any}
+                  watch={watch as any}
+                  setValue={setValue as any}
+                />
+              </SectionWrapper>
+            </div>
+
+            {/* NÚT SAVE Ở CUỐI */}
+            <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
+              <h3 className="font-semibold text-gray-800 mb-4">
+                Hoàn tất hồ sơ
+              </h3>
+              <p className="text-sm text-gray-500 mb-6">
+                Kiểm tra kỹ thông tin MST và Email trước khi lưu.
+              </p>
+
+              <div className="flex flex-col gap-3">
+                <button
+                  type="submit"
+                  disabled={mutation.isPending}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-md hover:bg-blue-700 transition disabled:bg-gray-300"
                 >
-                  <AccountSection
-                    register={register as any}
-                    errors={errors as any}
-                  />
-                </SectionWrapper>
+                  {mutation.isPending ? (
+                    "Đang xử lý..."
+                  ) : (
+                    <>
+                      <Save size={18} /> Lưu Nhà Tuyển Dụng
+                    </>
+                  )}
+                </button>
 
-                {/* 2. Company Info (Mới) */}
-                <SectionWrapper
-                  title="Thông Tin Công Ty"
-                  description="Tên, MST, Website và các thông tin pháp lý."
-                  icon={<Building2 className="text-blue-500" />}
+                <button
+                  type="button"
+                  onClick={() => navigate(-1)}
+                  className="w-full rounded-lg border bg-gray-50 px-4 py-3 font-medium text-gray-600 hover:bg-gray-100 transition"
                 >
-                  <CompanyInfoSection register={register} errors={errors} />
-                </SectionWrapper>
-
-                {/* 3. Address (Dùng lại của Candidate) */}
-                <SectionWrapper
-                  title="Địa Chỉ Trụ Sở"
-                  description="Địa chỉ đăng ký kinh doanh."
-                  icon={<MapPin className="text-red-500" />}
-                >
-                  <AddressSection
-                    register={register as any}
-                    errors={errors as any}
-                    watch={watch as any}
-                    setValue={setValue as any}
-                  />
-                </SectionWrapper>
-              </div>
-
-              {/* ➡ CỘT PHẢI - ACTION */}
-              <div className="space-y-6">
-                <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100 sticky top-6">
-                  <h3 className="font-semibold text-gray-800 mb-4">
-                    Hoàn tất hồ sơ
-                  </h3>
-                  <p className="text-sm text-gray-500 mb-6">
-                    Kiểm tra kỹ thông tin MST và Email trước khi lưu.
-                  </p>
-
-                  <div className="flex flex-col gap-3">
-                    <button
-                      type="submit"
-                      disabled={mutation.isPending}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 font-semibold text-white shadow-md hover:bg-blue-700 transition disabled:bg-gray-300"
-                    >
-                      {mutation.isPending ? (
-                        "Đang xử lý..."
-                      ) : (
-                        <>
-                          <Save size={18} /> Lưu Nhà Tuyển Dụng
-                        </>
-                      )}
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => navigate(-1)}
-                      className="w-full rounded-lg border bg-gray-50 px-4 py-3 font-medium text-gray-600 hover:bg-gray-100 transition"
-                    >
-                      Hủy
-                    </button>
-                  </div>
-                </div>
+                  Hủy
+                </button>
               </div>
             </div>
           </form>

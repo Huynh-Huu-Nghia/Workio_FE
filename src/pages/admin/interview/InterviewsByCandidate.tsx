@@ -20,7 +20,7 @@ const InterviewsByCandidate: React.FC = () => {
         c.full_name?.toLowerCase().includes(keyword) ||
         c.email?.toLowerCase().includes(keyword) ||
         c.phone?.includes(keyword) ||
-        false
+        false,
     );
   }, [candidates, searchTerm]);
 
@@ -30,14 +30,17 @@ const InterviewsByCandidate: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Lịch phỏng vấn theo ứng viên" activeMenu="jobs">
+    <AdminLayout
+      title="Lịch phỏng vấn theo ứng viên"
+      activeMenu="jobs"
+      fullWidth={true}
+    >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
             Lịch PV theo ứng viên
           </h1>
-          <p className="text-sm text-gray-500">
-          </p>
+          <p className="text-sm text-gray-500"></p>
         </div>
         <form
           onSubmit={onSubmit}
@@ -63,7 +66,8 @@ const InterviewsByCandidate: React.FC = () => {
             <option value="">Chọn ứng viên</option>
             {filteredCandidates.map((c: any) => (
               <option key={c.candidate_id} value={c.candidate_id}>
-                {c.full_name || "Chưa có tên"} — {c.email || c.phone || c.candidate_id}
+                {c.full_name || "Chưa có tên"} —{" "}
+                {c.email || c.phone || c.candidate_id}
               </option>
             ))}
           </select>

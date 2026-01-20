@@ -176,6 +176,7 @@ export default function CandidateEdit() {
   const onSubmit: SubmitHandler<UpdateCandidateSchema> = async (formData) => {
     if (!id) return;
     try {
+      console.log("Form data:", formData);
       const payload: Partial<UpdateCandidatePayload> = {
         email: formData.email,
       };

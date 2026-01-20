@@ -644,7 +644,11 @@ export default function CenterView() {
   };
 
   return (
-    <AdminLayout title="Chi tiết Trung tâm" activeMenu="center">
+    <AdminLayout
+      title="Chi tiết Trung tâm"
+      activeMenu="center"
+      fullWidth={true}
+    >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
           <button
