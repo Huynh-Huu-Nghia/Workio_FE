@@ -79,7 +79,7 @@ export default function Login() {
             navigate(path.ADMIN_DASHBOARD);
             break;
           case "recruiter":
-            navigate(path.RECRUITER_JOBS);
+            navigate(path.RECRUITER_HOME);
             break;
           case "center":
             navigate(path.CENTER_HOME);

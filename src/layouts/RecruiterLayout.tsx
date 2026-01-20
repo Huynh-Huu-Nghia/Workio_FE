@@ -19,6 +19,8 @@ import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
 import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
+import { clearAuthTokens } from "@/utils/authStorage";
+import { useNavigate } from "react-router-dom";
 
 type Props = {
   title?: string;
@@ -111,7 +113,7 @@ const recruiterMenu: MenuGroup[] = [
 
 export default function RecruiterLayout({ title, children }: Props) {
   const { pathname } = useLocation();
-  const { user, logout: contextLogout } = useUser();
+  const { user, logout: contextLogout, setUser } = useUser();
   const logoutMutation = useLogoutMutation();
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -138,19 +140,28 @@ export default function RecruiterLayout({ title, children }: Props) {
     return source.trim().charAt(0).toUpperCase();
   }, [user?.name, user?.email]);
 
+  const navigate = useNavigate();
+
   const handleLogout = async () => {
-    if (!user?.role?.value) return;
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
 
     try {
-      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
-      contextLogout();
-      window.location.href = "/login";
+      // 1. Xóa bản nháp Profile của Recruiter này
+      if (user?.id) {
+        const draftKey = `workio_recruiter_profile_draft_${user.id}`;
+        localStorage.removeItem(draftKey);
+      }
+      await logoutMutation.mutateAsync({ role: "Recruiter" });
+      clearAuthTokens(); // Xóa LocalStorage
       toast.success("Đăng xuất thành công!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Logout error:", error);
-      contextLogout();
-      window.location.href = "/login";
-      toast.success("Đăng xuất thành công!");
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
     }
   };
 

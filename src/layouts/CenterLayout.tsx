@@ -17,6 +17,7 @@ import LOGO_SRC from "@/assets/networking.png";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useUser } from "@/context/user/user.context";
 import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
+import { clearAuthTokens } from "@/utils/authStorage";
 
 type Props = {
   title?: string;
@@ -104,7 +105,7 @@ export default function CenterLayout({ title, children }: Props) {
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
   const { pathname, hash } = location;
-  const { user, logout: contextLogout } = useUser();
+  const { user, logout: contextLogout, setUser } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true;
@@ -151,18 +152,25 @@ export default function CenterLayout({ title, children }: Props) {
   }, [user?.name, user?.email]);
 
   const handleLogout = async () => {
-    if (!user?.role?.value) return;
+    if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
 
     try {
-      await logoutMutation.mutateAsync({ role: user.role.value as AuthRole });
-      contextLogout();
-      window.location.href = "/login";
+      // 1. Xóa bản nháp Profile của Recruiter này
+      if (user?.id) {
+        const draftKey = `workio_center_profile_draft_${user.id}`;
+        localStorage.removeItem(draftKey);
+      }
+      await logoutMutation.mutateAsync({ role: "Recruiter" });
+      clearAuthTokens(); // Xóa LocalStorage
       toast.success("Đăng xuất thành công!");
-    } catch (error: any) {
+    } catch (error) {
       console.error("Logout error:", error);
-      contextLogout();
-      window.location.href = "/login";
-      toast.success("Đăng xuất thành công!");
+      toast.info("Đang đăng xuất...");
+    } finally {
+      localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      setUser(null);
+      navigate(path.login); // Chuyển về trang login
     }
   };
 
