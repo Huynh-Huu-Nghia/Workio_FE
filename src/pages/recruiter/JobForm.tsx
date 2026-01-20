@@ -250,19 +250,28 @@ export default function RecruiterJobForm() {
           </div>
 
           <div className="sm:col-span-2">
-            <button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-              className="w-full rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 disabled:opacity-60"
-            >
-              {isEdit
-                ? updateMutation.isPending
-                  ? "Đang lưu..."
-                  : "Lưu thay đổi"
-                : createMutation.isPending
-                  ? "Đang tạo..."
-                  : "Tạo tin"}
-            </button>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => navigate(path.RECRUITER_JOBS)}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
+              >
+                Quay lại
+              </button>
+              <button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="flex-1 rounded-lg bg-orange-500 px-4 py-3 text-sm font-semibold text-white shadow-sm hover:bg-orange-600 disabled:opacity-60"
+              >
+                {isEdit
+                  ? updateMutation.isPending
+                    ? "Đang lưu..."
+                    : "Lưu thay đổi"
+                  : createMutation.isPending
+                    ? "Đang tạo..."
+                    : "Tạo tin"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
