@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
 import type { JobPost } from "@/api/job-post.api";
 
@@ -132,20 +132,39 @@ export const useRecruiterJobPostsQuery = () =>
   });
 
 // --- LẤY CHI TIẾT TIN CỦA RECRUITER ---
-const getRecruiterJobPostDetailRequest = async (
-  jobPostId: string
-): Promise<ApiResponse<JobPost>> => {
-  const response = await axiosInstance.get("/recruiter/job-post", {
-    params: { job_post_id: jobPostId },
-  });
-  return response.data;
+// const getRecruiterJobPostDetailRequest = async (
+//   jobPostId: string
+// ): Promise<ApiResponse<JobPost>> => {
+//   const response = await axiosInstance.get("/recruiter/job-post", {
+//     params: { job_post_id: jobPostId },
+//   });
+//   return response.data;
+// };
+
+// export const useRecruiterJobPostDetailQuery = (jobPostId?: string) =>
+//   useQuery({
+//     queryKey: ["recruiter-job-post", jobPostId],
+//     queryFn: () => getRecruiterJobPostDetailRequest(jobPostId as string),
+//     enabled: Boolean(jobPostId),
+//     staleTime: 1000 * 60 * 3,
+//   });
+export const getRecruiterJobPostDetailRequest = async (id: string) => {
+  if (!id) return null;
+  const response = await axiosInstance.get("/recruiter/job-posts"); 
+  // Lưu ý: Nếu backend chưa có API get detail riêng, ta có thể lọc từ list hoặc yêu cầu viết thêm.
+  // Ở đây giả định backend API /recruiter/job-posts trả về list, ta lọc tạm client-side 
+  // hoặc tốt nhất là backend nên có route GET /recruiter/job-post?id=...
+  
+  // Tạm thời gọi API lấy list và lọc (Solution an toàn nếu chưa sửa backend router)
+  const allJobs = response.data.data;
+  return { data: allJobs.find((j: any) => j.id === id) };
 };
 
-export const useRecruiterJobPostDetailQuery = (jobPostId?: string) =>
+export const useRecruiterJobPostDetailQuery = (id?: string) =>
   useQuery({
-    queryKey: ["recruiter-job-post", jobPostId],
-    queryFn: () => getRecruiterJobPostDetailRequest(jobPostId as string),
-    enabled: Boolean(jobPostId),
+    queryKey: ["recruiter-job-detail", id],
+    queryFn: () => getRecruiterJobPostDetailRequest(id!),
+    enabled: !!id,
     staleTime: 1000 * 60 * 3,
   });
 
@@ -170,11 +189,20 @@ const getCandidatesOfJobRequest = async (jobPostId: string) => {
   return response.data as ApiResponse<any[]>;
 };
 
-export const useCandidatesOfJobQuery = (jobPostId: string) =>
+// export const useCandidatesOfJobQuery = (jobPostId: string) =>
+//   useQuery({
+//     queryKey: ["recruiter-candidates-of-job", jobPostId],
+//     queryFn: () => getCandidatesOfJobRequest(jobPostId),
+//     enabled: Boolean(jobPostId),
+//     staleTime: 1000 * 60 * 3,
+//   });
+
+  export const useCandidatesOfJobQuery = (jobPostId: string) =>
   useQuery({
-    queryKey: ["recruiter-candidates-of-job", jobPostId],
+    queryKey: ["candidates-of-job", jobPostId],
     queryFn: () => getCandidatesOfJobRequest(jobPostId),
-    enabled: Boolean(jobPostId),
+    // Chỉ gọi API khi đã chọn jobPostId
+    enabled: !!jobPostId && jobPostId !== "", 
     staleTime: 1000 * 60 * 3,
   });
 
@@ -197,39 +225,94 @@ export const useSuggestedCandidatesQuery = (jobPostId: string) =>
   });
 
 // --- Recruiter: CRUD job post ---
-export const createRecruiterJobPostRequest = async (payload: Partial<JobPost>) => {
+// export const createRecruiterJobPostRequest = async (payload: Partial<JobPost>) => {
+//   const response = await axiosInstance.post("/recruiter/job-post", payload);
+//   return response.data as ApiResponse<any>;
+// };
+
+// export const useCreateRecruiterJobPostMutation = () =>
+//   useMutation({ mutationFn: createRecruiterJobPostRequest });
+
+// 4. Hook tạo tin
+export const createRecruiterJobPostRequest = async (payload: any) => {
   const response = await axiosInstance.post("/recruiter/job-post", payload);
-  return response.data as ApiResponse<any>;
+  return response.data;
 };
 
-export const useCreateRecruiterJobPostMutation = () =>
-  useMutation({ mutationFn: createRecruiterJobPostRequest });
-
-export const updateRecruiterJobPostRequest = async ({
-  jobPostId,
-  payload,
-}: {
-  jobPostId: string;
-  payload: Partial<JobPost>;
-}) => {
-  const response = await axiosInstance.patch("/recruiter/job-post", payload, {
-    params: { job_post_id: jobPostId },
+export const useCreateRecruiterJobPostMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRecruiterJobPostRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recruiter-job-posts"] });
+    },
   });
-  return response.data as ApiResponse<any>;
 };
 
-export const useUpdateRecruiterJobPostMutation = () =>
-  useMutation({ mutationFn: updateRecruiterJobPostRequest });
+// 5. Hook sửa tin
+export const updateRecruiterJobPostRequest = async ({ id, payload }: { id: string; payload: any }) => {
+  const response = await axiosInstance.patch("/recruiter/job-post", payload, {
+    params: { job_post_id: id },
+  });
+  return response.data;
+};
 
+export const useUpdateRecruiterJobPostMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateRecruiterJobPostRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recruiter-job-posts"] });
+      queryClient.invalidateQueries({ queryKey: ["recruiter-job-detail"] });
+    },
+  });
+};
+
+// export const updateRecruiterJobPostRequest = async ({
+//   jobPostId,
+//   payload,
+// }: {
+//   jobPostId: string;
+//   payload: Partial<JobPost>;
+// }) => {
+//   const response = await axiosInstance.patch("/recruiter/job-post", payload, {
+//     params: { job_post_id: jobPostId },
+//   });
+//   return response.data as ApiResponse<any>;
+// };
+
+// export const useUpdateRecruiterJobPostMutation = () =>
+//   useMutation({ mutationFn: updateRecruiterJobPostRequest });
+
+
+// 3. Hook xóa tin
 export const deleteRecruiterJobPostRequest = async (jobPostId: string) => {
   const response = await axiosInstance.delete("/recruiter/job-post", {
-    params: { job_post_id: jobPostId },
+    params: { job_post_id: jobPostId }, // Query param phải khớp backend router
   });
-  return response.data as ApiResponse<any>;
+  return response.data;
 };
 
-export const useDeleteRecruiterJobPostMutation = () =>
-  useMutation({ mutationFn: deleteRecruiterJobPostRequest });
+export const useDeleteRecruiterJobPostMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRecruiterJobPostRequest,
+    onSuccess: () => {
+      // Tự động refresh list khi xóa thành công
+      queryClient.invalidateQueries({ queryKey: ["recruiter-job-posts"] });
+    },
+  });
+};
+
+// export const deleteRecruiterJobPostRequest = async (jobPostId: string) => {
+//   const response = await axiosInstance.delete("/recruiter/job-post", {
+//     params: { job_post_id: jobPostId },
+//   });
+//   return response.data as ApiResponse<any>;
+// };
+
+// export const useDeleteRecruiterJobPostMutation = () =>
+//   useMutation({ mutationFn: deleteRecruiterJobPostRequest });
 
 // --- Recruiter: CRUD interview ---
 export const createRecruiterInterviewRequest = async (payload: any) => {
@@ -239,8 +322,18 @@ export const createRecruiterInterviewRequest = async (payload: any) => {
   return response.data as ApiResponse<any>;
 };
 
-export const useCreateRecruiterInterviewMutation = () =>
-  useMutation({ mutationFn: createRecruiterInterviewRequest });
+export const useCreateRecruiterInterviewMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: createRecruiterInterviewRequest,
+    onSuccess: () => {
+      // Refresh danh sách ứng viên (để cập nhật nút bấm)
+      queryClient.invalidateQueries({ queryKey: ["candidates-of-job"] }); 
+      // Refresh danh sách lịch phỏng vấn
+      queryClient.invalidateQueries({ queryKey: ["recruiter-interviews"] });
+    },
+  });
+};
 
 export const updateRecruiterInterviewRequest = async ({
   interviewId,
@@ -255,8 +348,15 @@ export const updateRecruiterInterviewRequest = async ({
   return response.data as ApiResponse<any>;
 };
 
-export const useUpdateRecruiterInterviewMutation = () =>
-  useMutation({ mutationFn: updateRecruiterInterviewRequest });
+export const useUpdateRecruiterInterviewMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: updateRecruiterInterviewRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["recruiter-interviews"] });
+    },
+  });
+};
 
 export const deleteRecruiterInterviewRequest = async (interviewId: string) => {
   const response = await axiosInstance.delete("/recruiter/interview", {
@@ -265,5 +365,13 @@ export const deleteRecruiterInterviewRequest = async (interviewId: string) => {
   return response.data as ApiResponse<any>;
 };
 
-export const useDeleteRecruiterInterviewMutation = () =>
-  useMutation({ mutationFn: deleteRecruiterInterviewRequest });
+export const useDeleteRecruiterInterviewMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: deleteRecruiterInterviewRequest,
+    onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ["candidates-of-job"] }); 
+        queryClient.invalidateQueries({ queryKey: ["recruiter-interviews"] });
+    },
+  });
+};

@@ -4,12 +4,14 @@ import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/ap
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 import CandidateLayout from "@/layouts/CandidateLayout";
+import { useUser } from "@/context/user/user.context"; // 1. Import useUser
 
 const CandidateSupportRequests: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Yêu cầu hỗ trợ";
+  const { user } = useUser(); // 2. Lấy user từ context
 
-  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery();
+  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(user?.id);
   const createMutation = useCreateSupportRequestMutation();
 
   const formatDate = (value?: string | number | Date | null) => {
