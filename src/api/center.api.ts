@@ -244,3 +244,100 @@ export const useCenterProfileQuery = () =>
 
 export const useUpdateCenterProfileMutation = () =>
   useMutation({ mutationFn: updateCenterProfileRequest });
+
+// --- Center: statistics ---
+export interface CenterStatistics {
+  courses: {
+    total: number;
+    active: number;
+    upcoming: number;
+  };
+  learners: {
+    total: number;
+    active: number;
+    byStatus: {
+      learning: number;
+      pending: number;
+      completed: number;
+      rejected: number;
+    };
+  };
+  completionRate: number;
+  duration: {
+    totalHours: number;
+    avgHours: number;
+    coursesWithDuration: number;
+  };
+  byTrainingField: Array<{
+    field: string;
+    courses: number;
+    learners: number;
+    learning: number;
+    completed: number;
+    pending: number;
+    rejected: number;
+    completionRate: number;
+  }>;
+  topCourses: {
+    byLearners: Array<{
+      course_id: string;
+      name: string;
+      learners: number;
+      completionRate: number;
+    }>;
+    byCompletion: Array<{
+      course_id: string;
+      name: string;
+      learners: number;
+      completionRate: number;
+    }>;
+  };
+  trends: {
+    coursesLast3Months: number;
+    coursesThisMonth: number;
+  };
+}
+
+const getCenterStatisticsRequest = async (): Promise<ApiResponse<CenterStatistics>> => {
+  const response = await axiosInstance.get("/center/statistics");
+  return response.data;
+};
+
+export const useCenterStatisticsQuery = () =>
+  useQuery({
+    queryKey: ["center-statistics"],
+    queryFn: getCenterStatisticsRequest,
+    staleTime: 1000 * 60 * 2, // 2 minutes
+    refetchInterval: 1000 * 60 * 5, // Auto refetch every 5 minutes
+  });
+
+// --- Center: notifications ---
+export interface CenterNotification {
+  id: string;
+  course_id: string;
+  course_name: string;
+  candidate_id: string;
+  candidate_name: string;
+  candidate_email?: string | null;
+  candidate_phone?: string | null;
+  requested_at: string;
+  type: 'pending_enrollment';
+}
+
+export interface CenterNotificationsResponse {
+  count: number;
+  notifications: CenterNotification[];
+}
+
+const getCenterNotificationsRequest = async (): Promise<ApiResponse<CenterNotificationsResponse>> => {
+  const response = await axiosInstance.get("/center/notifications");
+  return response.data;
+};
+
+export const useCenterNotificationsQuery = () =>
+  useQuery({
+    queryKey: ["center-notifications"],
+    queryFn: getCenterNotificationsRequest,
+    staleTime: 1000 * 30, // 30 seconds
+    refetchInterval: 1000 * 60, // Auto refetch every 1 minute
+  });
