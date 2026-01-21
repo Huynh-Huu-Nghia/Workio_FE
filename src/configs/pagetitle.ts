@@ -37,7 +37,7 @@ export const pathtotitle: { [key: string]: string } = {
   "/recruiter/profile": "Hồ sơ doanh nghiệp",
   "/recruiter/settings": "Cài đặt tài khoản",
   "/recruiter/support": "Yêu cầu hỗ trợ",
-  "/center": "Trung tâm",
+  "/center": "Trang chủ",
   "/center/courses": "Khóa học",
   "/center/settings": "Cài đặt tài khoản",
   "/center/support": "Yêu cầu hỗ trợ",
