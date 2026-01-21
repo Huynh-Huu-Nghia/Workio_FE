@@ -181,9 +181,9 @@ export default function CenterLayout({ title, children }: Props) {
   }, [pathname, title]);
 
   const avatarInitial = useMemo(() => {
-    const source = user?.center?.name || user?.name || user?.email || "CT";
+    const source = user?.email || user?.center?.name || user?.name || "CT";
     return source.trim().charAt(0).toUpperCase();
-  }, [user?.center?.name, user?.name, user?.email]);
+  }, [user?.email, user?.center?.name, user?.name]);
 
   const handleLogout = async () => {
     if (!confirm("Bạn có chắc chắn muốn đăng xuất?")) return;
