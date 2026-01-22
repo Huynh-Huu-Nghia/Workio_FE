@@ -284,6 +284,7 @@ const CoursesPage = () => {
   const [progressForm, setProgressForm] = useState<ProgressFormState>(
     createEmptyProgressForm()
   );
+  const [studentStatusFilter, setStudentStatusFilter] = useState<StudentStatus | "all">("all");
   const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({});
   const [removingMap, setRemovingMap] = useState<Record<string, boolean>>({});
   const [showQuickCreate, setShowQuickCreate] = useState(false);
@@ -441,8 +442,14 @@ const CoursesPage = () => {
   const handleOpenCourseDetail = (course: Course) => setSelectedCourseDetail(course);
   const handleCloseCourseDetail = () => setSelectedCourseDetail(null);
 
-  const handleOpenCourseStudents = (course: Course) => setSelectedCourseStudents(course);
-  const handleCloseCourseStudents = () => setSelectedCourseStudents(null);
+  const handleOpenCourseStudents = (course: Course) => {
+    setSelectedCourseStudents(course);
+    setStudentStatusFilter("all");
+  };
+  const handleCloseCourseStudents = () => {
+    setSelectedCourseStudents(null);
+    setStudentStatusFilter("all");
+  };
 
   const handleOpenEditCourse = (course: Course) => {
     setEditingCourse(course);
@@ -974,132 +981,6 @@ const CoursesPage = () => {
                                 >
                                   <Eye className="h-3.5 w-3.5" />
                                   Chi tiết
-                                </button>
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    );
-                  })()}
-                </div>
-
-                <div className="p-6">
-                  <div className="mb-4 flex items-center gap-2">
-                    <GraduationCap className="h-5 w-5 text-blue-600" />
-                    <h4 className="font-bold text-gray-900">Học viên trong khóa</h4>
-                  </div>
-                  {(() => {
-                    const courseKeyForManaged = courseId || "managed";
-                    const students = getCourseCandidates(course);
-                    const managed = students
-                      .filter((student) => normalizeStatus(student.status) !== STUDENT_STATUS.PENDING)
-                      .sort((a, b) => {
-                        return (
-                          STATUS_SORT_ORDER[normalizeStatus(a.status)] -
-                          STATUS_SORT_ORDER[normalizeStatus(b.status)]
-                        );
-                      });
-
-                    if (!managed.length) {
-                      return (
-                        <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center">
-                          <Users className="mb-2 h-8 w-8 text-gray-400" />
-                          <p className="text-sm font-medium text-gray-600">
-                            Chưa có học viên được duyệt
-                          </p>
-                          <p className="mt-1 text-xs text-gray-500">
-                            Phê duyệt yêu cầu để thêm học viên vào lớp.
-                          </p>
-                        </div>
-                      );
-                    }
-                    return (
-                      <div className="space-y-3">
-                        {managed.map((student) => {
-                          const statusKey = normalizeStatus(student.status);
-                          const meta = STUDENT_STATUS_META[statusKey];
-                          const name = getCandidateName(student);
-                          const { email, phone } = getCandidateContacts(student);
-                          const candidateKey = makeCandidateKey(courseKeyForManaged, student.candidate_id);
-                          const removing = isRemovingCandidate(courseId, student.candidate_id);
-                          return (
-                            <div
-                              key={candidateKey}
-                              className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white/80 p-4 shadow-sm"
-                            >
-                              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-blue-100 text-blue-600">
-                                <Users className="h-5 w-5" />
-                              </div>
-                              <div className="min-w-[200px] flex-1">
-                                <p className="font-bold text-gray-900">{name}</p>
-                                <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-600">
-                                  {email && <span>{email}</span>}
-                                  {phone && <span>{phone}</span>}
-                                </div>
-                                {student.requested_at && (
-                                  <p className="mt-1 text-[11px] text-gray-400">
-                                    Đăng ký: {formatDateTime(student.requested_at)}
-                                  </p>
-                                )}
-                              </div>
-                              <div className="flex flex-wrap items-center gap-2">
-                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
-                                  {statusKey === STUDENT_STATUS.COMPLETED ? (
-                                    <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
-                                  ) : statusKey === STUDENT_STATUS.LEARNING ? (
-                                    <Clock className="mr-1 h-3.5 w-3.5" />
-                                  ) : null}
-                                  {meta.label}
-                                </span>
-                                <button
-                                  type="button"
-                                  onClick={() => handleOpenCandidateDetail(course, student)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
-                                >
-                                  <Eye className="h-3.5 w-3.5" />
-                                  Chi tiết
-                                </button>
-                                {statusKey === STUDENT_STATUS.LEARNING && (
-                                  <button
-                                    type="button"
-                                    disabled={isProcessing(courseId, student.candidate_id)}
-                                    onClick={() =>
-                                      handleUpdateStatus(
-                                        courseId,
-                                        student.candidate_id,
-                                        STUDENT_STATUS.COMPLETED
-                                      )
-                                    }
-                                    className="rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    Đánh dấu hoàn thành
-                                  </button>
-                                )}
-                                {statusKey === STUDENT_STATUS.REJECTED && (
-                                  <button
-                                    type="button"
-                                    disabled={isProcessing(courseId, student.candidate_id)}
-                                    onClick={() =>
-                                      handleUpdateStatus(
-                                        courseId,
-                                        student.candidate_id,
-                                        STUDENT_STATUS.LEARNING
-                                      )
-                                    }
-                                    className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                  >
-                                    Chấp nhận lại
-                                  </button>
-                                )}
-                                <button
-                                  type="button"
-                                  disabled={removing}
-                                  onClick={() => handleRemoveStudent(course, student)}
-                                  className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
-                                >
-                                  <UserMinus className="h-3.5 w-3.5" />
-                                  {removing ? "Đang xóa..." : "Xóa khỏi khóa"}
                                 </button>
                               </div>
                             </div>
@@ -1685,6 +1566,24 @@ const CoursesPage = () => {
     const summary = summarizeCourse(selectedCourseStudents);
     const students = getCourseCandidates(selectedCourseStudents);
     const courseId = getCourseId(selectedCourseStudents);
+    
+    // Filter students based on selected status
+    let filteredStudents = studentStatusFilter === "all" 
+      ? students 
+      : students.filter(student => normalizeStatus(student.status) === studentStatusFilter);
+    
+    // Sort students by first name (last word in full name) A-Z
+    filteredStudents = [...filteredStudents].sort((a, b) => {
+      const nameA = getCandidateName(a).trim();
+      const nameB = getCandidateName(b).trim();
+      
+      // Get the last word (first name) from full name
+      const firstNameA = nameA.split(/\s+/).pop()?.toLowerCase() || "";
+      const firstNameB = nameB.split(/\s+/).pop()?.toLowerCase() || "";
+      
+      return firstNameA.localeCompare(firstNameB, "vi", { sensitivity: "base" });
+    });
+    
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
         <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
@@ -1709,32 +1608,77 @@ const CoursesPage = () => {
             </button>
           </div>
 
-          <div className="mt-4 grid gap-3 sm:grid-cols-4 text-center text-sm font-semibold">
-            <div className="rounded-2xl border border-amber-100 bg-amber-50 p-3">
-              <p className="text-xs text-amber-600">Chờ duyệt</p>
-              <p className="text-2xl text-amber-700">{summary.pending}</p>
+          <div className="mt-4 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-4 text-center text-sm font-semibold">
+              <button
+                type="button"
+                onClick={() => setStudentStatusFilter(STUDENT_STATUS.PENDING)}
+                className={`rounded-2xl border p-3 transition-all cursor-pointer ${
+                  studentStatusFilter === STUDENT_STATUS.PENDING
+                    ? 'border-amber-300 bg-amber-100 ring-2 ring-amber-300'
+                    : 'border-amber-100 bg-amber-50 hover:bg-amber-100'
+                }`}
+              >
+                <p className="text-xs text-amber-600">Chờ duyệt</p>
+                <p className="text-2xl text-amber-700">{summary.pending}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudentStatusFilter(STUDENT_STATUS.LEARNING)}
+                className={`rounded-2xl border p-3 transition-all cursor-pointer ${
+                  studentStatusFilter === STUDENT_STATUS.LEARNING
+                    ? 'border-blue-300 bg-blue-100 ring-2 ring-blue-300'
+                    : 'border-blue-100 bg-blue-50 hover:bg-blue-100'
+                }`}
+              >
+                <p className="text-xs text-blue-600">Đang học</p>
+                <p className="text-2xl text-blue-700">{summary.learning}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudentStatusFilter(STUDENT_STATUS.COMPLETED)}
+                className={`rounded-2xl border p-3 transition-all cursor-pointer ${
+                  studentStatusFilter === STUDENT_STATUS.COMPLETED
+                    ? 'border-emerald-300 bg-emerald-100 ring-2 ring-emerald-300'
+                    : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100'
+                }`}
+              >
+                <p className="text-xs text-emerald-600">Hoàn thành</p>
+                <p className="text-2xl text-emerald-700">{summary.completed}</p>
+              </button>
+              <button
+                type="button"
+                onClick={() => setStudentStatusFilter(STUDENT_STATUS.REJECTED)}
+                className={`rounded-2xl border p-3 transition-all cursor-pointer ${
+                  studentStatusFilter === STUDENT_STATUS.REJECTED
+                    ? 'border-rose-300 bg-rose-100 ring-2 ring-rose-300'
+                    : 'border-rose-100 bg-rose-50 hover:bg-rose-100'
+                }`}
+              >
+                <p className="text-xs text-rose-600">Từ chối</p>
+                <p className="text-2xl text-rose-700">{summary.rejected}</p>
+              </button>
             </div>
-            <div className="rounded-2xl border border-blue-100 bg-blue-50 p-3">
-              <p className="text-xs text-blue-600">Đang học</p>
-              <p className="text-2xl text-blue-700">{summary.learning}</p>
-            </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
-              <p className="text-xs text-emerald-600">Hoàn thành</p>
-              <p className="text-2xl text-emerald-700">{summary.completed}</p>
-            </div>
-            <div className="rounded-2xl border border-rose-100 bg-rose-50 p-3">
-              <p className="text-xs text-rose-600">Từ chối</p>
-              <p className="text-2xl text-rose-700">{summary.rejected}</p>
-            </div>
+            {studentStatusFilter !== "all" && (
+              <button
+                type="button"
+                onClick={() => setStudentStatusFilter("all")}
+                className="w-full rounded-xl border-2 border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-50"
+              >
+                Hiển thị tất cả ({students.length} học viên)
+              </button>
+            )}
           </div>
 
-          {students.length === 0 ? (
+          {filteredStudents.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
-              Chưa có học viên trong khóa học này.
+              {studentStatusFilter === "all" 
+                ? "Chưa có học viên trong khóa học này."
+                : `Không có học viên nào với trạng thái "${STUDENT_STATUS_META[studentStatusFilter]?.label}".`}
             </div>
           ) : (
             <div className="mt-6 max-h-[70vh] space-y-3 overflow-y-auto pr-2">
-              {students.map((student) => {
+              {filteredStudents.map((student) => {
                 const statusKey = normalizeStatus(student.status);
                 const meta = STUDENT_STATUS_META[statusKey];
                 const { email, phone } = getCandidateContacts(student);
