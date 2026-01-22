@@ -48,7 +48,7 @@ export default function ForgotPassword() {
         } else {
           // Nếu lỗi logic (err=1), hiện thông báo lỗi
           toast.error(
-            mes || "Thông tin không chính xác. Vui lòng kiểm tra lại."
+            mes || "Thông tin không chính xác. Vui lòng kiểm tra lại.",
           );
         }
       },

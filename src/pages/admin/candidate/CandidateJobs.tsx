@@ -15,14 +15,18 @@ const CandidateJobs: React.FC = () => {
   };
 
   return (
-    <AdminLayout title="Tin tuyển dụng ứng viên đã ứng tuyển" activeMenu="candidates">
+    <AdminLayout
+      title="Tin tuyển dụng ứng viên đã ứng tuyển"
+      activeMenu="candidates"
+    >
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
           <h1 className="text-xl font-semibold text-gray-800">
             Tin tuyển dụng ứng viên đã ứng tuyển
           </h1>
           <p className="text-sm text-gray-500">
-            Đây là danh sách các tin tuyển dụng mà ứng viên đã nộp đơn/ứng tuyển để được tuyển.
+            Danh sách các tin tuyển dụng mà ứng viên đã nộp đơn/ứng tuyển để
+            được tuyển.
           </p>
         </div>
         <form
