@@ -71,7 +71,7 @@ const PendingRecruiters: React.FC = () => {
                     </span>
                   </div>
                   <div className="mt-3 text-sm text-gray-500">
-                    Email: {rec.user?.email || "N/A"} | Điện thoại:{" "}
+                    Email: {rec.recruiter?.email || "N/A"} | Điện thoại:{" "}
                     {rec.phone || "N/A"}
                   </div>
                   <div className="mt-3">

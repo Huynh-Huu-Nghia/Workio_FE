@@ -1,18 +1,69 @@
 import React from "react";
-import { AlertCircle, Download, Loader2 } from "lucide-react";
+import {
+  AlertCircle,
+  Download,
+  Loader2,
+  CheckCircle,
+  XCircle,
+} from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
-import { useGetAdminJobPostsQuery } from "@/api/job-post.api";
+import {
+  useGetAdminJobPostsQuery,
+  useUpdateAdminJobPostMutation,
+} from "@/api/job-post.api";
+import { toast } from "react-toastify";
 import {
   ADMIN_APPLICATION_FORM_DOC_URL,
   ADMIN_RECRUITMENT_NOTICE_PDF_URL,
 } from "@/constants/documents";
 
 const PendingJobs: React.FC = () => {
-  const { data, isLoading, isError } = useGetAdminJobPostsQuery();
+  const { data, isLoading, isError, refetch } = useGetAdminJobPostsQuery();
+  const updateMutation = useUpdateAdminJobPostMutation();
   const jobs = data?.data ?? [];
   const pendingJobs = jobs.filter(
     (job) => !job.status || job.status === "Đang xem xét",
   );
+
+  const handleApprove = (jobId: string) => {
+    updateMutation.mutate(
+      {
+        jobPostId: jobId,
+        payload: { status: "Đang mở" },
+      },
+      {
+        onSuccess: () => {
+          toast.success("Đã duyệt tin tuyển dụng thành công!");
+          refetch();
+        },
+        onError: (error) => {
+          toast.error("Có lỗi xảy ra khi duyệt tin tuyển dụng.");
+          console.error("Error approving job:", error);
+        },
+      },
+    );
+  };
+
+  const handleReject = (jobId: string) => {
+    if (window.confirm("Bạn có chắc chắn muốn từ chối tin tuyển dụng này?")) {
+      updateMutation.mutate(
+        {
+          jobPostId: jobId,
+          payload: { status: "Đã hủy" },
+        },
+        {
+          onSuccess: () => {
+            toast.success("Đã từ chối tin tuyển dụng!");
+            refetch();
+          },
+          onError: (error) => {
+            toast.error("Có lỗi xảy ra khi từ chối tin tuyển dụng.");
+            console.error("Error rejecting job:", error);
+          },
+        },
+      );
+    }
+  };
 
   return (
     <AdminLayout
@@ -84,7 +135,7 @@ const PendingJobs: React.FC = () => {
                   className="rounded-xl border border-gray-100 p-4 shadow-[0_6px_18px_rgba(0,0,0,0.04)]"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <div>
+                    <div className="flex-1">
                       <p className="text-xs uppercase text-gray-400">
                         {job.recruitment_type || "Chưa đặt hình thức"}
                       </p>
@@ -96,9 +147,31 @@ const PendingJobs: React.FC = () => {
                         {job.application_deadline_to || "Chưa thiết lập"}
                       </p>
                     </div>
-                    <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
-                      Đang xem xét
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full bg-yellow-50 px-3 py-1 text-xs font-semibold text-yellow-700">
+                        Đang xem xét
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleApprove(job.id)}
+                          disabled={updateMutation.isPending}
+                          className="inline-flex items-center gap-1 rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-semibold text-green-700 hover:bg-green-100 disabled:opacity-50"
+                          title="Duyệt tin tuyển dụng"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Duyệt
+                        </button>
+                        <button
+                          onClick={() => handleReject(job.id)}
+                          disabled={updateMutation.isPending}
+                          className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-xs font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50"
+                          title="Từ chối tin tuyển dụng"
+                        >
+                          <XCircle className="h-4 w-4" />
+                          Từ chối
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   {job.requirements && (
                     <p className="mt-2 text-sm text-gray-700 line-clamp-2">

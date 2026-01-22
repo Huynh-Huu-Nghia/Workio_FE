@@ -67,7 +67,7 @@ export interface JobPost {
   application_deadline_from?: string | null;
   application_deadline_to?: string | null;
   support_info?: string | null;
-  benefits?: string | null;
+  benefits?: string[] | string | null;
   fields?: string[] | string | null;
   applied_candidates?: string[] | null;
   graduation_rank?: string | null;
@@ -101,14 +101,14 @@ export interface JobPost {
 }
 
 const getAdminJobPostsRequest = async (
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
 ): Promise<ApiResponse<JobPost[]>> => {
   const response = await axiosInstance.get("/admin/job-posts", { params });
   return response.data;
 };
 
 const getAdminJobPostDetailRequest = async (
-  jobPostId: string
+  jobPostId: string,
 ): Promise<ApiResponse<JobPost>> => {
   const response = await axiosInstance.get("/admin/job-post", {
     params: { job_post_id: jobPostId },
@@ -133,7 +133,7 @@ export const useAdminJobPostDetailQuery = (jobPostId?: string) =>
 
 // --- Admin: ứng viên của tin ---
 const getAdminCandidatesOfJobRequest = async (
-  jobPostId: string
+  jobPostId: string,
 ): Promise<ApiResponse<any[]>> => {
   const response = await axiosInstance.get("/admin/candidates-of-job-post", {
     params: { job_post_id: jobPostId },
@@ -151,7 +151,7 @@ export const useAdminCandidatesOfJobQuery = (jobPostId: string) =>
 
 // --- Admin: tin mà ứng viên đã ứng tuyển ---
 const getAdminPostsOfCandidateRequest = async (
-  candidateId: string
+  candidateId: string,
 ): Promise<ApiResponse<JobPost[]>> => {
   const response = await axiosInstance.get("/admin/job-posts-of-candidate", {
     params: { candidate_id: candidateId },
@@ -169,7 +169,7 @@ export const useAdminPostsOfCandidateQuery = (candidateId: string) =>
 
 // --- Admin: gợi ý jobs cho ứng viên ---
 const getAdminSuggestedJobsRequest = async (
-  candidateId: string
+  candidateId: string,
 ): Promise<ApiResponse<JobPost[]>> => {
   const response = await axiosInstance.get("/admin/suggested-jobs", {
     params: { candidate_id: candidateId },
@@ -187,7 +187,7 @@ export const useAdminSuggestedJobsQuery = (candidateId: string) =>
 
 // --- Admin: gợi ý ứng viên cho bài đăng ---
 const getAdminSuggestedCandidatesRequest = async (
-  jobPostId: string
+  jobPostId: string,
 ): Promise<ApiResponse<any[]>> => {
   const response = await axiosInstance.get("/admin/suggested-candidates", {
     params: { job_post_id: jobPostId },
@@ -197,7 +197,7 @@ const getAdminSuggestedCandidatesRequest = async (
 
 export const useAdminSuggestedCandidatesQuery = (
   jobPostId: string,
-  options: any = {}
+  options: any = {},
 ) =>
   useQuery<ApiResponse<any[]>>({
     queryKey: ["admin-suggested-candidates", jobPostId],
@@ -260,7 +260,7 @@ export const applyAdminJobPostRequest = async ({
   const response = await axiosInstance.patch(
     "/admin/apply-job-post",
     {},
-    { params: { job_post_id: jobPostId, candidate_id: candidateId } }
+    { params: { job_post_id: jobPostId, candidate_id: candidateId } },
   );
   return response.data as ApiResponse<any>;
 };

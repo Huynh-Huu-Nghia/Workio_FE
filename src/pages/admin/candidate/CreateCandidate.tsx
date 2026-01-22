@@ -128,7 +128,7 @@ export default function CreateCandidate() {
         onSuccess: (res) => {
           if (res.err === 0) {
             toast.success(res.mes || "Thêm ứng viên thành công! 🎉");
-            navigate("/admin/candidates/create");
+            navigate("/admin/candidates/list");
           } else {
             toast.error(res.mes || "Có lỗi từ server");
           }

@@ -22,20 +22,24 @@ const CandidateSuggestedJobs: React.FC = () => {
   const { data, isLoading, isError, refetch, isFetching } =
     useCandidateSuggestedJobsQuery();
   const jobs = data?.data ?? [];
-  
+
   const [search, setSearch] = useState("");
   const [statuses, setStatuses] = useState<string[]>([]);
   const [selectedFields, setSelectedFields] = useState<string[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
-  
+
   const { resolveJobLocation } = useJobLocationResolver();
 
   // --- HÀM FORMAT LƯƠNG CHUẨN ---
   const formatCurrency = (value?: number | string | null) => {
-    if (value === null || value === undefined || value === "") return "Thỏa thuận";
+    if (value === null || value === undefined || value === "")
+      return "Thỏa thuận";
     const num = Number(value);
     if (isNaN(num) || num === 0) return "Thỏa thuận";
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(num);
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(num);
   };
 
   const formatDate = (value?: string | null) =>
@@ -45,8 +49,9 @@ const CandidateSuggestedJobs: React.FC = () => {
     // Lấy danh sách ngành nghề từ dữ liệu jobs để làm filter
     const allFields = new Set<string>();
     jobs.forEach((job: any) => {
-       if (Array.isArray(job.fields)) job.fields.forEach((f: string) => allFields.add(f));
-       else if (typeof job.fields === 'string') allFields.add(job.fields);
+      if (Array.isArray(job.fields))
+        job.fields.forEach((f: string) => allFields.add(f));
+      else if (typeof job.fields === "string") allFields.add(job.fields);
     });
     return Array.from(allFields);
   }, [jobs]);
@@ -85,13 +90,13 @@ const CandidateSuggestedJobs: React.FC = () => {
 
   const toggleStatus = (value: string) => {
     setStatuses((prev) =>
-      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
     );
   };
 
   const toggleField = (value: string) => {
     setSelectedFields((prev) =>
-      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value]
+      prev.includes(value) ? prev.filter((s) => s !== value) : [...prev, value],
     );
   };
 
@@ -103,7 +108,8 @@ const CandidateSuggestedJobs: React.FC = () => {
             <div>
               <h1 className="text-2xl font-bold text-gray-800">{title}</h1>
               <p className="text-sm text-gray-500">
-                Danh sách việc làm phù hợp được hệ thống gợi ý theo hồ sơ của bạn.
+                Danh sách việc làm phù hợp được hệ thống gợi ý theo hồ sơ của
+                bạn.
               </p>
             </div>
             <button
@@ -113,7 +119,9 @@ const CandidateSuggestedJobs: React.FC = () => {
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-60"
               title="Làm mới gợi ý"
             >
-              <RefreshCcw className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`} />
+              <RefreshCcw
+                className={`h-4 w-4 ${isFetching ? "animate-spin" : ""}`}
+              />
               Làm mới
             </button>
           </header>
@@ -137,7 +145,9 @@ const CandidateSuggestedJobs: React.FC = () => {
               </p>
               <div className="flex flex-wrap gap-2">
                 {allStatuses.length === 0 && (
-                  <span className="text-sm text-gray-400">Không có dữ liệu</span>
+                  <span className="text-sm text-gray-400">
+                    Không có dữ liệu
+                  </span>
                 )}
                 {allStatuses.map((st) => (
                   <label
@@ -156,9 +166,13 @@ const CandidateSuggestedJobs: React.FC = () => {
               </div>
             </div>
             <div>
-              <p className="mb-1 text-sm font-medium text-gray-700">Ngành phù hợp</p>
+              <p className="mb-1 text-sm font-medium text-gray-700">
+                Ngành phù hợp
+              </p>
               <div className="flex flex-wrap gap-2">
-                {selectableFields.length === 0 && <span className="text-sm text-gray-400">Không có ngành</span>}
+                {selectableFields.length === 0 && (
+                  <span className="text-sm text-gray-400">Không có ngành</span>
+                )}
                 {selectableFields.map((field: string) => (
                   <label
                     key={field}
@@ -179,7 +193,9 @@ const CandidateSuggestedJobs: React.FC = () => {
         </div>
 
         {isLoading && (
-          <div className="text-center text-gray-500 py-10">Đang tải gợi ý...</div>
+          <div className="text-center text-gray-500 py-10">
+            Đang tải gợi ý...
+          </div>
         )}
         {isError && (
           <div className="text-center text-red-500 py-10">
@@ -197,14 +213,23 @@ const CandidateSuggestedJobs: React.FC = () => {
               filteredJobs.map((job: any) => {
                 const isExpanded = expandedId === job.id;
                 const locationInfo = resolveJobLocation(job);
-                const locationText = locationInfo.label || job.location || "Chưa cập nhật địa điểm";
-                
+                const locationText =
+                  locationInfo.label ||
+                  job.location ||
+                  "Chưa cập nhật địa điểm";
+
                 // Logic check recruiter để link tới trang chi tiết
                 const recruiterId = job.recruiter_id || job.recruiter?.id;
                 const canViewRecruiter = Boolean(recruiterId);
                 const goToRecruiter = () => {
-                    if(canViewRecruiter) navigate(path.CANDIDATE_RECRUITER_VIEW.replace(":id", String(recruiterId)));
-                }
+                  if (canViewRecruiter)
+                    navigate(
+                      path.CANDIDATE_RECRUITER_VIEW.replace(
+                        ":id",
+                        String(recruiterId),
+                      ),
+                    );
+                };
 
                 return (
                   <article
@@ -217,12 +242,14 @@ const CandidateSuggestedJobs: React.FC = () => {
                           <Lightbulb className="h-6 w-6" />
                         </div>
                         <div>
-                          <button 
+                          <button
                             onClick={goToRecruiter}
                             disabled={!canViewRecruiter}
                             className="text-xs uppercase text-gray-400 hover:text-orange-500 text-left font-bold"
                           >
-                            {job.recruiter_name || job.recruiter?.company_name || "Nhà tuyển dụng"}
+                            {job.recruiter_name ||
+                              job.recruiter?.company_name ||
+                              "Nhà tuyển dụng"}
                           </button>
                           <h3 className="text-lg font-semibold text-gray-800 mt-0.5">
                             {job.position || "Chưa có tên vị trí"}
@@ -238,9 +265,9 @@ const CandidateSuggestedJobs: React.FC = () => {
                             ))}
                             {/* Hiển thị Match Score nếu có */}
                             {job.match_score && (
-                                <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700 border border-green-200">
-                                    Độ phù hợp: {Math.round(job.match_score)}%
-                                </span>
+                              <span className="rounded-full bg-green-100 px-2 py-1 text-xs font-bold text-green-700 border border-green-200">
+                                Độ phù hợp: {Math.round(job.match_score)}%
+                              </span>
                             )}
                           </div>
                         </div>
@@ -249,23 +276,40 @@ const CandidateSuggestedJobs: React.FC = () => {
                         <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
                           {job.status || "Đang mở"}
                         </span>
-                        
+
                         {/* --- PHẦN HIỂN THỊ LƯƠNG ĐÃ SỬA --- */}
                         <div className="text-sm font-bold text-gray-800">
                           {formatCurrency(job.monthly_salary)}
                         </div>
                         {/* ---------------------------------- */}
 
-                        <button
-                          type="button"
-                          onClick={() =>
-                            setExpandedId((prev) => (prev === job.id ? null : job.id))
-                          }
-                          className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-orange-600"
-                        >
-                          <ChevronDown className={`w-4 h-4 transition ${isExpanded ? 'rotate-180' : ''}`} />
-                          {isExpanded ? "Thu gọn" : "Xem chi tiết"}
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedId((prev) =>
+                                prev === job.id ? null : job.id,
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-gray-500 hover:text-orange-600"
+                          >
+                            <ChevronDown
+                              className={`w-4 h-4 transition ${isExpanded ? "rotate-180" : ""}`}
+                            />
+                            {isExpanded ? "Thu gọn" : "Xem thêm"}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              navigate(
+                                path.CANDIDATE_JOB_VIEW.replace(":id", job.id),
+                              )
+                            }
+                            className="inline-flex items-center gap-1 text-sm font-semibold text-blue-600 hover:text-blue-800"
+                          >
+                            Chi tiết
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -302,7 +346,9 @@ const CandidateSuggestedJobs: React.FC = () => {
                             <p className="text-xs font-bold uppercase text-gray-500 mb-1">
                               Yêu cầu công việc
                             </p>
-                            <p className="whitespace-pre-line">{job.requirements || "Không có mô tả chi tiết."}</p>
+                            <p className="whitespace-pre-line">
+                              {job.requirements || "Không có mô tả chi tiết."}
+                            </p>
                           </div>
                           <div>
                             <p className="text-xs font-bold uppercase text-gray-500 mb-1">
@@ -322,12 +368,14 @@ const CandidateSuggestedJobs: React.FC = () => {
                             ) : (
                               <p className="text-gray-400">Chưa cập nhật</p>
                             )}
-                            
+
                             {job.other_requirements && (
-                                <div className="mt-3">
-                                    <p className="text-xs font-bold uppercase text-gray-500 mb-1">Yêu cầu khác</p>
-                                    <p>{job.other_requirements}</p>
-                                </div>
+                              <div className="mt-3">
+                                <p className="text-xs font-bold uppercase text-gray-500 mb-1">
+                                  Yêu cầu khác
+                                </p>
+                                <p>{job.other_requirements}</p>
+                              </div>
                             )}
                           </div>
                         </div>

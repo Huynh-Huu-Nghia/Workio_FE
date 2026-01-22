@@ -20,7 +20,7 @@ export interface RecruiterResponse {
   hired_count?: number;
   province_code?: string | number | null;
   ward_code?: string | number | null;
-  user?: {
+  recruiter?: {
     email?: string;
   };
   address?: {
@@ -76,7 +76,7 @@ export const useCreateRecruiterMutation = () => {
 
 // --- LẤY DANH SÁCH NTD (ADMIN) ---
 const getAllRecruitersRequest = async (
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
 ): Promise<ApiResponse<RecruiterResponse[]>> => {
   const response = await axiosInstance.get("/admin/recruiters", { params });
   return response.data;
@@ -104,6 +104,17 @@ export const useAdminRecruiterDetailQuery = (recruiterId?: string) =>
     enabled: Boolean(recruiterId),
   });
 
+// --- ADMIN: XÓA NTD ---
+const deleteRecruiterAdminRequest = async (recruiterId: string) => {
+  const response = await axiosInstance.delete("/admin/recruiter", {
+    data: { recruiter_id: recruiterId },
+  });
+  return response.data as ApiResponse<null>;
+};
+
+export const useDeleteRecruiterAdminMutation = () =>
+  useMutation({ mutationFn: deleteRecruiterAdminRequest });
+
 const getCandidateRecruiterDetailRequest = async (recruiterId: string) => {
   const response = await axiosInstance.get("/candidate/recruiter", {
     params: { recruiter_id: recruiterId },
@@ -119,7 +130,9 @@ export const useCandidateRecruiterDetailQuery = (recruiterId?: string) =>
   });
 
 // --- LẤY TIN ĐĂNG CỦA RECRUITER ---
-const getRecruiterJobPostsRequest = async (): Promise<ApiResponse<JobPost[]>> => {
+const getRecruiterJobPostsRequest = async (): Promise<
+  ApiResponse<JobPost[]>
+> => {
   const response = await axiosInstance.get("/recruiter/job-posts");
   return response.data;
 };
@@ -133,7 +146,7 @@ export const useRecruiterJobPostsQuery = () =>
 
 // --- LẤY CHI TIẾT TIN CỦA RECRUITER ---
 const getRecruiterJobPostDetailRequest = async (
-  jobPostId: string
+  jobPostId: string,
 ): Promise<ApiResponse<JobPost>> => {
   const response = await axiosInstance.get("/recruiter/job-post", {
     params: { job_post_id: jobPostId },
@@ -151,7 +164,9 @@ export const useRecruiterJobPostDetailQuery = (jobPostId?: string) =>
 
 // --- LẤY LỊCH PHỎNG VẤN CỦA RECRUITER ---
 const getRecruiterInterviewsRequest = async (): Promise<ApiResponse<any[]>> => {
-  const response = await axiosInstance.get("/recruiter/interviews-of-recruiter");
+  const response = await axiosInstance.get(
+    "/recruiter/interviews-of-recruiter",
+  );
   return response.data;
 };
 
@@ -164,9 +179,12 @@ export const useRecruiterInterviewsQuery = () =>
 
 // --- LẤY ỨNG VIÊN ĐÃ ỨNG TUYỂN CHO 1 JOB ---
 const getCandidatesOfJobRequest = async (jobPostId: string) => {
-  const response = await axiosInstance.get("/recruiter/candidates-of-job-post", {
-    params: { job_post_id: jobPostId },
-  });
+  const response = await axiosInstance.get(
+    "/recruiter/candidates-of-job-post",
+    {
+      params: { job_post_id: jobPostId },
+    },
+  );
   return response.data as ApiResponse<any[]>;
 };
 
@@ -180,7 +198,7 @@ export const useCandidatesOfJobQuery = (jobPostId: string) =>
 
 // --- GỢI Ý ỨNG VIÊN CHO JOB ---
 const getSuggestedCandidatesRequest = async (
-  jobPostId: string
+  jobPostId: string,
 ): Promise<ApiResponse<any[]>> => {
   const response = await axiosInstance.get("/recruiter/suggested-candidates", {
     params: { job_post_id: jobPostId },
@@ -197,7 +215,9 @@ export const useSuggestedCandidatesQuery = (jobPostId: string) =>
   });
 
 // --- Recruiter: CRUD job post ---
-export const createRecruiterJobPostRequest = async (payload: Partial<JobPost>) => {
+export const createRecruiterJobPostRequest = async (
+  payload: Partial<JobPost>,
+) => {
   const response = await axiosInstance.post("/recruiter/job-post", payload);
   return response.data as ApiResponse<any>;
 };

@@ -4,6 +4,7 @@ import { useForm } from "react-hook-form";
 import { useCreateCenterMutation } from "@/api/admin.api";
 import { toast } from "react-toastify";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
+import { useNavigate } from "react-router-dom";
 
 type FormValues = {
   email: string;
@@ -20,7 +21,8 @@ type FormValues = {
 
 const CenterCreate: React.FC = () => {
   const mutation = useCreateCenterMutation();
-  const { register, handleSubmit, reset, watch, setValue } = useForm<FormValues>({
+  const navigate = useNavigate();
+  const { register, handleSubmit, watch, setValue } = useForm<FormValues>({
     defaultValues: {
       email: "",
       password: "",
@@ -56,7 +58,7 @@ const CenterCreate: React.FC = () => {
       const res = await mutation.mutateAsync(payload as any);
       if (res?.err === 0) {
         toast.success(res?.mes || "Tạo trung tâm thành công");
-        reset();
+        navigate("/admin/centers");
       } else {
         toast.error(res?.mes || "Tạo trung tâm thất bại");
       }
@@ -69,7 +71,9 @@ const CenterCreate: React.FC = () => {
     <AdminLayout title="Thêm trung tâm" activeMenu="center">
       <div className="rounded-2xl border border-gray-100 bg-white shadow-sm">
         <div className="border-b border-gray-100 p-5">
-          <h1 className="text-xl font-semibold text-gray-800">Thêm trung tâm</h1>
+          <h1 className="text-xl font-semibold text-gray-800">
+            Thêm trung tâm
+          </h1>
           <p className="text-sm text-gray-500">
             Điền thông tin tài khoản, trung tâm và địa chỉ.
           </p>
@@ -162,17 +166,17 @@ const CenterCreate: React.FC = () => {
           <div className="sm:col-span-2 font-semibold text-gray-700 pt-2">
             Địa chỉ
           </div>
-            <div className="sm:col-span-2 grid gap-4 md:grid-cols-2">
-              <ProvinceWardSelect
-                provinceCode={watch("province_code") || ""}
-                wardCode={watch("ward_code") || ""}
-                onProvinceChange={(code) => {
-                  setValue("province_code", code);
-                  setValue("ward_code", "");
-                }}
-                onWardChange={(code) => setValue("ward_code", code)}
-              />
-            </div>
+          <div className="sm:col-span-2 grid gap-4 md:grid-cols-2">
+            <ProvinceWardSelect
+              provinceCode={watch("province_code") || ""}
+              wardCode={watch("ward_code") || ""}
+              onProvinceChange={(code) => {
+                setValue("province_code", code);
+                setValue("ward_code", "");
+              }}
+              onWardChange={(code) => setValue("ward_code", code)}
+            />
+          </div>
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700">
               Đường

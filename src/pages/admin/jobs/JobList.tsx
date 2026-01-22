@@ -8,6 +8,7 @@ import {
   Search,
   Tags,
   XCircle,
+  Eye,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import type { JobPost } from "@/api/job-post.api";
@@ -548,7 +549,7 @@ const JobList: React.FC = () => {
                             value={rec.recruiter_id}
                           >
                             {rec.company_name ||
-                              rec.user?.email ||
+                              rec.recruiter?.email ||
                               rec.recruiter_id}
                           </option>
                         ))}
@@ -1203,11 +1204,28 @@ const JobList: React.FC = () => {
                         </p>
                         <p className="text-xs text-gray-500">{c.email}</p>
                       </div>
-                      <span className="text-xs text-orange-600">
-                        {Array.isArray(c.fields_wish)
-                          ? c.fields_wish.join(", ")
-                          : c.fields_wish}
-                      </span>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-orange-600">
+                          {Array.isArray(c.fields_wish)
+                            ? c.fields_wish.join(", ")
+                            : c.fields_wish}
+                        </span>
+                        <button
+                          onClick={() => {
+                            navigate(
+                              path.ADMIN_CANDIDATE_VIEW.replace(
+                                ":id",
+                                c.candidate_id,
+                              ),
+                            );
+                            setActiveSuggestJobId(null);
+                          }}
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-2 py-1 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                        >
+                          <Eye className="h-3 w-3" />
+                          Chi tiết
+                        </button>
+                      </div>
                     </div>
                   ))}
               </div>

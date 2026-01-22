@@ -42,7 +42,7 @@ export interface CenterProfile {
 }
 
 const getAdminCenterDetailRequest = async (
-  centerId: string
+  centerId: string,
 ): Promise<ApiResponse<CenterDetail>> => {
   const response = await axiosInstance.get("/admin/center", {
     params: { center_id: centerId },
@@ -51,7 +51,7 @@ const getAdminCenterDetailRequest = async (
 };
 
 const getAdminCentersRequest = async (
-  params: Record<string, any> = {}
+  params: Record<string, any> = {},
 ): Promise<ApiResponse<CenterDetail[]>> => {
   const response = await axiosInstance.get("/admin/centers", { params });
   return response.data;
@@ -70,6 +70,45 @@ export const useAdminCentersQuery = (filters: Record<string, any> = {}) =>
     queryFn: () => getAdminCentersRequest(filters),
     staleTime: 1000 * 60 * 5,
   });
+
+// --- Admin: Update Center ---
+const updateAdminCenterRequest = async ({
+  center_id,
+  centerInfo,
+  addressInfo,
+}: {
+  center_id: string;
+  centerInfo?: Partial<CenterProfile>;
+  addressInfo?: any;
+}): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.put(
+    "/admin/center",
+    {
+      centerInfo,
+      addressInfo,
+    },
+    {
+      params: { center_id },
+    },
+  );
+  return response.data;
+};
+
+// --- Admin: Delete Center ---
+const deleteAdminCenterRequest = async (
+  center_id: string,
+): Promise<ApiResponse<null>> => {
+  const response = await axiosInstance.delete("/admin/center", {
+    params: { center_id },
+  });
+  return response.data;
+};
+
+export const useUpdateAdminCenterMutation = () =>
+  useMutation({ mutationFn: updateAdminCenterRequest });
+
+export const useDeleteAdminCenterMutation = () =>
+  useMutation({ mutationFn: deleteAdminCenterRequest });
 
 // --- Center: courses ---
 export interface CourseCandidate {
@@ -131,7 +170,10 @@ export const updateCenterCourseRequest = async ({
   courseId: string;
   payload: Partial<Course>;
 }) => {
-  const response = await axiosInstance.patch(`/center/courses/${courseId}`, payload);
+  const response = await axiosInstance.patch(
+    `/center/courses/${courseId}`,
+    payload,
+  );
   return response.data as ApiResponse<Course>;
 };
 
@@ -149,7 +191,7 @@ export const addStudentToCourseRequest = async ({
 }) => {
   const response = await axiosInstance.post(
     `/center/courses/${courseId}/students`,
-    { candidate_id }
+    { candidate_id },
   );
   return response.data as ApiResponse<any>;
 };
@@ -173,7 +215,7 @@ export const updateStudentStatusRequest = async ({
 }) => {
   const response = await axiosInstance.patch(
     `/center/courses/${courseId}/students/${candidateId}`,
-    { status, attendance, tuition_confirmed, signed_at, notes }
+    { status, attendance, tuition_confirmed, signed_at, notes },
   );
   return response.data as ApiResponse<any>;
 };
@@ -186,7 +228,7 @@ export const removeStudentFromCourseRequest = async ({
   candidateId: string;
 }) => {
   const response = await axiosInstance.delete(
-    `/center/courses/${courseId}/students/${candidateId}`
+    `/center/courses/${courseId}/students/${candidateId}`,
   );
   return response.data as ApiResponse<any>;
 };
@@ -206,7 +248,7 @@ export const useRemoveStudentFromCourseMutation = () =>
 
 // --- Admin: xem khóa học của trung tâm ---
 const getAdminCenterCoursesRequest = async (
-  centerId: string
+  centerId: string,
 ): Promise<ApiResponse<Course[]>> => {
   const response = await axiosInstance.get("/admin/center/courses", {
     params: { center_id: centerId },
@@ -223,13 +265,15 @@ export const useAdminCenterCoursesQuery = (centerId?: string) =>
   });
 
 // --- Center: profile ---
-const getCenterProfileRequest = async (): Promise<ApiResponse<CenterProfile>> => {
+const getCenterProfileRequest = async (): Promise<
+  ApiResponse<CenterProfile>
+> => {
   const response = await axiosInstance.get("/center/profile");
   return response.data;
 };
 
 const updateCenterProfileRequest = async (
-  payload: Partial<CenterProfile>
+  payload: Partial<CenterProfile>,
 ): Promise<ApiResponse<CenterProfile>> => {
   const response = await axiosInstance.put("/center/profile/update", payload);
   return response.data;

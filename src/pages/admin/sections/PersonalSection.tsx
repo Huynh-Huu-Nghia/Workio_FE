@@ -6,16 +6,19 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
-import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
+import type {
+  CreateCandidateSchema,
+  UpdateCandidateSchema,
+} from "@/schemas/candidate.schema";
 import { X } from "lucide-react";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
 
 interface Props {
-  register: UseFormRegister<CreateCandidateSchema>;
-  errors: FieldErrors<CreateCandidateSchema>;
-  control: Control<CreateCandidateSchema>;
-  setValue: UseFormSetValue<CreateCandidateSchema>;
-  watch: UseFormWatch<CreateCandidateSchema>;
+  register: UseFormRegister<CreateCandidateSchema | UpdateCandidateSchema>;
+  errors: FieldErrors<CreateCandidateSchema | UpdateCandidateSchema>;
+  control: Control<CreateCandidateSchema | UpdateCandidateSchema>;
+  setValue: UseFormSetValue<CreateCandidateSchema | UpdateCandidateSchema>;
+  watch: UseFormWatch<CreateCandidateSchema | UpdateCandidateSchema>;
 }
 
 // Dữ liệu mẫu cho Dropdown
@@ -66,7 +69,7 @@ export default function PersonalSection({
       setValue(
         fieldName,
         values.filter((t) => t !== tagToRemove),
-        { shouldValidate: true }
+        { shouldValidate: true },
       );
     };
 
@@ -350,7 +353,9 @@ export default function PersonalSection({
                       const next = e.target.checked
                         ? [...current, opt]
                         : current.filter((f: string) => f !== opt);
-                      setValue("candidateInfo.fields_wish", next, { shouldValidate: true });
+                      setValue("candidateInfo.fields_wish", next, {
+                        shouldValidate: true,
+                      });
                     }}
                     className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
                   />
@@ -359,7 +364,9 @@ export default function PersonalSection({
               );
             })}
           </div>
-          <p className="text-xs text-gray-500 mt-1">Chọn một hoặc nhiều ngành (checkbox).</p>
+          <p className="text-xs text-gray-500 mt-1">
+            Chọn một hoặc nhiều ngành (checkbox).
+          </p>
           <p className="text-xs text-red-500">
             {errors.candidateInfo?.fields_wish?.message as string}
           </p>

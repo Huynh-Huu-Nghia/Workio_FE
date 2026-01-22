@@ -13,7 +13,10 @@ import {
   ChevronUp,
   Filter,
 } from "lucide-react";
-import { useApplyJobCandidateMutation, useCandidateJobPostsQuery } from "@/api/candidate.api";
+import {
+  useApplyJobCandidateMutation,
+  useCandidateJobPostsQuery,
+} from "@/api/candidate.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation, useNavigate } from "react-router-dom";
 import path from "@/constants/path";
@@ -34,7 +37,7 @@ const CandidateJobBoard: React.FC = () => {
   const [applyingId, setApplyingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const { user } = useUser();
-  
+
   // --- State cho bộ lọc ---
   const [searchTerm, setSearchTerm] = useState("");
   const [fields, setFields] = useState<string[]>([]);
@@ -47,9 +50,9 @@ const CandidateJobBoard: React.FC = () => {
   const [workingTime, setWorkingTime] = useState("");
   const [provinceFilter, setProvinceFilter] = useState("");
   const [wardFilter, setWardFilter] = useState("");
-  
+
   // --- State đóng/mở bộ lọc (Mới) ---
-  const [isFilterOpen, setIsFilterOpen] = useState(false); 
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
 
   const { resolveJobLocation } = useJobLocationResolver();
   const { data: provinceData } = useProvincesQuery();
@@ -62,17 +65,21 @@ const CandidateJobBoard: React.FC = () => {
   const filteredWardOptions = useMemo(() => {
     if (!wardData) return [];
     return wardData.filter((ward) =>
-      provinceFilter ? String(ward.province_code) === String(provinceFilter) : true
+      provinceFilter
+        ? String(ward.province_code) === String(provinceFilter)
+        : true,
     );
   }, [wardData, provinceFilter]);
 
   const formatCurrency = (value?: number | string | null) => {
-    if (value === null || value === undefined || value === "") return "Thỏa thuận";
-    return new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" }).format(
-      Number(value)
-    );
+    if (value === null || value === undefined || value === "")
+      return "Thỏa thuận";
+    return new Intl.NumberFormat("vi-VN", {
+      style: "currency",
+      currency: "VND",
+    }).format(Number(value));
   };
-  
+
   const formatDate = (value?: string | null) =>
     value ? new Date(value).toLocaleDateString("vi-VN") : "Chưa thiết lập";
 
@@ -117,8 +124,10 @@ const CandidateJobBoard: React.FC = () => {
         if (statusFilter !== "all" && job.status !== statusFilter) return false;
         if (jobType && job.job_type !== jobType) return false;
         if (workingTime && job.working_time !== workingTime) return false;
-        if (minSalary && Number(job.monthly_salary || 0) < Number(minSalary)) return false;
-        if (maxSalary && Number(job.monthly_salary || 0) > Number(maxSalary)) return false;
+        if (minSalary && Number(job.monthly_salary || 0) < Number(minSalary))
+          return false;
+        if (maxSalary && Number(job.monthly_salary || 0) > Number(maxSalary))
+          return false;
         const locationInfo = resolveJobLocation(job);
         if (
           provinceFilter &&
@@ -126,7 +135,10 @@ const CandidateJobBoard: React.FC = () => {
         ) {
           return false;
         }
-        if (wardFilter && String(locationInfo.wardCode || "") !== String(wardFilter)) {
+        if (
+          wardFilter &&
+          String(locationInfo.wardCode || "") !== String(wardFilter)
+        ) {
           return false;
         }
         return true;
@@ -135,12 +147,16 @@ const CandidateJobBoard: React.FC = () => {
         if (!sortBy) return 0;
         const factor = order === "ASC" ? 1 : -1;
         if (sortBy === "monthly_salary") {
-          return factor * (Number(a.monthly_salary || 0) - Number(b.monthly_salary || 0));
+          return (
+            factor *
+            (Number(a.monthly_salary || 0) - Number(b.monthly_salary || 0))
+          );
         }
         if (sortBy === "created_at") {
           return (
             factor *
-            (new Date(a.created_at || 0).getTime() - new Date(b.created_at || 0).getTime())
+            (new Date(a.created_at || 0).getTime() -
+              new Date(b.created_at || 0).getTime())
           );
         }
         if (sortBy === "application_deadline_to") {
@@ -171,11 +187,10 @@ const CandidateJobBoard: React.FC = () => {
 
   return (
     <CandidateLayout title={title}>
-      
       {/* --- BỘ LỌC TÌM KIẾM (COLLAPSIBLE) --- */}
       <div className="mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
         {/* Header để bấm đóng/mở */}
-        <div 
+        <div
           className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
           onClick={() => setIsFilterOpen(!isFilterOpen)}
         >
@@ -183,24 +198,30 @@ const CandidateJobBoard: React.FC = () => {
             <Filter size={20} className="text-orange-500" />
             <span>Bộ lọc tìm kiếm</span>
             {/* Hiển thị tóm tắt nhỏ nếu đang lọc và bộ lọc đang đóng */}
-            {!isFilterOpen && (searchTerm || provinceFilter || statusFilter !== 'all') && (
-              <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
-                Đang lọc...
-              </span>
-            )}
+            {!isFilterOpen &&
+              (searchTerm || provinceFilter || statusFilter !== "all") && (
+                <span className="text-xs font-normal text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full animate-pulse">
+                  Đang lọc...
+                </span>
+              )}
           </div>
           {/* Đổi icon mũi tên */}
-          {isFilterOpen ? <ChevronUp size={20} className="text-gray-400" /> : <ChevronDown size={20} className="text-gray-400" />}
+          {isFilterOpen ? (
+            <ChevronUp size={20} className="text-gray-400" />
+          ) : (
+            <ChevronDown size={20} className="text-gray-400" />
+          )}
         </div>
 
         {/* Nội dung bộ lọc - Chỉ hiện khi isFilterOpen = true */}
         {isFilterOpen && (
           <div className="p-5 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              
               {/* 1. Tìm kiếm từ khóa */}
               <div className="lg:col-span-2">
-                <label className="mb-1 block text-sm font-medium text-gray-700">Tìm kiếm</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Tìm kiếm
+                </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <input
@@ -215,7 +236,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 2. Trạng thái */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Trạng thái
+                </label>
                 <select
                   value={statusFilter}
                   onChange={(e) => setStatusFilter(e.target.value as any)}
@@ -232,7 +255,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 3. Sắp xếp */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Sắp xếp</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Sắp xếp
+                </label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
@@ -247,7 +272,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 4. Thứ tự */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Thứ tự</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Thứ tự
+                </label>
                 <select
                   value={order}
                   onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
@@ -260,7 +287,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 5. Tỉnh/TP */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Tỉnh/TP</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Tỉnh/TP
+                </label>
                 <select
                   value={provinceFilter}
                   onChange={(e) => setProvinceFilter(e.target.value)}
@@ -277,7 +306,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 6. Phường/Xã */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Phường/Xã</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Phường/Xã
+                </label>
                 <select
                   value={wardFilter}
                   onChange={(e) => setWardFilter(e.target.value)}
@@ -297,7 +328,9 @@ const CandidateJobBoard: React.FC = () => {
               <div className="md:col-span-2">
                 <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">Lương từ</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Lương từ
+                    </label>
                     <input
                       type="number"
                       value={minSalary}
@@ -307,7 +340,9 @@ const CandidateJobBoard: React.FC = () => {
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">Lương đến</label>
+                    <label className="mb-1 block text-sm font-medium text-gray-700">
+                      Lương đến
+                    </label>
                     <input
                       type="number"
                       value={maxSalary}
@@ -321,7 +356,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 8. Loại việc */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Loại việc</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Loại việc
+                </label>
                 <select
                   value={jobType}
                   onChange={(e) => setJobType(e.target.value)}
@@ -336,7 +373,9 @@ const CandidateJobBoard: React.FC = () => {
 
               {/* 9. Giờ làm */}
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">Giờ làm</label>
+                <label className="mb-1 block text-sm font-medium text-gray-700">
+                  Giờ làm
+                </label>
                 <select
                   value={workingTime}
                   onChange={(e) => setWorkingTime(e.target.value)}
@@ -352,7 +391,9 @@ const CandidateJobBoard: React.FC = () => {
 
             {/* Checkbox Ngành nghề */}
             <div className="mt-5">
-              <p className="mb-1 text-sm font-medium text-gray-700">Ngành nghề</p>
+              <p className="mb-1 text-sm font-medium text-gray-700">
+                Ngành nghề
+              </p>
               <div className="flex flex-wrap gap-2 text-xs text-gray-700">
                 {INDUSTRY_OPTIONS.map((opt) => (
                   <label
@@ -376,11 +417,11 @@ const CandidateJobBoard: React.FC = () => {
 
             {/* Nút thu gọn ở dưới cùng */}
             <div className="mt-4 flex justify-center border-t border-gray-100 pt-3">
-              <button 
+              <button
                 onClick={() => setIsFilterOpen(false)}
                 className="text-xs text-gray-500 hover:text-orange-500 hover:underline flex items-center gap-1"
               >
-                <ChevronUp size={14}/> Thu gọn bộ lọc
+                <ChevronUp size={14} /> Thu gọn bộ lọc
               </button>
             </div>
           </div>
@@ -411,7 +452,8 @@ const CandidateJobBoard: React.FC = () => {
           ) : (
             filtered.map((job) => {
               const locationInfo = resolveJobLocation(job);
-              const locationText = locationInfo.label || "Chưa cập nhật địa điểm";
+              const locationText =
+                locationInfo.label || "Chưa cập nhật địa điểm";
               const recruiterId =
                 job.recruiter_id ||
                 job.recruiter?.recruiter_id ||
@@ -420,14 +462,16 @@ const CandidateJobBoard: React.FC = () => {
               const recruiterLabel =
                 job.recruiter?.company_name ||
                 job.recruiter_name ||
-                job.recruiter?.user?.email ||
+                job.recruiter?.recruiter?.email ||
                 job.recruiter?.contact_name ||
                 "Nhà tuyển dụng";
               const canViewRecruiter = Boolean(recruiterId);
               const recruiterIdStr = recruiterId ? String(recruiterId) : "";
               const goToRecruiter = () => {
                 if (!canViewRecruiter) return;
-                navigate(path.CANDIDATE_RECRUITER_VIEW.replace(":id", recruiterIdStr));
+                navigate(
+                  path.CANDIDATE_RECRUITER_VIEW.replace(":id", recruiterIdStr),
+                );
               };
               return (
                 <article
@@ -452,17 +496,21 @@ const CandidateJobBoard: React.FC = () => {
                           {job.position}
                         </h3>
                         <div className="mt-1 flex flex-wrap gap-2">
-                          {(Array.isArray(job.fields) ? job.fields : job.fields ? [job.fields] : []).slice(
-                            0,
-                            3
-                          ).map((f) => (
-                            <span
-                              key={f}
-                              className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700"
-                            >
-                              {f}
-                            </span>
-                          ))}
+                          {(Array.isArray(job.fields)
+                            ? job.fields
+                            : job.fields
+                              ? [job.fields]
+                              : []
+                          )
+                            .slice(0, 3)
+                            .map((f) => (
+                              <span
+                                key={f}
+                                className="rounded-full bg-orange-50 px-2 py-1 text-xs font-semibold text-orange-700"
+                              >
+                                {f}
+                              </span>
+                            ))}
                         </div>
                       </div>
                     </div>
@@ -507,21 +555,26 @@ const CandidateJobBoard: React.FC = () => {
                     </p>
                   )}
                   <div className="mt-3 flex flex-wrap items-center gap-2 text-sm">
-                    {(Array.isArray(job.fields) ? job.fields : job.fields ? [job.fields] : []).map(
-                      (f) => (
-                        <span
-                          key={f}
-                          className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700"
-                        >
-                          <Tags className="h-3 w-3" />
-                          {f}
-                        </span>
-                      )
-                    )}
+                    {(Array.isArray(job.fields)
+                      ? job.fields
+                      : job.fields
+                        ? [job.fields]
+                        : []
+                    ).map((f) => (
+                      <span
+                        key={f}
+                        className="inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-1 text-xs font-semibold text-blue-700"
+                      >
+                        <Tags className="h-3 w-3" />
+                        {f}
+                      </span>
+                    ))}
                     <button
                       type="button"
                       onClick={() =>
-                        setExpandedId((prev) => (prev === job.id ? null : job.id))
+                        setExpandedId((prev) =>
+                          prev === job.id ? null : job.id,
+                        )
                       }
                       className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 font-semibold text-gray-700 hover:bg-gray-50"
                     >
@@ -530,7 +583,16 @@ const CandidateJobBoard: React.FC = () => {
                           expandedId === job.id ? "rotate-180" : ""
                         }`}
                       />
-                      {expandedId === job.id ? "Thu gọn" : "Xem chi tiết"}
+                      {expandedId === job.id ? "Thu gọn" : "Xem thêm"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigate(path.CANDIDATE_JOB_VIEW.replace(":id", job.id))
+                      }
+                      className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      Chi tiết
                     </button>
                     <button
                       type="button"
@@ -548,12 +610,18 @@ const CandidateJobBoard: React.FC = () => {
                         try {
                           const res = await applyMutation.mutateAsync(job.id);
                           if ((res as any)?.err === 0) {
-                            toast.success((res as any)?.mes || "Ứng tuyển thành công");
+                            toast.success(
+                              (res as any)?.mes || "Ứng tuyển thành công",
+                            );
                           } else {
-                            toast.error((res as any)?.mes || "Ứng tuyển thất bại");
+                            toast.error(
+                              (res as any)?.mes || "Ứng tuyển thất bại",
+                            );
                           }
                         } catch (e: any) {
-                          toast.error(e?.response?.data?.mes || "Ứng tuyển thất bại");
+                          toast.error(
+                            e?.response?.data?.mes || "Ứng tuyển thất bại",
+                          );
                         } finally {
                           setApplyingId(null);
                         }
@@ -571,51 +639,70 @@ const CandidateJobBoard: React.FC = () => {
                       job.applied_candidates.includes(user!.id as string)
                         ? "Đã ứng tuyển"
                         : applyMutation.isPending && applyingId === job.id
-                        ? "Đang gửi..."
-                        : "Ứng tuyển"}
+                          ? "Đang gửi..."
+                          : "Ứng tuyển"}
                     </button>
                   </div>
                   {expandedId === job.id && (
                     <div className="mt-3 space-y-2 rounded-lg border border-dashed border-gray-200 bg-gray-50 p-3 text-sm text-gray-700">
-                      {(job.application_deadline_from || job.application_deadline_to) && (
+                      {(job.application_deadline_from ||
+                        job.application_deadline_to) && (
                         <div>
-                          <span className="font-semibold text-gray-800">Hạn ứng tuyển: </span>
-                          {job.application_deadline_from || "—"} → {job.application_deadline_to || "—"}
+                          <span className="font-semibold text-gray-800">
+                            Hạn ứng tuyển:{" "}
+                          </span>
+                          {job.application_deadline_from || "—"} →{" "}
+                          {job.application_deadline_to || "—"}
                         </div>
                       )}
                       {job.duration && (
                         <div>
-                          <span className="font-semibold text-gray-800">Thời lượng: </span>
+                          <span className="font-semibold text-gray-800">
+                            Thời lượng:{" "}
+                          </span>
                           {job.duration}
                         </div>
                       )}
                       {job.support_info && (
                         <div>
-                          <span className="font-semibold text-gray-800">Địa điểm hỗ trợ: </span>
+                          <span className="font-semibold text-gray-800">
+                            Địa điểm hỗ trợ:{" "}
+                          </span>
                           {job.support_info}
                         </div>
                       )}
                       {job.fields && (
                         <div>
-                          <span className="font-semibold text-gray-800">Ngành nghề: </span>
-                          {Array.isArray(job.fields) ? job.fields.join(", ") : job.fields}
+                          <span className="font-semibold text-gray-800">
+                            Ngành nghề:{" "}
+                          </span>
+                          {Array.isArray(job.fields)
+                            ? job.fields.join(", ")
+                            : job.fields}
                         </div>
                       )}
                       {job.monthly_salary && (
                         <div>
-                          <span className="font-semibold text-gray-800">Mức lương: </span>
+                          <span className="font-semibold text-gray-800">
+                            Mức lương:{" "}
+                          </span>
                           {formatCurrency(job.monthly_salary)}
                         </div>
                       )}
-                      {job.available_quantity !== null && job.available_quantity !== undefined && (
-                        <div>
-                          <span className="font-semibold text-gray-800">Số lượng cần: </span>
-                          {job.available_quantity}
-                        </div>
-                      )}
+                      {job.available_quantity !== null &&
+                        job.available_quantity !== undefined && (
+                          <div>
+                            <span className="font-semibold text-gray-800">
+                              Số lượng cần:{" "}
+                            </span>
+                            {job.available_quantity}
+                          </div>
+                        )}
                       {job.languguages && (
                         <div>
-                          <span className="font-semibold text-gray-800">Ngôn ngữ: </span>
+                          <span className="font-semibold text-gray-800">
+                            Ngôn ngữ:{" "}
+                          </span>
                           {Array.isArray(job.languguages)
                             ? job.languguages.join(", ")
                             : job.languguages}
@@ -623,26 +710,35 @@ const CandidateJobBoard: React.FC = () => {
                       )}
                       {(job.job_type || job.working_time) && (
                         <div>
-                          <span className="font-semibold text-gray-800">Hình thức làm việc: </span>
-                          {job.job_type || "—"} {job.working_time ? ` • ${job.working_time}` : ""}
+                          <span className="font-semibold text-gray-800">
+                            Hình thức làm việc:{" "}
+                          </span>
+                          {job.job_type || "—"}{" "}
+                          {job.working_time ? ` • ${job.working_time}` : ""}
                         </div>
                       )}
                       {(job.graduation_rank || job.computer_skill) && (
                         <div>
-                          <span className="font-semibold text-gray-800">Yêu cầu học vấn/kỹ năng: </span>
+                          <span className="font-semibold text-gray-800">
+                            Yêu cầu học vấn/kỹ năng:{" "}
+                          </span>
                           {job.graduation_rank || "—"}{" "}
                           {job.computer_skill ? ` • ${job.computer_skill}` : ""}
                         </div>
                       )}
                       {job.other_requirements && (
                         <div>
-                          <span className="font-semibold text-gray-800">Yêu cầu khác: </span>
+                          <span className="font-semibold text-gray-800">
+                            Yêu cầu khác:{" "}
+                          </span>
                           {job.other_requirements}
                         </div>
                       )}
                       {job.benefits && (
                         <div>
-                          <span className="font-semibold text-gray-800">Quyền lợi: </span>
+                          <span className="font-semibold text-gray-800">
+                            Quyền lợi:{" "}
+                          </span>
                           {Array.isArray(job.benefits) ? (
                             <div className="mt-1 flex flex-wrap gap-2">
                               {job.benefits.map((b: string) => (

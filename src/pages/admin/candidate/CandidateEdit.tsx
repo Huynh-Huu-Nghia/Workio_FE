@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isValid } from "date-fns";
 import {
@@ -97,6 +97,16 @@ export default function CandidateEdit() {
     },
   });
 
+  const { replace: replaceStudyHistories } = useFieldArray({
+    control,
+    name: "studyHistories",
+  });
+
+  const { replace: replaceWorkExperiences } = useFieldArray({
+    control,
+    name: "workExperiences",
+  });
+
   const safeFormatDate = (dateString: string | undefined | null) => {
     if (!dateString) return "";
     const date = new Date(dateString);
@@ -151,8 +161,7 @@ export default function CandidateEdit() {
       candidate?.address?.province_code || "",
     );
 
-    setValue(
-      "studyHistories",
+    replaceStudyHistories(
       (candidate.study_history || []).map((edu: any) => ({
         school_name: edu.school_name || "",
         major: edu.major || "",
@@ -161,8 +170,7 @@ export default function CandidateEdit() {
         degree: edu.degree || "",
       })),
     );
-    setValue(
-      "workExperiences",
+    replaceWorkExperiences(
       (candidate.work_experience || []).map((exp: any) => ({
         company_name: exp.company_name || "",
         position: exp.position || "",
@@ -171,7 +179,7 @@ export default function CandidateEdit() {
         description: exp.description || "",
       })),
     );
-  }, [detailRes, setValue]);
+  }, [detailRes, setValue, replaceStudyHistories, replaceWorkExperiences]);
 
   const onSubmit: SubmitHandler<UpdateCandidateSchema> = async (formData) => {
     if (!id) return;

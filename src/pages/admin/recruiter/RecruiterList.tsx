@@ -8,11 +8,15 @@ import {
   Search,
   XCircle,
   Printer,
+  Pencil,
+  Trash2,
+  ChevronDown,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import {
   useGetAllRecruitersQuery,
   useCreateRecruiterMutation,
+  useDeleteRecruiterAdminMutation,
 } from "@/api/recruiter.api";
 import { useNavigate } from "react-router-dom";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
@@ -30,6 +34,7 @@ const RecruiterList: React.FC = () => {
   const [sortBy, setSortBy] = useState("");
   const [order, setOrder] = useState<"ASC" | "DESC">("DESC");
   const [showCreate, setShowCreate] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
 
   // Province/ward data (ensure these are declared only once)
   const { data: provinceData } = useProvincesQuery?.() || { data: [] };
@@ -91,6 +96,7 @@ const RecruiterList: React.FC = () => {
   const [addrWard, setAddrWard] = useState("");
   const navigate = useNavigate();
   const createMutation = useCreateRecruiterMutation();
+  const deleteMutation = useDeleteRecruiterAdminMutation();
 
   const { data, isLoading, isError, refetch } = useGetAllRecruitersQuery({
     search: searchTerm || undefined,
@@ -126,7 +132,7 @@ const RecruiterList: React.FC = () => {
       const keyword = searchTerm.toLowerCase();
       const matchesKeyword =
         rec.company_name?.toLowerCase().includes(keyword) ||
-        rec.user?.email?.toLowerCase().includes(keyword) ||
+        rec.recruiter?.email?.toLowerCase().includes(keyword) ||
         rec.phone?.toLowerCase().includes(keyword) ||
         false;
 
@@ -178,6 +184,19 @@ const RecruiterList: React.FC = () => {
     provinceFilter,
     wardFilter,
   ]);
+
+  const handleDelete = (recruiterId: string) => {
+    if (window.confirm("Bạn có chắc chắn muốn xóa nhà tuyển dụng này?")) {
+      deleteMutation.mutate(recruiterId, {
+        onSuccess: () => {
+          refetch();
+        },
+        onError: (error) => {
+          alert("Xóa thất bại: " + error.message);
+        },
+      });
+    }
+  };
 
   const printRecruiterProfile = (rec: any, password?: string) => {
     const html = `
@@ -311,7 +330,7 @@ const RecruiterList: React.FC = () => {
             </div>
             <div class="info-row">
               <span class="label">Email:</span>
-              <span class="value">${rec.user?.email || "Chưa cập nhật"}</span>
+              <span class="value">${rec.recruiter?.email || "Chưa cập nhật"}</span>
             </div>
             <div class="info-row">
               <span class="label">Số điện thoại:</span>
@@ -628,76 +647,96 @@ const RecruiterList: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col gap-4">
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
-              <div className="md:col-span-2 xl:col-span-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên công ty, email"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+            {/* Filter Header with Toggle */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <h2 className="text-lg font-semibold text-gray-800">Bộ lọc</h2>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(!showFilters)}
+                  className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
+                >
+                  <ChevronDown
+                    className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
                   />
-                </div>
+                  {showFilters ? "Thu gọn" : "Mở rộng"}
+                </button>
               </div>
-              <select
-                value={showVerified}
-                onChange={(e) =>
-                  setShowVerified(
-                    e.target.value as "all" | "verified" | "pending",
-                  )
-                }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="all">Tất cả</option>
-                <option value="verified">Đã xác thực</option>
-                <option value="pending">Chờ xác thực</option>
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Sắp xếp</option>
-                <option value="company_name">Tên công ty</option>
-                <option value="created_at">Ngày tạo</option>
-                <option value="updated_at">Ngày cập nhật</option>
-              </select>
-              <select
-                value={order}
-                onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="DESC">Giảm dần</option>
-                <option value="ASC">Tăng dần</option>
-              </select>
-              <select
-                value={provinceFilter}
-                onChange={(e) => setProvinceFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Tỉnh/TP</option>
-                {provinceData?.map((province) => (
-                  <option key={province.code} value={province.code}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={wardFilter}
-                onChange={(e) => setWardFilter(e.target.value)}
-                disabled={!provinceFilter}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-              >
-                <option value="">Phường/Xã</option>
-                {filteredWardOptions.map((ward) => (
-                  <option key={ward.code} value={ward.code}>
-                    {ward.name}
-                  </option>
-                ))}
-              </select>
             </div>
+
+            {/* Collapsible Main Filters */}
+            {showFilters && (
+              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6 pt-3 border-t border-gray-100">
+                <div className="md:col-span-2 xl:col-span-3">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input
+                      type="text"
+                      placeholder="Tìm theo tên công ty, email"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
+                </div>
+                <select
+                  value={showVerified}
+                  onChange={(e) =>
+                    setShowVerified(
+                      e.target.value as "all" | "verified" | "pending",
+                    )
+                  }
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value="all">Tất cả</option>
+                  <option value="verified">Đã xác thực</option>
+                  <option value="pending">Chờ xác thực</option>
+                </select>
+                <select
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value="">Sắp xếp</option>
+                  <option value="company_name">Tên công ty</option>
+                  <option value="created_at">Ngày tạo</option>
+                  <option value="updated_at">Ngày cập nhật</option>
+                </select>
+                <select
+                  value={order}
+                  onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value="DESC">Giảm dần</option>
+                  <option value="ASC">Tăng dần</option>
+                </select>
+                <select
+                  value={provinceFilter}
+                  onChange={(e) => setProvinceFilter(e.target.value)}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                >
+                  <option value="">Tỉnh/TP</option>
+                  {provinceData?.map((province) => (
+                    <option key={province.code} value={province.code}>
+                      {province.name}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  value={wardFilter}
+                  onChange={(e) => setWardFilter(e.target.value)}
+                  disabled={!provinceFilter}
+                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                >
+                  <option value="">Phường/Xã</option>
+                  {filteredWardOptions.map((ward) => (
+                    <option key={ward.code} value={ward.code}>
+                      {ward.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
             <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
               <button
@@ -921,7 +960,7 @@ const RecruiterList: React.FC = () => {
                         <div className="flex flex-col gap-1 text-gray-700">
                           <span className="flex items-center gap-2 text-sm">
                             <Mail className="h-4 w-4 text-gray-400" />
-                            {rec.user?.email || "Không có email"}
+                            {rec.recruiter?.email || "Không có email"}
                           </span>
                           <span className="text-xs text-gray-500">
                             {rec.phone || "Chưa có số điện thoại"}
@@ -957,6 +996,24 @@ const RecruiterList: React.FC = () => {
                         >
                           <Eye className="h-4 w-4" />
                           Chi tiết
+                        </button>
+                        <button
+                          onClick={() =>
+                            navigate(
+                              `/admin/recruiters/edit/${rec.recruiter_id}`,
+                            )
+                          }
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 ml-2"
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Sửa
+                        </button>
+                        <button
+                          onClick={() => handleDelete(rec.recruiter_id)}
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-red-50 ml-2"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Xóa
                         </button>
                         <button
                           onClick={() => printRecruiterProfile(rec)}

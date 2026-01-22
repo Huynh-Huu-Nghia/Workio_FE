@@ -48,6 +48,7 @@ import CenterAccountSettings from "@/pages/center/AccountSettings";
 import CenterSupportRequests from "@/pages/center/SupportRequests";
 import CenterList from "@/pages/admin/center/CenterList";
 import CenterCreate from "@/pages/admin/center/CenterCreate";
+import CenterEdit from "@/pages/admin/center/CenterEdit";
 import JobCandidates from "@/pages/admin/jobs/JobCandidates";
 import CandidateJobs from "@/pages/admin/candidate/CandidateJobs";
 import SuggestedJobs from "@/pages/admin/jobs/SuggestedJobs";
@@ -55,6 +56,7 @@ import AdminSuggestedCandidates from "@/pages/admin/jobs/SuggestedCandidates";
 import CenterView from "@/pages/admin/center/CenterView";
 import CandidateAppliedJobs from "@/pages/candidate/AppliedJobs";
 import CandidateSuggestedJobs from "@/pages/candidate/SuggestedJobs";
+import CandidateJobView from "@/pages/candidate/JobView";
 import CandidatesForJob from "@/pages/recruiter/CandidatesForJob";
 import SuggestedCandidates from "@/pages/recruiter/SuggestedCandidates";
 import RecruiterJobForm from "@/pages/recruiter/JobForm";
@@ -187,6 +189,10 @@ export const AppRouter = createBrowserRouter([
         element: <CenterCreate />,
       },
       {
+        path: path.ADMIN_CENTER_EDIT,
+        element: <CenterEdit />,
+      },
+      {
         path: path.ADMIN_INTERVIEWS,
         element: <InterviewList />,
       },
@@ -239,6 +245,10 @@ export const AppRouter = createBrowserRouter([
         element: <CandidateSuggestedJobs />,
       },
       { path: path.CANDIDATE_APPLIED_JOBS, element: <CandidateAppliedJobs /> },
+      {
+        path: path.CANDIDATE_JOB_VIEW,
+        element: <CandidateJobView />,
+      },
       { path: "courses", element: <CandidateCourses /> },
       { path: path.CANDIDATE_INTERVIEWS, element: <CandidateInterviews /> },
       { path: path.CANDIDATE_PROFILE, element: <CandidateProfile /> },

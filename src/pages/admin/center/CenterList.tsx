@@ -1,10 +1,12 @@
 import React, { useMemo, useState } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useAdminCentersQuery } from "@/api/center.api";
-import { Loader2, XCircle, MapPin, Eye } from "lucide-react";
+import { Loader2, XCircle, MapPin, Eye, Pencil, Trash2 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
 import { INDUSTRY_OPTIONS } from "@/constants/industries";
+import { useDeleteAdminCenterMutation } from "@/api/center.api";
+import { toast } from "react-toastify";
 
 const CenterList: React.FC = () => {
   const [search, setSearch] = useState("");
@@ -25,11 +27,32 @@ const CenterList: React.FC = () => {
       order,
       training_field: trainingField || undefined,
     }),
-    [search, isActive, provinceCode, wardCode, sortBy, order, trainingField]
+    [search, isActive, provinceCode, wardCode, sortBy, order, trainingField],
   );
 
   const { data, isLoading, isError, refetch } = useAdminCentersQuery(filters);
   const centers = data?.data ?? [];
+  const deleteCenterMutation = useDeleteAdminCenterMutation();
+
+  const handleDelete = async (center: any) => {
+    if (
+      !window.confirm(
+        `Bạn có chắc chắn muốn xóa trung tâm "${center.name || "N/A"}"?`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await deleteCenterMutation.mutateAsync(center.center_id);
+      toast.success("Xóa trung tâm thành công!");
+      refetch();
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.mes || "Có lỗi xảy ra khi xóa trung tâm",
+      );
+    }
+  };
 
   return (
     <AdminLayout title="Trung tâm" activeMenu="center">
@@ -58,7 +81,9 @@ const CenterList: React.FC = () => {
             {/* Hàng 1: Tìm kiếm + nút áp dụng */}
             <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
               <div className="flex flex-1 flex-col gap-2">
-                <label className="text-xs font-semibold text-gray-600">Tìm kiếm</label>
+                <label className="text-xs font-semibold text-gray-600">
+                  Tìm kiếm
+                </label>
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -95,7 +120,9 @@ const CenterList: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-gray-600">Ngành đào tạo</label>
+                  <label className="text-xs font-semibold text-gray-600">
+                    Ngành đào tạo
+                  </label>
                   <select
                     value={trainingField}
                     onChange={(e) => setTrainingField(e.target.value)}
@@ -110,7 +137,9 @@ const CenterList: React.FC = () => {
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-gray-600">Trạng thái</label>
+                  <label className="text-xs font-semibold text-gray-600">
+                    Trạng thái
+                  </label>
                   <select
                     value={isActive}
                     onChange={(e) => setIsActive(e.target.value)}
@@ -125,7 +154,9 @@ const CenterList: React.FC = () => {
 
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-gray-600">Sắp xếp theo</label>
+                  <label className="text-xs font-semibold text-gray-600">
+                    Sắp xếp theo
+                  </label>
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
@@ -138,7 +169,9 @@ const CenterList: React.FC = () => {
                   </select>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <label className="text-xs font-semibold text-gray-600">Thứ tự</label>
+                  <label className="text-xs font-semibold text-gray-600">
+                    Thứ tự
+                  </label>
                   <select
                     value={order}
                     onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
@@ -204,6 +237,21 @@ const CenterList: React.FC = () => {
                       <Eye className="h-4 w-4" />
                       Chi tiết
                     </Link>
+                    <Link
+                      to={`/admin/centers/edit/${center.center_id}`}
+                      className="inline-flex items-center gap-1 rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700 hover:bg-blue-100"
+                    >
+                      <Pencil className="h-4 w-4" />
+                      Chỉnh sửa
+                    </Link>
+                    <button
+                      onClick={() => handleDelete(center)}
+                      disabled={deleteCenterMutation.isPending}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-3 py-1.5 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                      Xóa
+                    </button>
                   </div>
                 </div>
               ))

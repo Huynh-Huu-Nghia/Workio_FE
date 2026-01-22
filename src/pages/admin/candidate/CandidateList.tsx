@@ -11,6 +11,7 @@ import {
   Sparkles,
   Printer,
   Loader2, // Icon xoay xoay khi loading
+  ChevronDown,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import {
@@ -40,6 +41,7 @@ export default function CandidateList() {
   const [fields, setFields] = useState<string[]>([]);
   const [awaitingInterview, setAwaitingInterview] = useState(false);
   const [employed, setEmployed] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
   const [confirmDialog, setConfirmDialog] = useState<{
     isOpen: boolean;
     title: string;
@@ -1315,139 +1317,166 @@ export default function CandidateList() {
         )}
         <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
           {/* TOOLBAR */}
-          <div className="p-5 flex flex-col md:flex-row items-center justify-between gap-4 border-b border-gray-100">
-            <div className="flex flex-1 w-full md:w-auto items-center gap-3 flex-wrap">
-              <div className="relative flex-1 max-w-md">
-                <Search
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-                  size={18}
-                />
-                <input
-                  type="text"
-                  placeholder="Tìm theo tên, email, SĐT..."
-                  className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-500 text-sm"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-              <select
-                value={verified}
-                onChange={(e) => setVerified(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Xác thực (tất cả)</option>
-                <option value="true">Đã xác thực</option>
-                <option value="false">Chưa xác thực</option>
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Sắp xếp</option>
-                <option value="full_name">Tên</option>
-                <option value="created_at">Ngày tạo</option>
-                <option value="updated_at">Ngày cập nhật</option>
-              </select>
-              <select
-                value={order}
-                onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-                className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="DESC">Giảm dần</option>
-                <option value="ASC">Tăng dần</option>
-              </select>
-              <div className="flex flex-wrap gap-2">
-                <input
-                  type="number"
-                  value={minIncome}
-                  onChange={(e) => setMinIncome(e.target.value)}
-                  placeholder="Lương tối thiểu"
-                  className="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-                <input
-                  type="number"
-                  value={maxIncome}
-                  onChange={(e) => setMaxIncome(e.target.value)}
-                  placeholder="Lương tối đa"
-                  className="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-                <input
-                  type="number"
-                  value={minExp}
-                  onChange={(e) => setMinExp(e.target.value)}
-                  placeholder="Exp từ (năm)"
-                  className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-                <input
-                  type="number"
-                  value={maxExp}
-                  onChange={(e) => setMaxExp(e.target.value)}
-                  placeholder="Exp đến (năm)"
-                  className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                />
-                <select
-                  value={graduationRank}
-                  onChange={(e) => setGraduationRank(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Trình độ</option>
-                  <option value="Cấp 1">Cấp 1</option>
-                  <option value="Cấp 2">Cấp 2</option>
-                  <option value="Cấp 3">Cấp 3</option>
-                  <option value="Đại học">Đại học</option>
-                </select>
-                <select
-                  value={employed}
-                  onChange={(e) => setEmployed(e.target.value)}
-                  className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
-                >
-                  <option value="">Tình trạng việc làm</option>
-                  <option value="true">Đã có việc</option>
-                  <option value="false">Chưa có việc</option>
-                </select>
-                <label className="inline-flex items-center gap-2 text-sm text-gray-700">
-                  <input
-                    type="checkbox"
-                    checked={awaitingInterview}
-                    onChange={(e) => setAwaitingInterview(e.target.checked)}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  Đang chờ phỏng vấn
-                </label>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="text-xs text-gray-500">Ngành mong muốn:</span>
-                {INDUSTRY_OPTIONS.map((opt) => (
-                  <label
-                    key={opt}
-                    className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
+          <div className="p-5 border-b border-gray-100">
+            <div className="flex flex-col gap-4">
+              {/* Header with toggle button */}
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Bộ lọc
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowFilters(!showFilters)}
+                    className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
                   >
-                    <input
-                      type="checkbox"
-                      checked={fields.includes(opt)}
-                      onChange={(e) => {
-                        if (e.target.checked) setFields([...fields, opt]);
-                        else setFields(fields.filter((f) => f !== opt));
-                      }}
-                      className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
                     />
-                    {opt}
-                  </label>
-                ))}
+                    {showFilters ? "Thu gọn" : "Mở rộng"}
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="flex items-center gap-3 w-full md:w-auto justify-end">
-              {selectedRows.length > 0 && (
-                <button
-                  onClick={handleBulkDelete}
-                  disabled={deleteMutation.isPending}
-                  className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors animate-in fade-in disabled:opacity-60"
-                >
-                  <Trash2 size={16} /> Xóa ({selectedRows.length})
-                </button>
+              {/* Collapsible Filters */}
+              {showFilters && (
+                <div className="flex flex-1 w-full md:w-auto items-center gap-3 flex-wrap pt-3 border-t border-gray-100">
+                  <div className="relative flex-1 max-w-md">
+                    <Search
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={18}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Tìm theo tên, email, SĐT..."
+                      className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-orange-100 focus:border-orange-500 text-sm"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                  <select
+                    value={verified}
+                    onChange={(e) => setVerified(e.target.value)}
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  >
+                    <option value="">Xác thực (tất cả)</option>
+                    <option value="true">Đã xác thực</option>
+                    <option value="false">Chưa xác thực</option>
+                  </select>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  >
+                    <option value="">Sắp xếp</option>
+                    <option value="full_name">Tên</option>
+                    <option value="created_at">Ngày tạo</option>
+                    <option value="updated_at">Ngày cập nhật</option>
+                  </select>
+                  <select
+                    value={order}
+                    onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
+                    className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  >
+                    <option value="DESC">Giảm dần</option>
+                    <option value="ASC">Tăng dần</option>
+                  </select>
+                  <div className="flex flex-wrap gap-2">
+                    <input
+                      type="number"
+                      value={minIncome}
+                      onChange={(e) => setMinIncome(e.target.value)}
+                      placeholder="Lương tối thiểu"
+                      className="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      value={maxIncome}
+                      onChange={(e) => setMaxIncome(e.target.value)}
+                      placeholder="Lương tối đa"
+                      className="w-32 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      value={minExp}
+                      onChange={(e) => setMinExp(e.target.value)}
+                      placeholder="Exp từ (năm)"
+                      className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                    <input
+                      type="number"
+                      value={maxExp}
+                      onChange={(e) => setMaxExp(e.target.value)}
+                      placeholder="Exp đến (năm)"
+                      className="w-28 rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    />
+                    <select
+                      value={graduationRank}
+                      onChange={(e) => setGraduationRank(e.target.value)}
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    >
+                      <option value="">Trình độ</option>
+                      <option value="Cấp 1">Cấp 1</option>
+                      <option value="Cấp 2">Cấp 2</option>
+                      <option value="Cấp 3">Cấp 3</option>
+                      <option value="Đại học">Đại học</option>
+                    </select>
+                    <select
+                      value={employed}
+                      onChange={(e) => setEmployed(e.target.value)}
+                      className="rounded-lg border border-gray-200 px-3 py-2 text-sm"
+                    >
+                      <option value="">Tình trạng việc làm</option>
+                      <option value="true">Đã có việc</option>
+                      <option value="false">Chưa có việc</option>
+                    </select>
+                    <label className="inline-flex items-center gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={awaitingInterview}
+                        onChange={(e) => setAwaitingInterview(e.target.checked)}
+                        className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                      />
+                      Đang chờ phỏng vấn
+                    </label>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className="text-xs text-gray-500">
+                      Ngành mong muốn:
+                    </span>
+                    {INDUSTRY_OPTIONS.map((opt) => (
+                      <label
+                        key={opt}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={fields.includes(opt)}
+                          onChange={(e) => {
+                            if (e.target.checked) setFields([...fields, opt]);
+                            else setFields(fields.filter((f) => f !== opt));
+                          }}
+                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </div>
               )}
+
+              {/* Action buttons - always visible */}
+              <div className="flex items-center gap-3 w-full md:w-auto justify-end">
+                {selectedRows.length > 0 && (
+                  <button
+                    onClick={handleBulkDelete}
+                    disabled={deleteMutation.isPending}
+                    className="flex items-center gap-2 px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg text-sm font-medium hover:bg-red-100 transition-colors animate-in fade-in disabled:opacity-60"
+                  >
+                    <Trash2 size={16} /> Xóa ({selectedRows.length})
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 

@@ -5,14 +5,17 @@ import type {
   UseFormSetValue,
   UseFormWatch,
 } from "react-hook-form";
-import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
+import type {
+  CreateCandidateSchema,
+  UpdateCandidateSchema,
+} from "@/schemas/candidate.schema";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 
 interface Props {
-  register: UseFormRegister<CreateCandidateSchema>;
-  errors: FieldErrors<CreateCandidateSchema>;
-  setValue: UseFormSetValue<CreateCandidateSchema>;
-  watch: UseFormWatch<CreateCandidateSchema>;
+  register: UseFormRegister<CreateCandidateSchema | UpdateCandidateSchema>;
+  errors: FieldErrors<CreateCandidateSchema | UpdateCandidateSchema>;
+  setValue: UseFormSetValue<CreateCandidateSchema | UpdateCandidateSchema>;
+  watch: UseFormWatch<CreateCandidateSchema | UpdateCandidateSchema>;
 }
 
 export default function AddressSection({
@@ -30,7 +33,7 @@ export default function AddressSection({
   const wards = useMemo(() => {
     if (!provinceCode) return [];
     return allWards.filter(
-      (w: any) => String((w as any).province_code) === String(provinceCode)
+      (w: any) => String((w as any).province_code) === String(provinceCode),
     );
   }, [allWards, provinceCode]);
 

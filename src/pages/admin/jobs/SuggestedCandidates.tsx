@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from "react";
-import { Lightbulb, Search } from "lucide-react";
+import { Lightbulb, Search, Eye } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useAdminSuggestedCandidatesQuery } from "@/api/job-post.api";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import path from "@/constants/path";
 
 const AdminSuggestedCandidates: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [jobId, setJobId] = useState("");
   const [submittedId, setSubmittedId] = useState("");
   const { data, isFetching } = useAdminSuggestedCandidatesQuery(submittedId);
@@ -74,19 +76,35 @@ const AdminSuggestedCandidates: React.FC = () => {
                 candidates.map((c: any) => (
                   <div
                     key={c.candidate_id || c.id}
-                    className="flex items-center gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
+                    className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-white p-4 shadow-sm"
                   >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                      <Lightbulb className="h-5 w-5" />
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                        <Lightbulb className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {c.full_name || "Chưa có tên"}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Email: {c.email || c.user?.email || "—"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">
-                        {c.full_name || "Chưa có tên"}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Email: {c.email || c.user?.email || "—"}
-                      </p>
-                    </div>
+                    <button
+                      onClick={() =>
+                        navigate(
+                          path.ADMIN_CANDIDATE_VIEW.replace(
+                            ":id",
+                            c.candidate_id || c.id,
+                          ),
+                        )
+                      }
+                      className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                    >
+                      <Eye className="h-4 w-4" />
+                      Chi tiết
+                    </button>
                   </div>
                 ))
               )}

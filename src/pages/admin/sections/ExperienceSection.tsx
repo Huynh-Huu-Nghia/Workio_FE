@@ -1,12 +1,15 @@
 import { useFieldArray } from "react-hook-form";
 import type { Control, UseFormRegister, FieldErrors } from "react-hook-form";
-import type { CreateCandidateSchema } from "@/schemas/candidate.schema";
+import type {
+  CreateCandidateSchema,
+  UpdateCandidateSchema,
+} from "@/schemas/candidate.schema";
 import { Trash2, PlusCircle } from "lucide-react";
 
 interface Props {
-  control: Control<CreateCandidateSchema>;
-  register: UseFormRegister<CreateCandidateSchema>;
-  errors: FieldErrors<CreateCandidateSchema>;
+  control: Control<CreateCandidateSchema | UpdateCandidateSchema>;
+  register: UseFormRegister<CreateCandidateSchema | UpdateCandidateSchema>;
+  errors: FieldErrors<CreateCandidateSchema | UpdateCandidateSchema>;
 }
 
 export default function ExperienceSection({

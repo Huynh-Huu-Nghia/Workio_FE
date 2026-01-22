@@ -3,6 +3,10 @@ import path from "@/constants/path";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAdminRecruiterDetailQuery } from "@/api/recruiter.api";
 import {
+  useProvinceByCodeQuery,
+  useWardByCodeQuery,
+} from "@/api/provinces.api";
+import {
   Loader2,
   ArrowLeft,
   BadgeCheck,
@@ -77,6 +81,10 @@ export default function RecruiterView() {
   const primaryFields = recruiter ? parseList(recruiter.fields) : [];
   const relatedFields = recruiter ? parseList(recruiter.related_fields) : [];
   const industries = recruiter ? parseList(recruiter.industry) : [];
+  const { data: province } = useProvinceByCodeQuery(
+    recruiter?.address?.province_code,
+  );
+  const { data: ward } = useWardByCodeQuery(recruiter?.address?.ward_code);
   const handleBack = () => {
     const canUseHistory =
       typeof window !== "undefined" && window.history.length > 1;
@@ -146,7 +154,7 @@ export default function RecruiterView() {
                       </span>
                     </div>
                     <p className="text-sm text-gray-500">
-                      {recruiter?.user?.email || recruiter.email || "—"}
+                      {recruiter?.recruiter?.email || recruiter.email || "—"}
                     </p>
                   </div>
                 </div>
@@ -156,14 +164,14 @@ export default function RecruiterView() {
                   </span>
                 </div>
               </div>
-              <div className="mt-4 flex flex-wrap gap-3 text-sm text-gray-600">
+              <div className="mt-4 space-y-2 text-sm text-gray-600">
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
                   <Phone className="h-4 w-4 text-gray-400" />
                   {recruiter.phone || "—"}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
                   <Mail className="h-4 w-4 text-gray-400" />
-                  {recruiter?.user?.email || recruiter.email || "—"}
+                  {recruiter?.recruiter?.email || recruiter.email || "—"}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-full bg-slate-50 px-3 py-1 text-gray-700">
                   <Globe className="h-4 w-4 text-gray-400" />
@@ -268,7 +276,7 @@ export default function RecruiterView() {
                     <InfoItem label="Website" value={recruiter.website} />
                     <InfoItem
                       label="Email liên hệ"
-                      value={recruiter?.user?.email || recruiter.email}
+                      value={recruiter?.recruiter?.email || recruiter.email}
                     />
                     <InfoItem label="Điện thoại" value={recruiter.phone} />
                   </div>
@@ -338,13 +346,13 @@ export default function RecruiterView() {
                     <div>
                       <p className="text-gray-500">Phường/Xã</p>
                       <p className="font-semibold text-gray-900">
-                        {recruiter.address?.ward_code || "—"}
+                        {ward?.name || recruiter.address?.ward_code || "—"}
                       </p>
                     </div>
                     <div>
                       <p className="text-gray-500">Tỉnh/TP</p>
                       <p className="font-semibold text-gray-900">
-                        {recruiter.address?.province?.name ||
+                        {province?.name ||
                           recruiter.address?.province_code ||
                           "—"}
                       </p>

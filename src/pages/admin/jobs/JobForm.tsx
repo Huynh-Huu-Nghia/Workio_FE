@@ -212,7 +212,7 @@ export default function JobFormAdmin() {
               <option value="">Chọn nhà tuyển dụng</option>
               {recruiters.map((rec: any) => (
                 <option key={rec.recruiter_id} value={rec.recruiter_id}>
-                  {rec.company_name || rec.user?.email || rec.recruiter_id}
+                  {rec.company_name || rec.recruiter?.email || rec.recruiter_id}
                 </option>
               ))}
             </select>
@@ -221,7 +221,7 @@ export default function JobFormAdmin() {
                 <div className="font-semibold text-gray-800">
                   {selectedRecruiter.company_name || "Chưa cập nhật tên"}
                 </div>
-                <div>Email: {selectedRecruiter.user?.email || "—"}</div>
+                <div>Email: {selectedRecruiter.recruiter?.email || "—"}</div>
                 <div>Điện thoại: {selectedRecruiter.phone || "—"}</div>
                 <div>Mã số thuế: {selectedRecruiter.tax_number || "—"}</div>
               </div>

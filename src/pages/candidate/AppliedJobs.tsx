@@ -475,7 +475,7 @@ const CandidateAppliedJobs: React.FC = () => {
                 const recruiterLabel =
                   job.recruiter?.company_name ||
                   job.recruiter_name ||
-                  job.recruiter?.user?.email ||
+                  job.recruiter?.recruiter?.email ||
                   job.recruiter?.contact_name ||
                   "Nhà tuyển dụng";
                 const canViewRecruiter = Boolean(recruiterId);

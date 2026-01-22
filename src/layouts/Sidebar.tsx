@@ -71,172 +71,175 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
     }
   };
 
-  const menuGroups: MenuGroup[] = [
-    {
-      title: "TỔNG QUAN",
-      items: [
-        {
-          id: "dashboard",
-          label: "Dashboard",
-          icon: <LayoutDashboard size={20} />,
-          link: "/admin/dashboard",
-        },
-        {
-          id: "reports",
-          label: "Báo cáo",
-          icon: <BarChart3 size={20} />,
-          link: "/admin/reports",
-        },
-      ],
-    },
-    {
-      title: "QUẢN LÝ NGƯỜI DÙNG",
-      items: [
-        {
-          id: "candidates",
-          label: "Ứng viên",
-          icon: <UserCheck size={20} />,
-          link: "#",
-          subItems: [
-            {
-              id: "all-candidates",
-              label: "Danh sách Ứng viên",
-              link: "/admin/candidates/list",
-            },
-            {
-              id: "add-candidate",
-              label: "Thêm Ứng viên",
-              link: "/admin/candidates/create",
-            },
-            // removed tin đã ứng tuyển per request
-          ],
-        },
-        {
-          id: "recruiters",
-          label: "Nhà tuyển dụng",
-          icon: <Building2 size={20} />,
-          link: "#",
-          subItems: [
-            {
-              id: "all-recruiters",
-              label: "Danh sách NTD",
-              link: "/admin/recruiters",
-            },
-            // mục chờ xác thực đã bỏ theo yêu cầu
-            {
-              id: "add-recruiter",
-              label: "Thêm NTD",
-              link: "/admin/recruiters/create",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: "QUẢN LÝ VIỆC LÀM",
-      items: [
-        {
-          id: "jobs",
-          label: "Tin tuyển dụng",
-          icon: <Briefcase size={20} />,
-          link: "#",
-          subItems: [
-            { id: "all-jobs", label: "Tất cả tin đăng", link: "/admin/jobs" },
-            {
-              id: "pending-jobs",
-              label: "Tin chờ duyệt",
-              link: "/admin/jobs/pending",
-              hidden: true,
-            },
-            {
-              id: "interviews",
-              label: "Lịch phỏng vấn",
-              link: "/admin/interviews",
-            },
-            {
-              id: "interviews-candidate",
-              label: "PV theo ứng viên",
-              link: "/admin/interviews/candidate",
-            },
-            {
-              id: "job-candidates",
-              label: "Ứng viên theo tin",
-              link: "/admin/jobs/candidates",
-            },
-            {
-              id: "suggested-jobs",
-              label: "Gợi ý việc làm",
-              link: "/admin/jobs/suggested",
-            },
-            {
-              id: "suggested-candidates",
-              label: "Gợi ý ứng viên",
-              link: "/admin/jobs/suggested-candidates",
-            },
-          ],
-        },
-      ],
-    },
-    {
-      title: "HỆ THỐNG",
-      items: [
-        {
-          id: "request",
-          label: "Yêu cầu hỗ trợ",
-          icon: <MessageSquare size={20} />,
-          link: "/admin/requests",
-        },
-        {
-          id: "centers",
-          label: "Trung tâm",
-          icon: <Building2 size={20} />,
-          link: "#",
-          subItems: [
-            {
-              id: "center-list",
-              label: "Danh sách trung tâm",
-              link: "/admin/centers",
-            },
-            {
-              id: "center-create",
-              label: "Thêm trung tâm",
-              link: "/admin/centers/create",
-            },
-          ],
-        },
-        {
-          id: "categories",
-          label: "Danh mục chung",
-          icon: <List size={20} />,
-          link: "#",
-          subItems: [
-            {
-              id: "industries",
-              label: "Ngành nghề",
-              link: "/admin/categories/industries",
-            },
-            {
-              id: "skills",
-              label: "Kỹ năng",
-              link: "/admin/categories/skills",
-            },
-          ],
-        },
-        {
-          id: "social",
-          label: "Tra cứu BHXH",
-          icon: <ShieldCheck size={20} />,
-          link: "/admin/social-insurances",
-        },
-        {
-          id: "settings",
-          label: "Cài đặt tài khoản",
-          icon: <Settings size={20} />,
-          link: "/admin/settings",
-        },
-      ],
-    },
-  ];
+  const menuGroups: MenuGroup[] = React.useMemo(
+    () => [
+      {
+        title: "TỔNG QUAN",
+        items: [
+          {
+            id: "dashboard",
+            label: "Dashboard",
+            icon: <LayoutDashboard size={20} />,
+            link: "/admin/dashboard",
+          },
+          {
+            id: "reports",
+            label: "Báo cáo",
+            icon: <BarChart3 size={20} />,
+            link: "/admin/reports",
+          },
+        ],
+      },
+      {
+        title: "QUẢN LÝ NGƯỜI DÙNG",
+        items: [
+          {
+            id: "candidates",
+            label: "Ứng viên",
+            icon: <UserCheck size={20} />,
+            link: "#",
+            subItems: [
+              {
+                id: "all-candidates",
+                label: "Danh sách Ứng viên",
+                link: "/admin/candidates/list",
+              },
+              {
+                id: "add-candidate",
+                label: "Thêm Ứng viên",
+                link: "/admin/candidates/create",
+              },
+              // removed tin đã ứng tuyển per request
+            ],
+          },
+          {
+            id: "recruiters",
+            label: "Nhà tuyển dụng",
+            icon: <Building2 size={20} />,
+            link: "#",
+            subItems: [
+              {
+                id: "all-recruiters",
+                label: "Danh sách NTD",
+                link: "/admin/recruiters",
+              },
+              // mục chờ xác thực đã bỏ theo yêu cầu
+              {
+                id: "add-recruiter",
+                label: "Thêm NTD",
+                link: "/admin/recruiters/create",
+              },
+            ],
+          },
+          {
+            id: "centers",
+            label: "Trung tâm",
+            icon: <Building2 size={20} />,
+            link: "#",
+            subItems: [
+              {
+                id: "center-list",
+                label: "Danh sách trung tâm",
+                link: "/admin/centers",
+              },
+              {
+                id: "center-create",
+                label: "Thêm trung tâm",
+                link: "/admin/centers/create",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: "QUẢN LÝ VIỆC LÀM",
+        items: [
+          {
+            id: "jobs",
+            label: "Tin tuyển dụng",
+            icon: <Briefcase size={20} />,
+            link: "#",
+            subItems: [
+              { id: "all-jobs", label: "Tất cả tin đăng", link: "/admin/jobs" },
+              {
+                id: "pending-jobs",
+                label: "Tin chờ duyệt",
+                link: "/admin/jobs/pending",
+                hidden: true,
+              },
+              {
+                id: "interviews",
+                label: "Lịch phỏng vấn",
+                link: "/admin/interviews",
+              },
+              {
+                id: "interviews-candidate",
+                label: "PV theo ứng viên",
+                link: "/admin/interviews/candidate",
+              },
+              {
+                id: "job-candidates",
+                label: "Ứng viên theo tin",
+                link: "/admin/jobs/candidates",
+              },
+              {
+                id: "suggested-jobs",
+                label: "Gợi ý việc làm",
+                link: "/admin/jobs/suggested",
+              },
+              {
+                id: "suggested-candidates",
+                label: "Gợi ý ứng viên",
+                link: "/admin/jobs/suggested-candidates",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: "HỆ THỐNG",
+        items: [
+          {
+            id: "request",
+            label: "Yêu cầu hỗ trợ",
+            icon: <MessageSquare size={20} />,
+            link: "/admin/requests",
+          },
+          {
+            id: "categories",
+            label: "Danh mục chung",
+            icon: <List size={20} />,
+            link: "#",
+            subItems: [
+              {
+                id: "industries",
+                label: "Ngành nghề",
+                link: "/admin/categories/industries",
+              },
+              {
+                id: "skills",
+                label: "Kỹ năng",
+                link: "/admin/categories/skills",
+              },
+            ],
+          },
+          {
+            id: "social",
+            label: "Tra cứu BHXH",
+            icon: <ShieldCheck size={20} />,
+            link: "/admin/social-insurances",
+          },
+          {
+            id: "settings",
+            label: "Cài đặt tài khoản",
+            icon: <Settings size={20} />,
+            link: "/admin/settings",
+          },
+        ],
+      },
+    ],
+    [],
+  );
 
   useEffect(() => {
     const currentPath = location.pathname;
@@ -254,7 +257,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
         }
       });
     });
-  }, [location.pathname]);
+  }, [location.pathname, menuGroups]);
 
   const toggleMenu = (id: string) => {
     setOpenMenus((prev) =>
