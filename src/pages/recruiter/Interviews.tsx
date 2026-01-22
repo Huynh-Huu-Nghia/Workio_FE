@@ -1,31 +1,56 @@
+// File: src/pages/Recruiter/Interviews.tsx
 import React, { useMemo, useState } from "react";
-import { CalendarClock, Loader2, MapPin, XCircle, Filter, Search } from "lucide-react";
-import { useRecruiterInterviewsQuery, useRecruiterJobPostsQuery } from "@/api/recruiter.api";
+import { 
+  CalendarClock, 
+  Loader2, 
+  MapPin, 
+  Search, 
+  Edit, 
+  Trash2, 
+  Globe 
+} from "lucide-react";
+import { 
+  useRecruiterInterviewsQuery, 
+  useRecruiterJobPostsQuery, 
+  useDeleteRecruiterInterviewMutation 
+} from "@/api/recruiter.api";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
+import { toast } from "react-toastify";
+import EditInterviewModal from "./EditInterviewModal";
 
 const statusColors: Record<string, string> = {
-  completed: "bg-emerald-50 text-emerald-700",
-  cancelled: "bg-red-50 text-red-700",
-  pending: "bg-amber-50 text-amber-700",
-  default: "bg-blue-50 text-blue-700",
+  "Đang diễn ra": "bg-amber-50 text-amber-700 border-amber-200",
+  "Đã kết thúc": "bg-emerald-50 text-emerald-700 border-emerald-200",
+  "Đã hủy": "bg-red-50 text-red-700 border-red-200",
 };
 
 const RecruiterInterviews: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Lịch phỏng vấn";
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [jobFilter, setJobFilter] = useState("all");
-  const [timeFilter, setTimeFilter] = useState("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortBy, setSortBy] = useState<"scheduled_time" | "created_at">("scheduled_time");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const { data, isLoading, isError } = useRecruiterInterviewsQuery();
+  
+  // --- FIX LỖI DATE.NOW() ---
+  // Lưu thời gian hiện tại vào state để đảm bảo pure render
+  const [now] = useState(new Date().getTime());
+
+  // Data
+  const { data: interviewsRes, isLoading } = useRecruiterInterviewsQuery();
   const { data: jobsRes } = useRecruiterJobPostsQuery();
-  const interviews = data?.data ?? [];
+  const deleteMutation = useDeleteRecruiterInterviewMutation();
+
+  const interviews = interviewsRes?.data ?? [];
   const jobPosts = jobsRes?.data ?? [];
 
+  // Filters State
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [jobFilter, setJobFilter] = useState("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  
+  // Modal State
+  const [editModal, setEditModal] = useState<{isOpen: boolean, interview: any}>({ isOpen: false, interview: null });
+
+  // Map Job để lấy tên Job nhanh (nếu backend không trả về đủ deep include)
   const jobMap = useMemo(() => {
     return jobPosts.reduce((acc: Record<string, any>, job: any) => {
       acc[job.id] = job;
@@ -33,257 +58,186 @@ const RecruiterInterviews: React.FC = () => {
     }, {});
   }, [jobPosts]);
 
-  const filtered = useMemo(() => {
+  // Logic Lọc
+  const filteredInterviews = useMemo(() => {
     return interviews.filter((itv: any) => {
-      if (statusFilter !== "all" && (itv.status || "pending") !== statusFilter) return false;
-      if (jobFilter !== "all" && String(itv.job_post_id) !== jobFilter) return false;
-      if (timeFilter !== "all" && itv.scheduled_time) {
-        const time = new Date(itv.scheduled_time).getTime();
-        const now = Date.now();
-        if (timeFilter === "upcoming" && time <= now) return false;
-        if (timeFilter === "past" && time > now) return false;
-      }
+      // 1. Lọc theo Job
+      if (jobFilter !== "all" && itv.job_post_id !== jobFilter) return false;
+      
+      // 2. Lọc theo Status (Enum: 'Đang diễn ra', 'Đã kết thúc')
+      if (statusFilter !== "all" && itv.status !== statusFilter) return false;
+      
+      // 3. Tìm kiếm
       if (searchTerm.trim()) {
         const keyword = searchTerm.trim().toLowerCase();
-        const haystack = `${itv.candidate_name || ""} ${itv.candidate_id || ""} ${itv.notes || ""}`.toLowerCase();
+        // Handle alias dữ liệu từ backend trả về
+        const candidateName = itv.candidate?.full_name || itv.candidate?.candidate?.name || "";
+        const candidateEmail = itv.candidate?.email || itv.candidate?.candidate?.email || "";
+        const jobTitle = itv.job_post?.position || jobMap[itv.job_post_id]?.position || "";
+        
+        const haystack = `${candidateName} ${candidateEmail} ${jobTitle} ${itv.notes || ""}`.toLowerCase();
         if (!haystack.includes(keyword)) return false;
       }
       return true;
     });
-  }, [interviews, statusFilter, jobFilter, timeFilter, searchTerm]);
+  }, [interviews, jobFilter, statusFilter, searchTerm, jobMap]);
 
-  const sortedInterviews = useMemo(() => {
-    const list = [...filtered];
-    const direction = sortOrder === "asc" ? 1 : -1;
-    const getTime = (value?: string) => (value ? new Date(value).getTime() : 0);
-    list.sort((a: any, b: any) => {
-      const currentSort = sortBy;
-      const aVal = currentSort === "scheduled_time" ? getTime(a.scheduled_time) : getTime(a.created_at);
-      const bVal = currentSort === "scheduled_time" ? getTime(b.scheduled_time) : getTime(b.created_at);
-      return (aVal - bVal) * direction;
-    });
-    return list;
-  }, [filtered, sortBy, sortOrder]);
-
-  const stats = useMemo(() => {
-    const upcoming = interviews.filter((itv: any) => {
-      if (!itv.scheduled_time) return false;
-      return new Date(itv.scheduled_time).getTime() > Date.now();
-    });
-    const completed = interviews.filter((itv: any) => itv.status === "completed");
-    const pending = interviews.filter((itv: any) => itv.status !== "completed");
-    return { total: interviews.length, upcoming: upcoming.length, completed: completed.length, pending: pending.length };
-  }, [interviews]);
-
-  const resetFilters = () => {
-    setStatusFilter("all");
-    setJobFilter("all");
-    setTimeFilter("all");
-    setSearchTerm("");
-    setSortBy("scheduled_time");
-    setSortOrder("asc");
+  // Handle Delete
+  const handleDelete = async (id: string) => {
+    if (!window.confirm("Bạn có chắc muốn xóa lịch phỏng vấn này? Hành động này không thể hoàn tác.")) return;
+    try {
+      await deleteMutation.mutateAsync(id);
+      toast.success("Đã xóa lịch phỏng vấn");
+    } catch (e) {
+      toast.error("Xóa thất bại");
+    }
   };
 
-  const isFiltered =
-    statusFilter !== "all" ||
-    jobFilter !== "all" ||
-    timeFilter !== "all" ||
-    searchTerm.trim().length > 0 ||
-    sortBy !== "scheduled_time" ||
-    sortOrder !== "asc";
+  // Handle Edit Check
+  const handleEditClick = (itv: any) => {
+    const scheduled = new Date(itv.scheduled_time).getTime();
+    
+    // Logic chặn sửa: Nếu đã quá hạn VÀ trạng thái là Đã kết thúc/Đã hủy
+    if (scheduled < now && (itv.status === "Đã kết thúc" || itv.status === "Đã hủy")) {
+        toast.info("Lịch phỏng vấn đã kết thúc, không thể chỉnh sửa.");
+        return;
+    }
+    setEditModal({ isOpen: true, interview: itv });
+  };
 
   return (
     <RecruiterLayout title={title}>
       <div className="space-y-6">
+        {/* Header Stats & Filter */}
         <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between mb-6">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">Quản lý lịch</p>
-              <h2 className="text-xl font-bold text-gray-900">Lịch phỏng vấn ứng viên</h2>
-              <p className="text-sm text-gray-500">
-                Theo dõi kết quả API `/recruiter/interviews-of-recruiter` để bám sát quá trình tuyển dụng.
-              </p>
+              <h2 className="text-xl font-bold text-gray-900">Danh sách lịch hẹn</h2>
+              <p className="text-sm text-gray-500">Quản lý các cuộc phỏng vấn sắp tới và đã hoàn thành.</p>
             </div>
-            <div className="flex flex-wrap gap-2 text-sm text-gray-500">
-              <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
-                Tổng: {stats.total}
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
-                Sắp diễn ra: {stats.upcoming}
-              </span>
-              <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
-                Đã hoàn tất: {stats.completed}
-              </span>
+            <div className="flex gap-2 w-full lg:w-auto">
+                <div className="relative w-full lg:w-64">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <input 
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        placeholder="Tìm tên, email, vị trí..." 
+                        className="w-full pl-9 pr-4 py-2 border rounded-lg text-sm focus:outline-none focus:border-orange-500"
+                    />
+                </div>
             </div>
           </div>
-        </section>
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="rounded-2xl border border-dashed border-gray-100 bg-slate-50 p-4">
-            <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-              <div className="flex items-center gap-2 text-sm font-semibold text-gray-700">
-                <Filter className="h-4 w-4 text-orange-500" /> Bộ lọc & sắp xếp
-              </div>
-              <button
-                type="button"
-                onClick={resetFilters}
-                disabled={!isFiltered}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 transition disabled:opacity-40"
-              >
-                Đặt lại tất cả
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-3 lg:grid-cols-3">
-              <div className="lg:col-span-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Tìm ứng viên, ghi chú..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                  />
-                </div>
-              </div>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="pending">Đang xử lý</option>
-                <option value="completed">Hoàn thành</option>
-                <option value="cancelled">Đã hủy</option>
-              </select>
-              <select
+          <div className="grid gap-3 md:grid-cols-3">
+            <select 
                 value={jobFilter}
                 onChange={(e) => setJobFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
+                className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-orange-500"
+            >
                 <option value="all">Tất cả tin tuyển dụng</option>
                 {jobPosts.map((job: any) => (
-                  <option key={job.id} value={String(job.id)}>
-                    {job.position}
-                  </option>
+                    <option key={job.id} value={job.id}>{job.position}</option>
                 ))}
-              </select>
-            </div>
-
-            <div className="mt-3 grid gap-3 lg:grid-cols-3">
-              <select
-                value={timeFilter}
-                onChange={(e) => setTimeFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="all">Tất cả thời gian</option>
-                <option value="upcoming">Sắp diễn ra</option>
-                <option value="past">Đã diễn ra</option>
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as "scheduled_time" | "created_at")}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="scheduled_time">Sắp xếp theo lịch hẹn</option>
-                <option value="created_at">Theo ngày tạo</option>
-              </select>
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="asc">Tăng dần</option>
-                <option value="desc">Giảm dần</option>
-              </select>
-            </div>
+            </select>
+            
+            {/* Bộ lọc Status khớp với DB */}
+            <select 
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="rounded-lg border px-3 py-2 text-sm focus:outline-none focus:border-orange-500"
+            >
+                <option value="all">Tất cả trạng thái</option>
+                <option value="Đang diễn ra">Đang diễn ra</option>
+                <option value="Đã kết thúc">Đã kết thúc</option>
+                {/* <option value="Đã hủy">Đã hủy</option> (Nếu DB có enum này) */}
+            </select>
           </div>
-
-          {isLoading && (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              <Loader2 className="mr-2 inline h-5 w-5 animate-spin text-orange-500" /> Đang tải lịch...
-            </div>
-          )}
-
-          {isError && (
-            <div className="mt-4 rounded-xl border border-dashed border-red-200 p-6 text-center text-red-600">
-              <XCircle className="mr-2 inline h-5 w-5" /> Không thể tải lịch phỏng vấn.
-            </div>
-          )}
-
-          {!isLoading && !isError && sortedInterviews.length === 0 && (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Chưa có lịch phỏng vấn phù hợp bộ lọc.
-            </div>
-          )}
-
-          {!isLoading && !isError && sortedInterviews.length > 0 && (
-            <div className="mt-4 space-y-3">
-              {sortedInterviews.map((itv: any) => {
-                const job = jobMap[String(itv.job_post_id)] || {};
-                const status = itv.status || "pending";
-                return (
-                  <article
-                    key={itv.id}
-                    className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm"
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                      <div>
-                        <p className="text-xs uppercase tracking-wider text-gray-400">
-                          Tin tuyển dụng: {job.position || itv.job_post_id || "—"}
-                        </p>
-                        <h3 className="text-lg font-semibold text-gray-900">
-                          Ứng viên: {itv.candidate_name || itv.candidate_id || "—"}
-                        </h3>
-                        {itv.notes && (
-                          <p className="text-sm text-gray-600">{itv.notes}</p>
-                        )}
-                      </div>
-                      <span
-                        className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${
-                          statusColors[status] || statusColors.default
-                        }`}
-                      >
-                        {status === "pending"
-                          ? "Đang xử lý"
-                          : status === "completed"
-                          ? "Hoàn thành"
-                          : status === "cancelled"
-                          ? "Đã hủy"
-                          : status}
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-4 text-sm text-gray-600">
-                      <span className="inline-flex items-center gap-2">
-                        <CalendarClock className="h-4 w-4 text-gray-400" />
-                        {formatDateTime(itv.scheduled_time)}
-                      </span>
-                      {itv.location && (
-                        <span className="inline-flex items-center gap-2">
-                          <MapPin className="h-4 w-4 text-gray-400" />
-                          {itv.location}
-                        </span>
-                      )}
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          )}
         </section>
+
+        {/* List */}
+        <section>
+            {isLoading ? (
+                <div className="flex justify-center py-10"><Loader2 className="animate-spin text-orange-500"/></div>
+            ) : filteredInterviews.length === 0 ? (
+                <div className="text-center py-16 text-gray-500 bg-white rounded-xl border border-dashed">
+                    Chưa có lịch phỏng vấn nào phù hợp.
+                </div>
+            ) : (
+                <div className="grid gap-4">
+                    {filteredInterviews.map((itv: any) => {
+                        const candidateName = itv.candidate?.full_name || itv.candidate?.candidate?.name || "Ứng viên ẩn";
+                        const candidateEmail = itv.candidate?.email || itv.candidate?.candidate?.email || "";
+                        const jobTitle = itv.job_post?.position || jobMap[itv.job_post_id]?.position || "---";
+                        
+                        // Check expire dùng biến 'now' từ state (Safe for render)
+                        const scheduledTime = new Date(itv.scheduled_time).getTime();
+                        const isExpired = scheduledTime < now;
+
+                        return (
+                            <div key={itv.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition flex flex-col md:flex-row justify-between gap-4">
+                                <div className="space-y-2 flex-1">
+                                    <div className="flex items-center flex-wrap gap-2">
+                                        <h3 className="font-bold text-gray-900 text-lg">{candidateName}</h3>
+                                        <span className="text-xs text-gray-400">({candidateEmail})</span>
+                                        <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold border ${statusColors[itv.status] || "bg-gray-100 text-gray-600"}`}>
+                                            {itv.status}
+                                        </span>
+                                    </div>
+                                    <p className="text-sm text-gray-600 font-medium">Vị trí: <span className="text-orange-600">{jobTitle}</span></p>
+                                    
+                                    <div className="flex flex-wrap gap-4 text-sm text-gray-500 mt-2">
+                                        <span className="flex items-center gap-1">
+                                            <CalendarClock size={16}/> 
+                                            {new Date(itv.scheduled_time).toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })}
+                                            {isExpired && itv.status === 'Đang diễn ra' && <span className="text-red-500 text-xs font-bold ml-1">(Quá hạn)</span>}
+                                        </span>
+                                        <span className="flex items-center gap-1">
+                                            {itv.interview_type === 'Online' ? <Globe size={16}/> : <MapPin size={16}/>} 
+                                            {itv.interview_type === 'Online' ? (
+                                                <a href={itv.location} target="_blank" rel="noreferrer" className="text-blue-600 underline truncate max-w-[200px]">
+                                                    {itv.location || "Link Online"}
+                                                </a>
+                                            ) : (
+                                                itv.location
+                                            )}
+                                        </span>
+                                    </div>
+                                    {itv.notes && <p className="text-sm text-gray-500 italic border-l-2 border-gray-200 pl-2 mt-2">{itv.notes}</p>}
+                                </div>
+
+                                <div className="flex items-start gap-2 self-end md:self-center">
+                                    <button 
+                                        onClick={() => handleEditClick(itv)}
+                                        className={`p-2 rounded-lg border transition ${isExpired && itv.status === 'Đã kết thúc' ? 'text-gray-300 border-gray-100 cursor-not-allowed' : 'text-blue-600 border-blue-100 hover:bg-blue-50'}`}
+                                        title="Chỉnh sửa"
+                                        disabled={isExpired && itv.status === 'Đã kết thúc'}
+                                    >
+                                        <Edit size={18} />
+                                    </button>
+                                    <button 
+                                        onClick={() => handleDelete(itv.id)}
+                                        className="p-2 rounded-lg border border-red-100 text-red-600 hover:bg-red-50 transition"
+                                        title="Xóa"
+                                    >
+                                        <Trash2 size={18} />
+                                    </button>
+                                </div>
+                            </div>
+                        )
+                    })}
+                </div>
+            )}
+        </section>
+
+        {/* Edit Modal */}
+        <EditInterviewModal 
+            isOpen={editModal.isOpen} 
+            onClose={() => setEditModal({isOpen: false, interview: null})} 
+            interview={editModal.interview}
+        />
       </div>
     </RecruiterLayout>
   );
 };
-
-const formatDateTime = (value?: string) =>
-  value
-    ? new Date(value).toLocaleString("vi-VN", {
-        hour12: false,
-        dateStyle: "medium",
-        timeStyle: "short",
-      })
-    : "Chưa đặt lịch";
 
 export default RecruiterInterviews;

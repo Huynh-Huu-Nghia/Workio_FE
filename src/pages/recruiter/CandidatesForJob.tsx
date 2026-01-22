@@ -1,259 +1,257 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Users, Search, CalendarPlus, Briefcase } from "lucide-react";
+import React, { useEffect, useState } from "react";
+import { Users, Search, CalendarPlus, Briefcase, Mail, Phone, Loader2, MapPin, Eye, AlertCircle } from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
-import { Link, useLocation, useSearchParams } from "react-router-dom";
+import { Link, useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import {
   useCandidatesOfJobQuery,
-  useCreateRecruiterInterviewMutation,
   useRecruiterJobPostsQuery,
 } from "@/api/recruiter.api";
-import { toast } from "react-toastify";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
 import path from "@/constants/path";
-
-const formatDate = (value?: string | null) =>
-  value ? new Date(value).toLocaleDateString("vi-VN") : "Chưa thiết lập";
+import CreateInterviewModal from "./CreateInterviewModal";
+import CandidateDetailModal from "./CandidateDetailModal"; 
 
 const CandidatesForJob: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Ứng viên cho tin";
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  
   const initialJobId = searchParams.get("job_post_id") || "";
   const [selectedJobId, setSelectedJobId] = useState(initialJobId);
   const [candidateSearch, setCandidateSearch] = useState("");
 
+  // State Modal Phỏng vấn
+  const [modalData, setModalData] = useState<{
+    isOpen: boolean;
+    candidateId: string;
+    candidateName: string;
+  }>({ isOpen: false, candidateId: "", candidateName: "" });
+
+  // State Modal Chi tiết
+  const [detailModal, setDetailModal] = useState<{
+    isOpen: boolean;
+    candidate: any;
+  }>({ isOpen: false, candidate: null });
+
   const { data: jobsRes, isLoading: jobsLoading } = useRecruiterJobPostsQuery();
-  const jobPosts = jobsRes?.data ?? [];
+  const jobPosts = Array.isArray(jobsRes?.data) ? jobsRes.data : [];
+
+  // --- LOGIC CHECK TRẠNG THÁI JOB ---
+  const currentJob = jobPosts.find((j: any) => j.id === selectedJobId);
+  
+  // Điều kiện 1: Job phải active (Không Hủy, Không Đã tuyển/Đóng)
+  const isJobActive = currentJob && 
+                      currentJob.status !== "Đã hủy" && 
+                      currentJob.status !== "Đã tuyển"; // Hoặc "Đã kết thúc" tùy ENUM DB của bạn
+  
+  // Điều kiện 2: Job phải thuộc loại "Phỏng vấn"
+  const isInterviewType = currentJob && currentJob.recruitment_type === "Phỏng vấn";
+
+  // Tổng hợp điều kiện cho Job
+  const canCreateInterviewForJob = isJobActive && isInterviewType;
 
   useEffect(() => {
-    if (initialJobId) {
-      setSelectedJobId(initialJobId);
-      return;
-    }
     if (!selectedJobId && jobPosts.length > 0) {
-      setSelectedJobId(jobPosts[0].id);
+      const firstId = jobPosts[0].id;
+      setSelectedJobId(firstId);
+      setSearchParams({ job_post_id: firstId }, { replace: true });
     }
-  }, [initialJobId, jobPosts, selectedJobId]);
+  }, [jobPosts, selectedJobId, setSearchParams]);
 
-  const { data, isFetching } = useCandidatesOfJobQuery(selectedJobId);
-  const createInterview = useCreateRecruiterInterviewMutation();
-  const candidates = data?.data ?? [];
+  const handleJobChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const newId = e.target.value;
+    setSelectedJobId(newId);
+    setSearchParams({ job_post_id: newId });
+  };
 
-  const filteredCandidates = useMemo(() => {
-    if (!candidateSearch.trim()) return candidates;
-    const q = candidateSearch.trim().toLowerCase();
-    return candidates.filter((c: any) => {
-      const haystack =
-        `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
-      return haystack.includes(q);
-    });
-  }, [candidates, candidateSearch]);
 
-  const selectedJob = useMemo(
-    () => jobPosts.find((job: any) => job.id === selectedJobId),
-    [jobPosts, selectedJobId],
+  const { data: candidatesRes, isFetching: candidatesLoading, refetch } = useCandidatesOfJobQuery(selectedJobId);
+  const candidates = Array.isArray(candidatesRes?.data) ? candidatesRes.data : [];
+
+  const filteredCandidates = candidates.filter((c: any) => 
+    (c.full_name || "").toLowerCase().includes(candidateSearch.toLowerCase()) ||
+    (c.email || "").toLowerCase().includes(candidateSearch.toLowerCase())
   );
 
-  const handleCreateInterview = async (candidate: any) => {
-    if (!selectedJobId) {
-      toast.info("Vui lòng chọn tin tuyển dụng trước.");
-      return;
-    }
-    const when = window.prompt(
-      "Nhập thời gian phỏng vấn (YYYY-MM-DD HH:mm)",
-      "",
-    );
-    if (!when) return;
-    const locationInput =
-      window.prompt("Địa điểm (Online/Offline)", "Online") || "Online";
-    try {
-      const res = await createInterview.mutateAsync({
-        job_post_id: selectedJobId,
-        payload: {
-          candidate_id: candidate.candidate_id || candidate.id,
-          scheduled_time: when,
-          location: locationInput,
-          interview_type: "Online",
-          notes: "",
-        },
-      });
-      if ((res as any)?.err === 0) {
-        toast.success((res as any)?.mes || "Đã tạo lịch phỏng vấn.");
-      } else {
-        toast.error((res as any)?.mes || "Tạo phỏng vấn thất bại.");
-      }
-    } catch (e: any) {
-      toast.error(e?.response?.data?.mes || "Tạo phỏng vấn thất bại.");
-    }
+  const handleOpenInterviewModal = (candidate: any) => {
+    setModalData({
+      isOpen: true,
+      candidateId: candidate.candidate_id || candidate.id,
+      candidateName: candidate.full_name
+    });
   };
+
+  const handleViewDetail = (candidate: any) => {
+    setDetailModal({ isOpen: true, candidate: candidate });
+  }
 
   return (
     <RecruiterLayout title={title}>
       <div className="space-y-6">
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <section className="rounded-2xl border border-gray-100 bg-white p-6 shadow-sm">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">
-                Chọn tin tuyển dụng
-              </p>
-              <h2 className="text-xl font-bold text-gray-900">
-                Liệt kê ứng viên đã ứng tuyển
-              </h2>
-              <p className="text-sm text-gray-500">
-                Hệ thống tự động lấy ứng viên dựa trên API
-                `/recruiter/candidates-of-job-post`.
-              </p>
-            </div>
-            <div className="flex flex-col gap-2 sm:flex-row">
+              <h1 className="text-xl font-bold text-gray-900">{title}</h1>
+              <p className="text-sm text-gray-500">Quản lý hồ sơ ứng viên đã nộp đơn.</p>
+
+            </div>    
+            <div className="w-full md:w-72">
               <select
                 value={selectedJobId}
-                onChange={(e) => setSelectedJobId(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[240px]"
+                onChange={handleJobChange}
+                className="w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-700 focus:border-orange-500 focus:outline-none"
+                disabled={jobsLoading}
               >
-                <option value="">Chọn tin tuyển dụng</option>
-                {jobPosts
-                  .filter((job: any) => job.status !== "Đã tuyển")
-                  .map((job: any) => (
+                {jobsLoading ? <option>Đang tải tin...</option> : 
+                 jobPosts.length === 0 ? <option value="">Chưa có tin nào</option> :
+                 jobPosts.map((job: any) => (
                     <option key={job.id} value={job.id}>
-                      {job.position} • {job.status || "Chưa rõ"}
+                        {job.position} {job.status === 'Đã hủy' ? '(Đã hủy)' : ''}
                     </option>
-                  ))}
+                 ))
+                }
               </select>
-              <Link
-                to={path.RECRUITER_JOB_CREATE}
-                className="inline-flex items-center justify-center rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-              >
-                + Đăng tin mới
-              </Link>
             </div>
-          </div>
-
-          {jobsLoading ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-500">
-              Đang tải danh sách tin...
-            </div>
-          ) : jobPosts.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-500">
-              Bạn chưa có tin tuyển dụng nào. Hãy tạo tin mới để xem danh sách
-              ứng viên.
-            </div>
-          ) : selectedJob ? (
-            <div className="mt-5 grid gap-4 sm:grid-cols-3">
-              {[
-                {
-                  label: "Trạng thái",
-                  value: selectedJob.status || "Chưa rõ",
-                },
-                {
-                  label: "Chỉ tiêu",
-                  value: selectedJob.available_quantity ?? "—",
-                },
-                {
-                  label: "Hạn nộp",
-                  value: formatDate(selectedJob.application_deadline_to),
-                },
-              ].map((item) => (
-                <div key={item.label} className="rounded-xl bg-slate-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">
-                    {item.label}
-                  </p>
-                  <p className="mt-1 text-lg font-bold text-gray-900">
-                    {item.value}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : null}
-        </section>
-
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">
-                Lọc ứng viên
-              </p>
-              <h3 className="text-lg font-bold text-gray-900">
-                Kết quả cho tin đang chọn
-              </h3>
-            </div>
-            <div className="relative w-full md:w-64">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                value={candidateSearch}
-                onChange={(e) => setCandidateSearch(e.target.value)}
-                placeholder="Tìm theo tên hoặc email"
-                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              />
-            </div>
-          </div>
-
-          {!selectedJobId ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Hãy chọn một tin tuyển dụng để xem danh sách ứng viên.
-            </div>
-          ) : isFetching ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Đang tải danh sách ứng viên...
-            </div>
-          ) : filteredCandidates.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Chưa có ứng viên phù hợp.
-            </div>
-          ) : (
-            <div className="mt-4 space-y-3">
-              {filteredCandidates.map((candidate: any) => (
-                <article
-                  key={candidate.candidate_id || candidate.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+          </div>          
+          {selectedJobId && (
+             <div className="mt-4 flex items-center justify-end">
+                <Link
+                    to={`${path.RECRUITER_SUGGESTED_CANDIDATES}?job_post_id=${selectedJobId}`}
+                    className="inline-flex items-center gap-2 rounded-lg bg-indigo-50 px-4 py-2 text-sm font-semibold text-indigo-700 hover:bg-indigo-100 transition"
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-11 w-11 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                        <Users className="h-5 w-5" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-gray-900">
-                          {candidate.full_name || "Chưa cập nhật tên"}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          Email:{" "}
-                          {candidate.email || candidate.user?.email || "—"}
-                        </p>
-                      </div>
-                    </div>
-                    <div className="flex flex-wrap gap-2 text-xs text-gray-500">
-                      {candidate.major && (
-                        <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
-                          {candidate.major}
-                        </span>
-                      )}
-                      {candidate.experience_years && (
-                        <span className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700">
-                          {candidate.experience_years} năm KN
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button
-                      type="button"
-                      onClick={() => handleCreateInterview(candidate)}
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                      <CalendarPlus className="h-4 w-4" /> Lên lịch phỏng vấn
-                    </button>
-                    <Link
-                      to={`${path.RECRUITER_SUGGESTED_CANDIDATES}?job_post_id=${selectedJobId}`}
-                      className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-                    >
-                      <Briefcase className="h-4 w-4" /> Gợi ý thêm
-                    </Link>
-                  </div>
-                </article>
-              ))}
-            </div>
+                    <Briefcase size={16} /> Gợi ý thêm ứng viên phù hợp
+                </Link>
+             </div>
           )}
         </section>
+
+        <section className="min-h-[400px]">
+          {!selectedJobId ? (
+             <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 text-gray-500">
+                <Briefcase size={48} className="mb-2 opacity-50" />
+                <p>Vui lòng chọn một tin tuyển dụng.</p>
+             </div>
+          ) : candidatesLoading ? (
+             <div className="flex h-64 items-center justify-center">
+                <Loader2 className="animate-spin text-orange-500" size={32} />
+             </div>
+          ) : candidates.length === 0 ? (
+             <div className="flex h-64 flex-col items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-gray-50 text-gray-500">
+                <Users size={48} className="mb-2 opacity-50" />
+                <p>Chưa có ứng viên nào ứng tuyển vào vị trí này.</p>
+             </div>
+          ) : (
+            <>
+              <div className="mb-4 flex items-center gap-2 rounded-xl border border-gray-100 bg-white p-3 shadow-sm">
+                <Search size={18} className="text-gray-400" />
+                <input 
+                  value={candidateSearch}
+                  onChange={(e) => setCandidateSearch(e.target.value)}
+                  placeholder="Tìm theo tên hoặc email..."
+                  className="flex-1 outline-none text-sm"
+                />
+              </div>
+
+              {/* Cảnh báo nếu Job không thể tạo Interview */}
+              {!canCreateInterviewForJob && (
+                  <div className="mb-4 rounded-lg bg-amber-50 p-3 text-sm text-amber-800 flex items-center gap-2 border border-amber-100">
+                      <AlertCircle size={16} />
+                      Tin tuyển dụng này đã đóng hoặc không thuộc loại "Phỏng vấn". Chức năng hẹn lịch bị khóa.
+                  </div>
+              )}
+
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {filteredCandidates.map((candidate: any) => {
+                  // --- LOGIC MỚI: Check từng ứng viên ---
+                  // candidate.interview_status được trả về từ Backend (JobPostRepository)
+                  // Nếu có giá trị (vd: "Đang diễn ra", "Đã kết thúc") => Đã có lịch
+                  const hasInterview = Boolean(candidate.interview_status);
+                  
+                  // Nút chỉ active khi: Job OK VÀ Ứng viên chưa có lịch
+                  const isButtonEnabled = canCreateInterviewForJob && !hasInterview;
+
+                  return (
+                    <article key={candidate.id} className="flex flex-col justify-between rounded-2xl border border-gray-100 bg-white p-5 shadow-sm transition hover:shadow-md">
+                      <div>
+                        <div className="flex items-start gap-4">
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-orange-100 text-xl font-bold text-orange-600 shrink-0">
+                            {candidate.avatar_url ? (
+                              <img src={candidate.avatar_url} alt="" className="h-full w-full rounded-full object-cover"/>
+                            ) : (
+                              (candidate.full_name || "U").charAt(0).toUpperCase()
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h3 className="truncate text-lg font-bold text-gray-900" title={candidate.full_name}>
+                              {candidate.full_name}
+                            </h3>
+                            <div className="mt-1 flex flex-col gap-1 text-xs text-gray-500">
+                              <span className="flex items-center gap-1 truncate"><Mail size={12} /> {candidate.email}</span>
+                              <span className="flex items-center gap-1"><Phone size={12} /> {candidate.phone || "---"}</span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 flex flex-wrap gap-2 text-xs">
+                          <span className="rounded-full bg-blue-50 px-2 py-1 font-medium text-blue-700">Đã nộp hồ sơ</span>
+                          {candidate.major && <span className="rounded-full bg-gray-100 px-2 py-1 text-gray-600">{candidate.major}</span>}
+                          {/* Hiển thị badge trạng thái nếu đã có lịch */}
+                          {hasInterview && (
+                             <span className="rounded-full bg-emerald-50 px-2 py-1 font-medium text-emerald-700 border border-emerald-100">
+                                {candidate.interview_status}
+                             </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="mt-5 border-t border-gray-50 pt-4 flex gap-2">
+                          <button 
+                              onClick={() => handleViewDetail(candidate)}
+                              className="flex-1 inline-flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 transition"
+                          >
+                              <Eye size={16}/> Chi tiết
+                          </button>
+
+                          <button
+                              onClick={() => handleOpenInterviewModal(candidate)}
+                              disabled={!isButtonEnabled}
+                              className={`flex-1 inline-flex items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold transition shadow-sm ${
+                                  isButtonEnabled
+                                  ? "bg-orange-600 text-white hover:bg-orange-700 cursor-pointer" 
+                                  : "bg-gray-100 text-gray-400 cursor-not-allowed border border-gray-200"
+                              }`}
+                          >
+                              <CalendarPlus size={16} /> 
+                              {hasInterview ? "Đã hẹn lịch" : "Phỏng vấn"}
+                          </button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            </>
+          )}
+        </section>
+
+        {/* --- MODAL TẠO LỊCH --- */}
+        <CreateInterviewModal 
+          isOpen={modalData.isOpen}
+          onClose={() => setModalData({ ...modalData, isOpen: false })}
+          jobPostId={selectedJobId}
+          candidateId={modalData.candidateId}
+          candidateName={modalData.candidateName}
+          onSuccess={() => {
+             // Refetch để cập nhật lại trạng thái nút (Disable nút vừa tạo)
+             refetch();
+          }}
+        />
+
+        {/* --- MODAL CHI TIẾT --- */}
+        <CandidateDetailModal
+            isOpen={detailModal.isOpen}
+            onClose={() => setDetailModal({...detailModal, isOpen: false})}
+            candidate={detailModal.candidate}
+        />
       </div>
     </RecruiterLayout>
   );

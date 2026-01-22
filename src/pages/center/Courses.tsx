@@ -13,13 +13,11 @@ import {
 import { toast } from "react-toastify";
 import CenterLayout from "@/layouts/CenterLayout";
 import {
-  ArrowUpDown,
   BookOpen,
   CheckCircle2,
   Clock,
   Edit3,
   Eye,
-  Filter,
   Sparkles,
   Search,
   SlidersHorizontal,
@@ -40,9 +38,7 @@ const STUDENT_STATUS = {
 
 type StudentStatus = (typeof STUDENT_STATUS)[keyof typeof STUDENT_STATUS];
 type StatusKey = StudentStatus | "default";
-type CourseSortKey = "students_desc" | "students_asc" | "name_asc" | "name_desc";
-type StudentSortKey = "recent" | "oldest" | "name";
-type StudentFilterValue = StudentStatus | "all";
+type CourseSortKey = "students_desc" | "students_asc" | "name_asc" | "name_desc" | "start_date_asc" | "start_date_desc" | "duration_asc" | "duration_desc";
 type CenterTabId = "create" | "manage";
 
 type EditFormState = {
@@ -51,6 +47,8 @@ type EditFormState = {
   start_date: string;
   end_date: string;
   capacity: string;
+  training_field: string;
+  duration_hours: string;
 };
 
 type ProgressFormState = {
@@ -104,32 +102,10 @@ const COURSE_SORT_OPTIONS: { value: CourseSortKey; label: string }[] = [
   { value: "students_asc", label: "Học viên ít → nhiều" },
   { value: "name_asc", label: "Tên A → Z" },
   { value: "name_desc", label: "Tên Z → A" },
-];
-
-const STUDENT_SORT_OPTIONS: { value: StudentSortKey; label: string }[] = [
-  { value: "recent", label: "Mới cập nhật" },
-  { value: "oldest", label: "Cũ nhất" },
-  { value: "name", label: "Tên A → Z" },
-];
-
-const STUDENT_FILTER_OPTIONS: { value: StudentFilterValue; label: string }[] = [
-  { value: "all", label: "Tất cả trạng thái" },
-  {
-    value: STUDENT_STATUS.PENDING,
-    label: STUDENT_STATUS_META[STUDENT_STATUS.PENDING].label,
-  },
-  {
-    value: STUDENT_STATUS.LEARNING,
-    label: STUDENT_STATUS_META[STUDENT_STATUS.LEARNING].label,
-  },
-  {
-    value: STUDENT_STATUS.COMPLETED,
-    label: STUDENT_STATUS_META[STUDENT_STATUS.COMPLETED].label,
-  },
-  {
-    value: STUDENT_STATUS.REJECTED,
-    label: STUDENT_STATUS_META[STUDENT_STATUS.REJECTED].label,
-  },
+  { value: "start_date_asc", label: "Bắt đầu sớm nhất" },
+  { value: "start_date_desc", label: "Bắt đầu muộn nhất" },
+  { value: "duration_asc", label: "Thời lượng ngắn → dài" },
+  { value: "duration_desc", label: "Thời lượng dài → ngắn" },
 ];
 
 const getTabFromHash = (hashValue: string): CenterTabId | null => {
@@ -144,6 +120,8 @@ const createEmptyEditForm = (): EditFormState => ({
   start_date: "",
   end_date: "",
   capacity: "",
+  training_field: "",
+  duration_hours: "",
 });
 
 const createEmptyProgressForm = (): ProgressFormState => ({
@@ -180,8 +158,8 @@ const getCandidateName = (student: CourseCandidate) =>
   "Học viên chưa cập nhật";
 
 const getCandidateContacts = (student: CourseCandidate) => {
-  const email = student?.candidate?.email || student?.email || null;
-  const phone = student?.candidate?.phone || student?.phone || null;
+  const email = student?.email || student?.candidate?.email || null;
+  const phone = student?.phone || student?.candidate?.phone || null;
   return { email, phone };
 };
 
@@ -257,11 +235,43 @@ const CoursesPage = () => {
   const [courseStartDate, setCourseStartDate] = useState("");
   const [courseEndDate, setCourseEndDate] = useState("");
   const [courseCapacity, setCourseCapacity] = useState("");
+  const [trainingField, setTrainingField] = useState("");
+  const [durationHours, setDurationHours] = useState("");
+  const [trainingFields, setTrainingFields] = useState<Array<{id: number; name: string; code: string}>>([]);
+
+  // Fetch training fields when component mounts
+  useEffect(() => {
+    const fetchTrainingFields = async () => {
+      try {
+        console.log('🔄 Fetching training fields from API...');
+        const response = await fetch('http://localhost:3000/center/training-fields');
+        console.log('📡 Response status:', response.status, response.statusText);
+        
+        if (!response.ok) {
+          console.error('❌ Response not OK:', response.status, response.statusText);
+          return;
+        }
+        
+        const data = await response.json();
+        console.log('📦 Raw response data:', data);
+        
+        if (data.err === 0 && data.data && Array.isArray(data.data)) {
+          setTrainingFields(data.data);
+          console.log('✅ Training fields loaded successfully:', data.data.length, 'fields');
+          console.log('📋 Fields:', data.data.map(f => f.name).join(', '));
+        } else {
+          console.error('❌ Invalid response format:', data);
+        }
+      } catch (err) {
+        console.error('❌ Error fetching training fields:', err);
+      }
+    };
+    
+    fetchTrainingFields();
+  }, []);
   const [courseSearch, setCourseSearch] = useState("");
   const [courseSort, setCourseSort] = useState<CourseSortKey>("students_desc");
-  const [studentStatusFilter, setStudentStatusFilter] =
-    useState<StudentFilterValue>("all");
-  const [studentSort, setStudentSort] = useState<StudentSortKey>("recent");
+  const [trainingFieldFilter, setTrainingFieldFilter] = useState<string>("all");
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
   const [editForm, setEditForm] = useState<EditFormState>(createEmptyEditForm());
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
@@ -319,10 +329,24 @@ const CoursesPage = () => {
   const filteredCourses = useMemo(() => {
     const keyword = courseSearch.trim().toLowerCase();
     const filtered = courses.filter((course) => {
-      if (!keyword) return true;
-      const name = (course.name || "").toLowerCase();
-      const description = (course.description || "").toLowerCase();
-      return name.includes(keyword) || description.includes(keyword);
+      // Filter by search keyword
+      if (keyword) {
+        const name = (course.name || "").toLowerCase();
+        const description = (course.description || "").toLowerCase();
+        if (!name.includes(keyword) && !description.includes(keyword)) {
+          return false;
+        }
+      }
+      
+      // Filter by training field
+      if (trainingFieldFilter !== "all") {
+        const courseField = (course as any).training_field;
+        if (courseField !== trainingFieldFilter) {
+          return false;
+        }
+      }
+      
+      return true;
     });
 
     return filtered.sort((a, b) => {
@@ -332,12 +356,32 @@ const CoursesPage = () => {
       if (courseSort === "students_asc") {
         return getStudentCount(a) - getStudentCount(b);
       }
+      if (courseSort === "start_date_asc") {
+        const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+        const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+        return dateA - dateB;
+      }
+      if (courseSort === "start_date_desc") {
+        const dateA = a.start_date ? new Date(a.start_date).getTime() : 0;
+        const dateB = b.start_date ? new Date(b.start_date).getTime() : 0;
+        return dateB - dateA;
+      }
+      if (courseSort === "duration_asc") {
+        const durationA = (a as any).duration_hours || 0;
+        const durationB = (b as any).duration_hours || 0;
+        return durationA - durationB;
+      }
+      if (courseSort === "duration_desc") {
+        const durationA = (a as any).duration_hours || 0;
+        const durationB = (b as any).duration_hours || 0;
+        return durationB - durationA;
+      }
       const nameA = (a.name || "").toLowerCase();
       const nameB = (b.name || "").toLowerCase();
       const comparison = nameA.localeCompare(nameB, "vi", { sensitivity: "base" });
       return courseSort === "name_desc" ? -comparison : comparison;
     });
-  }, [courses, courseSearch, courseSort]);
+  }, [courses, courseSearch, courseSort, trainingFieldFilter]);
 
   const submitCourseCreation = async (): Promise<boolean> => {
     if (!courseName.trim()) {
@@ -351,6 +395,8 @@ const CoursesPage = () => {
       start_date: courseStartDate || null,
       end_date: courseEndDate || null,
       capacity: courseCapacity ? Number(courseCapacity) : null,
+      training_field: trainingField || null,
+      duration_hours: durationHours ? Number(durationHours) : null,
     };
 
     try {
@@ -362,6 +408,8 @@ const CoursesPage = () => {
         setCourseStartDate("");
         setCourseEndDate("");
         setCourseCapacity("");
+        setTrainingField("");
+        setDurationHours("");
         refetch();
         return true;
       }
@@ -404,6 +452,8 @@ const CoursesPage = () => {
       start_date: course.start_date ? course.start_date.slice(0, 10) : "",
       end_date: course.end_date ? course.end_date.slice(0, 10) : "",
       capacity: course.capacity ? String(course.capacity) : "",
+      training_field: course.training_field || "",
+      duration_hours: course.duration_hours ? String(course.duration_hours) : "",
     });
   };
 
@@ -435,6 +485,8 @@ const CoursesPage = () => {
       start_date: editForm.start_date || null,
       end_date: editForm.end_date || null,
       capacity: editForm.capacity ? Number(editForm.capacity) : null,
+      training_field: editForm.training_field || null,
+      duration_hours: editForm.duration_hours ? Number(editForm.duration_hours) : null,
     };
 
     try {
@@ -638,6 +690,32 @@ const CoursesPage = () => {
             placeholder="VD: 30"
           />
         </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+          <select
+            value={trainingField}
+            onChange={(e) => setTrainingField(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+          >
+            <option value="">-- Chọn lĩnh vực --</option>
+            {trainingFields.map((field) => (
+              <option key={field.id} value={field.name}>
+                {field.name}
+              </option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="block text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+          <input
+            type="number"
+            min={1}
+            value={durationHours}
+            onChange={(e) => setDurationHours(e.target.value)}
+            className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-3 text-sm shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+            placeholder="VD: 40"
+          />
+        </div>
         <div className="md:col-span-2">
           <button
             type="submit"
@@ -679,18 +757,33 @@ const CoursesPage = () => {
 
       {hasCourses && (
         <div className="rounded-3xl border border-gray-200 bg-white/70 p-4 shadow-sm backdrop-blur">
-          <div className="grid gap-4 lg:grid-cols-2">
+          <div className="grid gap-3 lg:grid-cols-2">
+            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-inner">
+              <Search className="h-4 w-4 text-gray-400" />
+              <input
+                value={courseSearch}
+                onChange={(e) => setCourseSearch(e.target.value)}
+                placeholder="Tìm theo tên hoặc mô tả"
+                className="w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
+              />
+            </div>
             <div className="flex flex-wrap gap-3">
-              <div className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-white px-3 py-2 shadow-inner">
-                <Search className="h-4 w-4 text-gray-400" />
-                <input
-                  value={courseSearch}
-                  onChange={(e) => setCourseSearch(e.target.value)}
-                  placeholder="Tìm theo tên hoặc mô tả"
-                  className="w-full bg-transparent text-sm text-gray-700 placeholder:text-gray-400 focus:outline-none"
-                />
-              </div>
-              <label className="flex items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">
+              <label className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">
+                <GraduationCap className="h-4 w-4 text-blue-500" />
+                <select
+                  value={trainingFieldFilter}
+                  onChange={(e) => setTrainingFieldFilter(e.target.value)}
+                  className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
+                >
+                  <option value="all">Tất cả lĩnh vực</option>
+                  {trainingFields.map((field) => (
+                    <option key={field.id} value={field.name}>
+                      {field.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">
                 <SlidersHorizontal className="h-4 w-4 text-orange-500" />
                 <select
                   value={courseSort}
@@ -705,38 +798,7 @@ const CoursesPage = () => {
                 </select>
               </label>
             </div>
-            <div className="flex flex-wrap gap-3">
-              <label className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">
-                <Filter className="h-4 w-4 text-blue-500" />
-                <select
-                  value={studentStatusFilter}
-                  onChange={(e) => setStudentStatusFilter(e.target.value as StudentFilterValue)}
-                  className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
-                >
-                  {STUDENT_FILTER_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="flex flex-1 items-center gap-2 rounded-2xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-semibold text-gray-600">
-                <ArrowUpDown className="h-4 w-4 text-purple-500" />
-                <select
-                  value={studentSort}
-                  onChange={(e) => setStudentSort(e.target.value as StudentSortKey)}
-                  className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
-                >
-                  {STUDENT_SORT_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
           </div>
-          <p className="mt-2 text-xs text-gray-500">Các bộ lọc học viên áp dụng cho mọi khóa học bên dưới.</p>
         </div>
       )}
 
@@ -923,58 +985,31 @@ const CoursesPage = () => {
                 </div>
 
                 <div className="p-6">
-                  <div className="mb-4 flex flex-wrap items-center gap-3">
-                    <div className="flex items-center gap-2">
-                      <GraduationCap className="h-5 w-5 text-blue-600" />
-                      <h4 className="font-bold text-gray-900">Học viên trong khóa</h4>
-                    </div>
-                    <span className="text-xs text-gray-500">
-                      (Áp dụng bộ lọc: {STUDENT_FILTER_OPTIONS.find((o) => o.value === studentStatusFilter)?.label})
-                    </span>
+                  <div className="mb-4 flex items-center gap-2">
+                    <GraduationCap className="h-5 w-5 text-blue-600" />
+                    <h4 className="font-bold text-gray-900">Học viên trong khóa</h4>
                   </div>
                   {(() => {
                     const courseKeyForManaged = courseId || "managed";
                     const students = getCourseCandidates(course);
-                    const managedBase = students.filter(
-                      (student) => normalizeStatus(student.status) !== STUDENT_STATUS.PENDING
-                    );
-                    const managedFiltered = managedBase.filter((student) =>
-                      studentStatusFilter === "all"
-                        ? true
-                        : normalizeStatus(student.status) === studentStatusFilter
-                    );
-                    const managed = [...managedFiltered].sort((a, b) => {
-                      if (studentSort === "recent") {
-                        return getRequestedTimestamp(b) - getRequestedTimestamp(a);
-                      }
-                      if (studentSort === "oldest") {
-                        return getRequestedTimestamp(a) - getRequestedTimestamp(b);
-                      }
-                      if (studentSort === "name") {
-                        const compare = getCandidateName(a).localeCompare(getCandidateName(b), "vi", {
-                          sensitivity: "base",
-                        });
-                        if (compare !== 0) return compare;
-                      }
-                      return (
-                        STATUS_SORT_ORDER[normalizeStatus(a.status)] -
-                        STATUS_SORT_ORDER[normalizeStatus(b.status)]
-                      );
-                    });
+                    const managed = students
+                      .filter((student) => normalizeStatus(student.status) !== STUDENT_STATUS.PENDING)
+                      .sort((a, b) => {
+                        return (
+                          STATUS_SORT_ORDER[normalizeStatus(a.status)] -
+                          STATUS_SORT_ORDER[normalizeStatus(b.status)]
+                        );
+                      });
 
                     if (!managed.length) {
                       return (
                         <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-gray-200 bg-gray-50 p-8 text-center">
                           <Users className="mb-2 h-8 w-8 text-gray-400" />
                           <p className="text-sm font-medium text-gray-600">
-                            {managedBase.length
-                              ? "Không có học viên khớp với bộ lọc hiện tại"
-                              : "Chưa có học viên được duyệt"}
+                            Chưa có học viên được duyệt
                           </p>
                           <p className="mt-1 text-xs text-gray-500">
-                            {managedBase.length
-                              ? "Điều chỉnh lại bộ lọc để xem danh sách khác."
-                              : "Phê duyệt yêu cầu để thêm học viên vào lớp."}
+                            Phê duyệt yêu cầu để thêm học viên vào lớp.
                           </p>
                         </div>
                       );
@@ -1159,6 +1194,32 @@ const CoursesPage = () => {
                 placeholder="VD: 30"
               />
             </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+              <select
+                value={trainingField}
+                onChange={(e) => setTrainingField(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+              >
+                <option value="">-- Chọn lĩnh vực --</option>
+                {trainingFields.map((field) => (
+                  <option key={field.id} value={field.name}>
+                    {field.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+              <input
+                type="number"
+                min={1}
+                value={durationHours}
+                onChange={(e) => setDurationHours(e.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm transition focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+                placeholder="VD: 40"
+              />
+            </div>
             <div className="md:col-span-2 flex justify-end gap-3 pt-2">
               <button
                 type="button"
@@ -1289,6 +1350,32 @@ const CoursesPage = () => {
                 placeholder="VD: 30"
               />
             </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+              <select
+                value={editForm.training_field}
+                onChange={(e) => handleEditFieldChange("training_field", e.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+              >
+                <option value="">-- Chọn lĩnh vực --</option>
+                {trainingFields.map((field) => (
+                  <option key={field.id} value={field.name}>
+                    {field.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+              <input
+                type="number"
+                min={1}
+                value={editForm.duration_hours}
+                onChange={(e) => handleEditFieldChange("duration_hours", e.target.value)}
+                className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+                placeholder="VD: 40"
+              />
+            </div>
             <div className="md:col-span-2 flex justify-end gap-3">
               <button
                 type="button"
@@ -1321,9 +1408,9 @@ const CoursesPage = () => {
     const courseId = getCourseId(course);
     const processing = isProcessing(courseId, student.candidate_id);
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
-        <div className="w-full max-w-xl rounded-3xl bg-white p-6 shadow-2xl">
-          <div className="mb-4 flex items-start justify-between">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4 overflow-y-auto">
+        <div className="w-full max-w-xl rounded-3xl bg-white shadow-2xl my-8">
+          <div className="sticky top-0 z-10 flex items-start justify-between rounded-t-3xl bg-white px-6 pt-6 pb-4 border-b border-gray-100">
             <div>
               <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Học viên</p>
               <h3 className="text-xl font-bold text-gray-900">{name}</h3>
@@ -1332,13 +1419,13 @@ const CoursesPage = () => {
             <button
               type="button"
               onClick={handleCloseCandidateDetail}
-              className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200"
+              className="rounded-full bg-gray-100 p-2 text-gray-500 transition hover:bg-gray-200 flex-shrink-0"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-4 px-6 pb-6 max-h-[calc(100vh-200px)] overflow-y-auto">
             <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
               <p className="text-xs font-semibold uppercase text-gray-500">Thông tin liên hệ</p>
               <div className="mt-2 grid gap-3 sm:grid-cols-2">
@@ -1365,101 +1452,113 @@ const CoursesPage = () => {
               <p className="text-sm text-gray-600">{meta.description}</p>
             </div>
 
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Thời gian</p>
-                <p className="text-sm text-gray-600">
-                  Đăng ký: <span className="font-semibold text-gray-800">{formatDateTime(student.requested_at)}</span>
-                </p>
+            <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+              <p className="text-xs font-semibold uppercase text-gray-500">Thời gian</p>
+              <div className="mt-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs text-gray-600">Đăng ký:</p>
+                  <p className="text-sm font-semibold text-gray-800">{formatDateTime(student.requested_at)}</p>
+                </div>
                 {student.signed_at && (
-                  <p className="text-sm text-gray-600">
-                    Ký cam kết: <span className="font-semibold text-gray-800">{formatDateTime(student.signed_at)}</span>
-                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs text-gray-600">Ký cam kết:</p>
+                    <p className="text-sm font-semibold text-gray-800">
+                      {new Date(student.signed_at).toLocaleDateString("vi-VN")}
+                    </p>
+                  </div>
                 )}
-              </div>
-              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Tiến độ</p>
-                <p className="text-sm text-gray-600">
-                  Điểm danh: <span className="font-semibold text-gray-800">{student.attendance ?? 0}%</span>
-                </p>
-                <p className="text-sm text-gray-600">
-                  Học phí: <span className="font-semibold text-gray-800">{student.tuition_confirmed ? "Đã xác nhận" : "Chưa xác nhận"}</span>
-                </p>
               </div>
             </div>
 
-            {student.notes && (
-              <div className="rounded-2xl border border-gray-100 bg-white p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Ghi chú</p>
-                <p className="mt-1 text-sm text-gray-700">{student.notes}</p>
-              </div>
-            )}
+            <div className="rounded-2xl border border-gray-100 bg-white p-4">
+              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">Tiến độ học tập</p>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
+                  <div>
+                    <p className="text-xs text-gray-600">Điểm danh</p>
+                    <p className="text-lg font-bold text-blue-600">{student.attendance ?? 0}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-xs text-gray-600">Học phí</p>
+                    <p className={`text-sm font-semibold ${student.tuition_confirmed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {student.tuition_confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}
+                    </p>
+                  </div>
+                </div>
 
-            <div className="rounded-2xl border border-gray-100 bg-white/90 p-4">
-              <p className="text-sm font-semibold text-gray-800">Cập nhật tiến độ</p>
-              <p className="mt-1 text-xs text-gray-500">Điều chỉnh thông tin học tập và xác nhận học phí cho học viên này.</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                <div>
-                  <label className="text-xs font-semibold uppercase text-gray-500">Điểm danh (%)</label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={progressForm.attendance}
-                    onChange={(e) => handleProgressChange("attendance", e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
-                    placeholder="VD: 85"
-                  />
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Điểm danh (Buổi)</label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      value={progressForm.attendance}
+                      onChange={(e) => handleProgressChange("attendance", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                      placeholder="0-100"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">Ngày ký cam kết</label>
+                    <input
+                      type="date"
+                      value={progressForm.signed_at}
+                      onChange={(e) => handleProgressChange("signed_at", e.target.value)}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    />
+                  </div>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase text-gray-500">Ngày ký cam kết</label>
-                  <input
-                    type="date"
-                    value={progressForm.signed_at}
-                    onChange={(e) => handleProgressChange("signed_at", e.target.value)}
-                    className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
-                  />
+
+                <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600">Trạng thái học phí</p>
+                    <p className={`text-sm font-semibold ${progressForm.tuition_confirmed ? 'text-emerald-600' : 'text-amber-600'}`}>
+                      {progressForm.tuition_confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleProgressChange("tuition_confirmed", !progressForm.tuition_confirmed)}
+                    className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
+                      progressForm.tuition_confirmed
+                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                    }`}
+                  >
+                    {progressForm.tuition_confirmed ? 'Đã thu' : 'Chưa thu'}
+                  </button>
                 </div>
               </div>
-              <div className="mt-4 flex items-center justify-between rounded-xl border border-gray-200 bg-gray-50 px-4 py-2">
-                <div>
-                  <p className="text-xs font-semibold uppercase text-gray-500">Trạng thái học phí</p>
-                  <p className="text-sm text-gray-700">
-                    {progressForm.tuition_confirmed ? "Đã xác nhận" : "Chưa xác nhận"}
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => handleProgressChange("tuition_confirmed", !progressForm.tuition_confirmed)}
-                  className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
-                    progressForm.tuition_confirmed
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}
-                >
-                  {progressForm.tuition_confirmed ? "Đã thu" : "Chưa thu"}
-                </button>
-              </div>
-              <div className="mt-4">
-                <label className="text-xs font-semibold uppercase text-gray-500">Ghi chú</label>
-                <textarea
-                  rows={3}
-                  value={progressForm.notes}
-                  onChange={(e) => handleProgressChange("notes", e.target.value)}
-                  className="mt-2 w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
-                  placeholder="Ghi chú thêm về tiến độ, kết quả học tập, v.v."
-                />
-              </div>
-              <div className="mt-4 flex flex-wrap justify-end gap-3">
-                <button
-                  type="button"
-                  onClick={handleSaveProgress}
-                  disabled={processing}
-                  className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-5 py-2 text-sm font-semibold text-white shadow transition hover:from-blue-600 hover:to-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {processing ? "Đang lưu..." : "Lưu tiến độ"}
-                </button>
-              </div>
+            </div>
+
+            <div className="rounded-2xl border border-gray-100 bg-white p-4">
+              <label className="block text-xs font-semibold uppercase text-gray-500 mb-2">Ghi chú</label>
+              <textarea
+                rows={3}
+                value={progressForm.notes}
+                onChange={(e) => handleProgressChange("notes", e.target.value)}
+                className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
+                placeholder="Thêm ghi chú về học viên..."
+              />
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseCandidateDetail}
+                className="rounded-xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveProgress}
+                disabled={processing}
+                className="rounded-xl bg-gradient-to-r from-blue-500 to-indigo-500 px-6 py-2.5 text-sm font-semibold text-white shadow transition hover:from-blue-600 hover:to-indigo-600 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {processing ? "Đang lưu..." : "Lưu thông tin"}
+              </button>
             </div>
           </div>
         </div>
@@ -1490,28 +1589,90 @@ const CoursesPage = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500">Thời gian</p>
-              <p className="text-sm text-gray-700">
-                {selectedCourseDetail.start_date || "Chưa đặt ngày"} → {selectedCourseDetail.end_date || "—"}
-              </p>
+          <div className="mt-4 space-y-3">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Ngày bắt đầu</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {selectedCourseDetail.start_date 
+                    ? new Date(selectedCourseDetail.start_date).toLocaleDateString("vi-VN")
+                    : "Chưa xác định"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Ngày kết thúc</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {selectedCourseDetail.end_date
+                    ? new Date(selectedCourseDetail.end_date).toLocaleDateString("vi-VN")
+                    : "Chưa xác định"}
+                </p>
+              </div>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500">Sĩ số</p>
-              <p className="text-sm text-gray-700">
-                {studentCount} học viên
-              </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Sĩ số tối đa</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {selectedCourseDetail.capacity || "Không giới hạn"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Số học viên hiện tại</p>
+                <p className="text-sm font-semibold text-gray-700">{studentCount}</p>
+              </div>
             </div>
-          </div>
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center">
-              <p className="text-xs font-semibold uppercase text-gray-500">Chờ duyệt</p>
-              <p className="text-2xl font-bold text-orange-600">{summary.pending}</p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Lĩnh vực đào tạo</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {selectedCourseDetail.training_field || "Chưa xác định"}
+                </p>
+              </div>
+              <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
+                <p className="text-xs font-semibold uppercase text-gray-500">Số giờ đào tạo</p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {selectedCourseDetail.duration_hours ? `${selectedCourseDetail.duration_hours} giờ` : "Chưa xác định"}
+                </p>
+              </div>
             </div>
-            <div className="rounded-2xl border border-gray-100 bg-white p-4 text-center">
-              <p className="text-xs font-semibold uppercase text-gray-500">Đang học</p>
-              <p className="text-2xl font-bold text-blue-600">{summary.learning}</p>
+            <div className="rounded-2xl border border-gray-100 bg-blue-50/50 p-4">
+              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">Thống kê học viên</p>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
+                  <span className="text-sm text-gray-700">Chờ duyệt: <strong>{summary.pending}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
+                  <span className="text-sm text-gray-700">Đang học: <strong>{summary.learning}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <span className="text-sm text-gray-700">Hoàn thành: <strong>{summary.completed}</strong></span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
+                  <span className="text-sm text-gray-700">Từ chối: <strong>{summary.rejected}</strong></span>
+                </div>
+              </div>
+            </div>
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={handleCloseCourseDetail}
+                className="rounded-xl border border-gray-200 px-5 py-2.5 text-sm font-semibold text-gray-600 transition hover:bg-gray-50"
+              >
+                Đóng
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  handleCloseCourseDetail();
+                  handleOpenEditCourse(selectedCourseDetail);
+                }}
+                className="rounded-xl bg-gradient-to-r from-orange-500 to-orange-600 px-6 py-2.5 text-sm font-bold text-white shadow-lg transition hover:from-orange-600 hover:to-orange-700"
+              >
+                Chỉnh sửa
+              </button>
             </div>
           </div>
         </div>
@@ -1587,7 +1748,6 @@ const CoursesPage = () => {
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-base font-semibold text-gray-900">{name}</p>
-                        <p className="text-xs text-gray-500">ID: {student.candidate_id}</p>
                       </div>
                       <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
                         {meta.label}

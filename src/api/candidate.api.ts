@@ -404,3 +404,17 @@ export const applyJobCandidateRequest = async (jobPostId: string) => {
 
 export const useApplyJobCandidateMutation = () =>
   useMutation({ mutationFn: applyJobCandidateRequest });
+
+
+// [UPDATE] Thêm request hủy ứng tuyển
+const cancelAppliedJobCandidateRequest = async (jobPostId: string) => {
+  // Giả định API Backend hỗ trợ Method DELETE với params job_post_id
+  const response = await axiosInstance.delete("/candidate/apply-job-post", {
+    params: { job_post_id: jobPostId },
+  });
+  return response.data as ApiResponse<any>;
+};
+
+// [UPDATE] Thêm hook mutation cho hủy ứng tuyển
+export const useCancelAppliedJobMutation = () =>
+  useMutation({ mutationFn: cancelAppliedJobCandidateRequest });

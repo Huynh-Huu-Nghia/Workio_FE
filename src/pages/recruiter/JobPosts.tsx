@@ -127,21 +127,21 @@ const RecruiterJobPosts: React.FC = () => {
   }, [wardData, provinceFilter]);
 
   const stats = useMemo(() => {
-    const active = jobs.filter((job: any) => job.status === "Đang mở");
-    const pending = jobs.filter((job: any) => job.status === "Đang xem xét");
-    const hired = jobs.filter((job: any) => job.status === "Đã tuyển");
+    const active = jobs.filter((j: any) => j.status === "Đang mở").length;
+    const pending = jobs.filter((j: any) => j.status === "Đang xem xét").length;
+    const hired = jobs.filter((j: any) => j.status === "Đã tuyển").length;
+    
+    // Logic đếm số tin sắp hết hạn (trong vòng 7 ngày tới)
     const closingSoon = jobs.filter((job: any) => {
-      if (!job.application_deadline_to) return false;
-      const diff = new Date(job.application_deadline_to).getTime();
-      return diff > 0 && diff <= 1000 * 60 * 60 * 24 * 7;
-    });
-    return {
-      total: jobs.length,
-      active: active.length,
-      pending: pending.length,
-      hired: hired.length,
-      closingSoon: closingSoon.length,
-    };
+      if (job.status !== "Đang mở" || !job.application_deadline_to) return false;
+      const now = new Date().getTime();
+      const deadline = new Date(job.application_deadline_to).getTime();
+      const diff = deadline - now;
+      // Lớn hơn 0 (chưa hết hạn) VÀ nhỏ hơn 7 ngày
+      return diff > 0 && diff <= 7 * 24 * 60 * 60 * 1000; 
+    }).length;
+
+    return { total: jobs.length, active, pending, hired, closingSoon };
   }, [jobs]);
 
   const statusCounts = useMemo(() => {
@@ -189,62 +189,65 @@ const RecruiterJobPosts: React.FC = () => {
 
   const filteredJobs = useMemo(() => {
     return jobs.filter((job: any) => {
-      if (statusFilter !== "all" && job.status !== statusFilter) return false;
-      if (typeFilter !== "all" && job.recruitment_type !== typeFilter)
-        return false;
-      if (workingTimeFilter !== "all" && job.working_time !== workingTimeFilter)
-        return false;
-      if (jobTypeFilter !== "all" && job.job_type !== jobTypeFilter)
-        return false;
-      const salaryValue = Number(job.monthly_salary || 0);
-      if (minSalary && salaryValue < Number(minSalary)) return false;
-      if (maxSalary && salaryValue > Number(maxSalary)) return false;
+      // 1. Search (Giữ nguyên)
       if (search.trim()) {
         const keyword = search.trim().toLowerCase();
-        const fields = parseTags(job.fields).join(" ").toLowerCase();
-        const haystack =
-          `${job.position || ""} ${job.requirements || ""} ${fields}`.toLowerCase();
+        const haystack = `${job.position || ""} ${job.requirements || ""}`.toLowerCase();
         if (!haystack.includes(keyword)) return false;
       }
-      const jobProvince =
-        job.address?.province_code ??
-        job.recruiter?.address?.province_code ??
-        job.recruiter?.province_code ??
-        job.province_code ??
-        null;
-      if (
-        provinceFilter &&
-        String(jobProvince || "") !== String(provinceFilter)
-      )
-        return false;
-      const jobWard =
-        job.address?.ward_code ??
-        job.recruiter?.address?.ward_code ??
-        job.recruiter?.ward_code ??
-        job.ward_code ??
-        null;
-      if (wardFilter && String(jobWard || "") !== String(wardFilter))
-        return false;
+      
+      // 2. Dropdowns (Giữ nguyên các filter khác)
+      if (statusFilter !== "all" && job.status !== statusFilter) return false;
+      if (typeFilter !== "all" && job.recruitment_type !== typeFilter) return false;
+      if (workingTimeFilter !== "all" && job.working_time !== workingTimeFilter) return false;
+      if (jobTypeFilter !== "all" && job.job_type !== jobTypeFilter) return false;
+      
+      // 3. Salary (Giữ nguyên)
+      const salary = Number(job.monthly_salary || 0);
+      if (minSalary && salary < Number(minSalary)) return false;
+      if (maxSalary && salary > Number(maxSalary)) return false;
+
+      // --- 4. FIX LOGIC ĐỊA CHỈ & FALLBACK ---
+      
+     // --- LOGIC ĐỊA CHỈ & FALLBACK ---
+      const recruiter = job.recruiter || {};
+      const recruiterAddr = recruiter.address || {}; // Đã có dữ liệu nhờ fix Repository
+
+      // Lấy Province/Ward Code (Ưu tiên Job -> Recruiter Address -> Recruiter Info)
+      let finalProvince = job.province_code;
+      if (!finalProvince) finalProvince = recruiterAddr.province_code;
+      if (!finalProvince) finalProvince = recruiter.province_code;
+
+      let finalWard = job.ward_code;
+      if (!finalWard) finalWard = recruiterAddr.ward_code;
+      if (!finalWard) finalWard = recruiter.ward_code;
+
+      // Logic lọc
+      if (provinceFilter) {
+          // Ép kiểu String để so sánh an toàn
+          if (String(finalProvince) !== String(provinceFilter)) return false;
+          
+          // Chỉ lọc Ward nếu ĐÃ CHỌN Ward. Nếu wardFilter rỗng (chưa chọn), vẫn giữ lại kết quả theo Tỉnh.
+          if (wardFilter) {
+              if (String(finalWard) !== String(wardFilter)) return false;
+          }
+      }
+
       return true;
     });
-  }, [
-    jobs,
-    search,
-    statusFilter,
-    typeFilter,
-    workingTimeFilter,
-    jobTypeFilter,
-    minSalary,
-    maxSalary,
-    provinceFilter,
-    wardFilter,
-  ]);
+  }, [jobs, search, statusFilter, typeFilter, workingTimeFilter, jobTypeFilter, minSalary, maxSalary, provinceFilter, wardFilter]);
+
 
   const sortedJobs = useMemo(() => {
     const list = [...filteredJobs];
     const direction = sortOrder === "asc" ? 1 : -1;
-    const parseDate = (value?: string | null) =>
-      value ? new Date(value).getTime() : 0;
+    
+    // Hàm helper lấy timestamp an toàn (Check cả camelCase và snake_case)
+    const getTime = (dateObj: any) => {
+        if (!dateObj) return 0;
+        return new Date(dateObj).getTime();
+    };
+
     list.sort((a: any, b: any) => {
       let comparison = 0;
       switch (sortBy) {
@@ -256,16 +259,16 @@ const RecruiterJobPosts: React.FC = () => {
           );
           break;
         case "created_at":
-          comparison = parseDate(a.created_at) - parseDate(b.created_at);
+          // FIX: Check cả createdAt (từ JSON mặc định) và created_at
+          comparison = getTime(a.createdAt || a.created_at) - getTime(b.createdAt || b.created_at);
           break;
         case "deadline":
-          comparison =
-            parseDate(a.application_deadline_to) -
-            parseDate(b.application_deadline_to);
+          comparison = getTime(a.application_deadline_to) - getTime(b.application_deadline_to);
           break;
         case "updated_at":
         default:
-          comparison = parseDate(a.updated_at) - parseDate(b.updated_at);
+          // FIX: Check cả updatedAt và updated_at
+          comparison = getTime(a.updatedAt || a.updated_at) - getTime(b.updatedAt || b.updated_at);
           break;
       }
       return comparison * direction;
@@ -287,31 +290,21 @@ const RecruiterJobPosts: React.FC = () => {
     setSortOrder("desc");
   };
 
-  const handleDelete = (job: any) => {
-    setConfirmDialog({
-      isOpen: true,
-      title: "Xóa tin tuyển dụng",
-      message: `Bạn có chắc muốn xóa tin "${job.position}" không?`,
-      onConfirm: async () => {
-        try {
-          const res = await deleteMutation.mutateAsync(job.id);
-          if ((res as any)?.err === 0) {
-            toast.info((res as any)?.mes || "Đã xóa tin.");
-            await refetch();
-          } else {
-            toast.error((res as any)?.mes || "Xóa thất bại.");
-          }
-        } catch (e: any) {
-          toast.error(e?.response?.data?.mes || "Xóa thất bại.");
-        }
-        setConfirmDialog({
-          isOpen: false,
-          title: "",
-          message: "",
-          onConfirm: () => {},
-        });
-      },
-    });
+  const handleDelete = async (jobId: string) => {
+    const ok = window.confirm("Xóa tin tuyển dụng này?");
+    if (!ok) return;
+    try {
+      const res = await deleteMutation.mutateAsync(jobId);
+      if ((res as any)?.err === 0) {
+        toast.info((res as any)?.mes || "Đã xóa tin.");
+        await refetch();
+      } else {
+        toast.error((res as any)?.mes || "Xóa thất bại.");
+      }
+      refetch(); 
+    } catch (e: any) {
+      toast.error(e?.response?.data?.mes || "Xóa thất bại.");
+    }
   };
 
   const isFiltered =
@@ -589,6 +582,17 @@ const RecruiterJobPosts: React.FC = () => {
                             <Users className="h-4 w-4 text-gray-400" /> SL cần:{" "}
                             {job.available_quantity ?? "—"}
                           </span>
+                          <span className="flex items-center gap-1">
+                            <Users size={16} /> 
+                            {/* Đếm số phần tử trong mảng JSON hoặc Array */}
+                            Số ứng viên: {
+                              Array.isArray(job.applied_candidates) 
+                              ? job.applied_candidates.length 
+                              : (typeof job.applied_candidates === 'string' 
+                              ? JSON.parse(job.applied_candidates || "[]").length 
+                              : 0)
+                            }
+                          </span>
                           <span className="inline-flex items-center gap-1">
                             <Clock className="h-4 w-4 text-gray-400" />{" "}
                             {job.working_time || "Chưa rõ"}
@@ -626,24 +630,23 @@ const RecruiterJobPosts: React.FC = () => {
 
                   <div className="mt-4 grid gap-3 text-sm text-gray-600 sm:grid-cols-3">
                     <div>
-                      <p className="text-gray-400">Thu nhập dự kiến</p>
-                      <p className="font-semibold text-gray-900">
-                        {formatCurrency(job.monthly_salary)}
-                      </p>
+                      <p className="text-gray-400 text-xs uppercase">Mức lương</p>
+                      <p className="font-semibold text-gray-900">{formatCurrency(job.monthly_salary)}</p>
                     </div>
                     <div>
-                      <p className="text-gray-400">Thời lượng tuyển</p>
-                      <p className="font-semibold text-gray-900">
-                        {job.duration || "Không rõ"}
-                      </p>
+                      {/* Hiển thị duration đúng theo Model */}
+                      <p className="text-gray-400 text-xs uppercase">Thời hạn / Hợp đồng</p>
+                      <p className="font-semibold text-gray-900">{job.duration || "Chưa thiết lập"}</p>
                     </div>
-                    <div>
-                      <p className="text-gray-400">Ngày cập nhật</p>
-                      <p className="font-semibold text-gray-900">
-                        {formatDate(job.updated_at)}
-                      </p>
-                    </div>
+                  <div>
+                    <p className="text-gray-400 text-xs uppercase">Ngày cập nhật</p>
+                      {/* Dùng updated_at thay vì created_at để thấy lần sửa cuối */}
+                    <p className="font-semibold text-gray-900">
+                      {job.updatedAt ? new Date(job.updatedAt).toLocaleDateString("vi-VN") : 
+                      (job.updated_at ? new Date(job.updated_at).toLocaleDateString("vi-VN") : "—")}
+                    </p>
                   </div>
+                </div>
 
                   <div className="mt-4 flex flex-wrap gap-2 text-sm">
                     <Link

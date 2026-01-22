@@ -8,8 +8,16 @@ import {
   Building2,
   Filter,
   ChevronUp,
+  Trash2, // Icon xoá
+  AlertTriangle,
 } from "lucide-react";
-import { useCandidateAppliedJobsQuery } from "@/api/candidate.api";
+// Import hook Hủy ứng tuyển và useQueryClient
+import {
+  useCandidateAppliedJobsQuery,
+  useCancelAppliedJobMutation,
+} from "@/api/candidate.api";
+import { useQueryClient } from "@tanstack/react-query";
+
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation, useNavigate } from "react-router-dom";
 import CandidateLayout from "@/layouts/CandidateLayout";
@@ -17,19 +25,24 @@ import { INDUSTRY_OPTIONS } from "@/constants/industries";
 import { useJobLocationResolver } from "@/hooks/useJobLocationResolver";
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
 import path from "@/constants/path";
+import { toast } from "react-toastify";
 
 const CandidateAppliedJobs: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const queryClient = useQueryClient(); // Để refresh lại list sau khi xoá
   const title = pathtotitle[location.pathname] || "Việc đã ứng tuyển";
+
   const { data, isLoading, isError } = useCandidateAppliedJobsQuery();
+  const cancelMutation = useCancelAppliedJobMutation(); // Hook huỷ
+
   const apiErr = data && (data as any).err !== 0;
   const jobs = !apiErr ? (data?.data ?? []) : [];
 
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
-  // --- State Bộ lọc ---
-  const [isFilterOpen, setIsFilterOpen] = useState(false); // Mặc định đóng
+  // --- State Bộ lọc (Giữ nguyên như cũ) ---
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [fields, setFields] = useState<string[]>([]);
   const [minSalary, setMinSalary] = useState("");
@@ -59,14 +72,9 @@ const CandidateAppliedJobs: React.FC = () => {
     );
   }, [wardData, provinceFilter]);
 
-  // Thống kê nhanh số lượng (Optional - Giữ nguyên logic cũ của bạn)
+  // Thống kê nhanh
   const statusCounts = useMemo(() => {
-    const counts = {
-      total: jobs.length,
-      active: 0,
-      reviewing: 0,
-      hired: 0,
-    };
+    const counts = { total: jobs.length, active: 0, reviewing: 0, hired: 0 };
     jobs.forEach((job: any) => {
       const status = (job.status || "").toLowerCase();
       if (status.includes("đang mở")) counts.active += 1;
@@ -104,6 +112,7 @@ const CandidateAppliedJobs: React.FC = () => {
     return [];
   };
 
+  // Logic lọc giữ nguyên
   const filtered = useMemo(() => {
     return jobs
       .filter((job: any) => {
@@ -186,6 +195,34 @@ const CandidateAppliedJobs: React.FC = () => {
     resolveJobLocation,
   ]);
 
+  // --- XỬ LÝ HỦY ỨNG TUYỂN ---
+  const handleCancelApplication = async (job: any) => {
+    if (
+      !confirm(
+        `Bạn có chắc chắn muốn hủy ứng tuyển vào vị trí "${job.position}"? \nLưu ý: Mọi lịch phỏng vấn liên quan (nếu có) cũng sẽ bị xóa.`,
+      )
+    ) {
+      return;
+    }
+
+    try {
+      const res = await cancelMutation.mutateAsync(job.id);
+      if ((res as any).err === 0) {
+        toast.success("Đã hủy ứng tuyển thành công.");
+        // Refresh lại danh sách việc làm và danh sách phỏng vấn
+        queryClient.invalidateQueries({ queryKey: ["candidate-applied-jobs"] });
+        queryClient.invalidateQueries({ queryKey: ["candidate-interviews"] });
+        queryClient.invalidateQueries({ queryKey: ["candidate-job-posts"] });
+      } else {
+        toast.error((res as any).mes || "Hủy thất bại.");
+      }
+    } catch (error: any) {
+      toast.error(
+        error?.response?.data?.mes || "Có lỗi xảy ra khi hủy ứng tuyển.",
+      );
+    }
+  };
+
   return (
     <CandidateLayout title={title}>
       <div className="mx-auto max-w-6xl">
@@ -221,7 +258,6 @@ const CandidateAppliedJobs: React.FC = () => {
 
         {/* --- BỘ LỌC COLLAPSIBLE --- */}
         <div className="mb-4 rounded-2xl border border-gray-100 bg-white shadow-sm overflow-hidden transition-all duration-300">
-          {/* Header để bấm đóng/mở */}
           <div
             className="flex items-center justify-between p-4 cursor-pointer hover:bg-gray-50 transition-colors"
             onClick={() => setIsFilterOpen(!isFilterOpen)}
@@ -278,6 +314,7 @@ const CandidateAppliedJobs: React.FC = () => {
                     <option value="Đã hủy">Đã hủy</option>
                   </select>
                 </div>
+                {/* ... (Các phần select khác giữ nguyên như file gốc) ... */}
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">
                     Sắp xếp
@@ -423,7 +460,6 @@ const CandidateAppliedJobs: React.FC = () => {
                   ))}
                 </div>
               </div>
-
               <div className="mt-4 flex justify-center border-t border-gray-100 pt-3">
                 <button
                   onClick={() => setIsFilterOpen(false)}
@@ -448,7 +484,6 @@ const CandidateAppliedJobs: React.FC = () => {
             Không thể tải danh sách.
           </div>
         )}
-
         {!isLoading && !isError && apiErr && (
           <div className="rounded-lg border border-red-100 bg-red-50 p-4 text-center text-red-700">
             {(data as any)?.mes || "Không tải được danh sách đã ứng tuyển."}
@@ -467,6 +502,7 @@ const CandidateAppliedJobs: React.FC = () => {
                 const locationInfo = resolveJobLocation(job);
                 const locationText =
                   locationInfo.label || "Chưa cập nhật địa điểm";
+
                 const recruiterId =
                   job.recruiter_id ||
                   job.recruiter?.recruiter_id ||
@@ -475,7 +511,7 @@ const CandidateAppliedJobs: React.FC = () => {
                 const recruiterLabel =
                   job.recruiter?.company_name ||
                   job.recruiter_name ||
-                  job.recruiter?.recruiter?.email ||
+                  job.recruiter?.user?.email ||
                   job.recruiter?.contact_name ||
                   "Nhà tuyển dụng";
                 const canViewRecruiter = Boolean(recruiterId);
@@ -489,6 +525,15 @@ const CandidateAppliedJobs: React.FC = () => {
                     ),
                   );
                 };
+
+                // LOGIC HỦY: Kiểm tra Deadline
+                const deadline = job.application_deadline_to
+                  ? new Date(job.application_deadline_to)
+                  : null;
+                const now = new Date();
+                // Nếu không có deadline thì mặc định cho hủy, hoặc nếu chưa đến deadline
+                const canCancel = deadline ? now <= deadline : true;
+
                 return (
                   <article
                     key={job.id}
@@ -537,7 +582,33 @@ const CandidateAppliedJobs: React.FC = () => {
                           <Calendar className="h-4 w-4 text-gray-400" />
                           Hạn nộp: {formatDate(job.application_deadline_to)}
                         </span>
+
                         <div className="flex gap-2">
+                          {/* Nút Hủy Ứng Tuyển */}
+                          {canCancel ? (
+                            <button
+                              type="button"
+                              onClick={() => handleCancelApplication(job)}
+                              disabled={cancelMutation.isPending}
+                              className="inline-flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-semibold text-red-600 hover:bg-red-100 transition disabled:opacity-50"
+                              title="Hủy ứng tuyển và xóa phỏng vấn liên quan"
+                            >
+                              {cancelMutation.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Trash2 className="h-4 w-4" />
+                              )}
+                              Hủy ứng tuyển
+                            </button>
+                          ) : (
+                            <div
+                              className="inline-flex items-center gap-1 rounded-lg bg-gray-100 px-3 py-2 text-xs font-medium text-gray-500"
+                              title="Đã quá hạn nộp hồ sơ"
+                            >
+                              <AlertTriangle size={14} /> Quá hạn hủy
+                            </div>
+                          )}
+
                           {canViewRecruiter && (
                             <button
                               type="button"
@@ -565,7 +636,6 @@ const CandidateAppliedJobs: React.FC = () => {
                     </div>
                     {expanded && (
                       <div className="mt-3 space-y-2 rounded-lg bg-gray-50 p-3 text-sm text-gray-700 border border-dashed border-gray-200">
-                        {/* Chi tiết tin tuyển dụng */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <div>
                             <span className="font-semibold text-gray-800">

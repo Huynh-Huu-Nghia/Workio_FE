@@ -23,7 +23,7 @@ import { getAccessToken } from "./authStorage";
 
 // 1. Tạo instance Axios với cấu hình cơ bản
 export const axiosInstance = axios.create({
-  baseURL: "/api", // Prefix API to avoid clashing with SPA routes on reload
+  baseURL: "/api", // Prefix /api để Vite Proxy forward tới Backend (localhost:3000)
   headers: {
     "Content-Type": "application/json",
   },

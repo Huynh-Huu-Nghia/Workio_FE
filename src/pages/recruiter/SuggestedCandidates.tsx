@@ -1,5 +1,16 @@
+// File: SuggestedCandidates.tsx
 import React, { useEffect, useMemo, useState } from "react";
-import { Lightbulb, Search, Target } from "lucide-react";
+import { 
+  Briefcase, 
+  MapPin, 
+  Target, 
+  User, 
+  Search, 
+  Clock, 
+  GraduationCap,
+  Mail,
+  Phone
+} from "lucide-react";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation, useSearchParams } from "react-router-dom";
 import {
@@ -7,6 +18,7 @@ import {
   useSuggestedCandidatesQuery,
 } from "@/api/recruiter.api";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
+import { useProvincesQuery } from "@/api/provinces.api";
 
 const SuggestedCandidates: React.FC = () => {
   const location = useLocation();
@@ -18,6 +30,7 @@ const SuggestedCandidates: React.FC = () => {
 
   const { data: jobsRes, isLoading: jobsLoading } = useRecruiterJobPostsQuery();
   const jobPosts = jobsRes?.data ?? [];
+  const { data: provinces } = useProvincesQuery();
 
   useEffect(() => {
     if (initialJobId) {
@@ -25,152 +38,204 @@ const SuggestedCandidates: React.FC = () => {
       return;
     }
     if (!selectedJobId && jobPosts.length > 0) {
-      setSelectedJobId(jobPosts[0].id);
+      // Tự động chọn job đang mở đầu tiên
+      const firstActiveJob = jobPosts.find((j: any) => j.status === "Đang mở");
+      if (firstActiveJob) setSelectedJobId(firstActiveJob.id);
+      else setSelectedJobId(jobPosts[0].id);
     }
   }, [initialJobId, jobPosts, selectedJobId]);
 
   const { data, isFetching } = useSuggestedCandidatesQuery(selectedJobId);
   const candidates = data?.data ?? [];
 
+  const getProvinceName = (code: string | number) => {
+    if (!provinces) return code;
+    const p = provinces.find((prov) => String(prov.code) === String(code));
+    return p ? p.name : code;
+  };
+
   const filteredCandidates = useMemo(() => {
     if (!keyword.trim()) return candidates;
     const q = keyword.trim().toLowerCase();
     return candidates.filter((c: any) => {
+      // Handle alias: c.candidate là User Info
+      const userInfo = c.candidate || {}; 
       const haystack =
-        `${c.full_name || ""} ${c.email || c.user?.email || ""}`.toLowerCase();
+        `${c.full_name || ""} ${c.email || userInfo.email || ""} ${c.phone || userInfo.phone || ""}`.toLowerCase();
       return haystack.includes(q);
     });
   }, [candidates, keyword]);
 
   return (
     <RecruiterLayout title={title}>
-      <div className="space-y-6">
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="space-y-6 mx-auto max-w-6xl">
+        {/* Header & Filter */}
+        <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+          <div className="flex flex-col md:flex-row gap-4 justify-between items-start md:items-center">
             <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">
-                Chọn tin tuyển dụng
-              </p>
-              <h2 className="text-xl font-bold text-gray-900">
-                Gợi ý ứng viên phù hợp
+              <h2 className="text-xl font-bold text-gray-800 flex items-center gap-2">
+                <Target className="text-orange-500" />
+                Gợi ý ứng viên (AI Matching)
               </h2>
-              <p className="text-sm text-gray-500">
-                Dữ liệu lấy từ API `/recruiter/suggested-candidates` dựa trên
-                tiêu chí của tin.
+              <p className="text-sm text-gray-500 mt-1">
+                Hệ thống tự động chấm điểm độ phù hợp dựa trên hồ sơ ứng viên và yêu cầu công việc.
               </p>
             </div>
-            <select
-              value={selectedJobId}
-              onChange={(e) => setSelectedJobId(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 sm:min-w-[260px]"
-            >
-              <option value="">Chọn tin tuyển dụng</option>
-              {jobPosts
-                .filter((job: any) => job.status !== "Đã tuyển")
-                .map((job: any) => (
+            
+            <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
+              <select
+                value={selectedJobId}
+                onChange={(e) => setSelectedJobId(e.target.value)}
+                className="rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none min-w-[200px]"
+              >
+                <option value="">-- Chọn tin tuyển dụng --</option>
+                {jobPosts.map((job: any) => (
                   <option key={job.id} value={job.id}>
-                    {job.position} • {job.status || "Chưa rõ"}
+                    {job.position} {job.status === "Đang mở" ? "(Đang mở)" : `(${job.status})`}
                   </option>
                 ))}
-            </select>
-          </div>
-          {jobsLoading && (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-4 text-center text-sm text-gray-500">
-              Đang tải danh sách tin...
+              </select>
+              
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <input
+                  value={keyword}
+                  onChange={(e) => setKeyword(e.target.value)}
+                  placeholder="Tìm tên, email..."
+                  className="w-full sm:w-64 rounded-lg border border-gray-300 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none"
+                />
+              </div>
             </div>
-          )}
+          </div>
         </section>
 
-        <section className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-            <div>
-              <p className="text-xs uppercase tracking-widest text-gray-400">
-                Bộ lọc
-              </p>
-              <h3 className="text-lg font-bold text-gray-900">
-                Danh sách gợi ý
-              </h3>
-            </div>
-            <div className="relative w-full md:w-72">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                placeholder="Tìm theo tên/email"
-                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              />
-            </div>
-          </div>
-
+        {/* Content */}
+        <section>
           {!selectedJobId ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Hãy chọn một tin tuyển dụng để xem gợi ý.
+            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+              <Briefcase className="h-16 w-16 text-gray-200 mb-4" />
+              <p className="text-gray-500 font-medium">Vui lòng chọn một tin tuyển dụng để bắt đầu tìm kiếm.</p>
             </div>
           ) : isFetching ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Đang tải danh sách gợi ý...
+            <div className="flex flex-col items-center justify-center py-16">
+              <div className="h-10 w-10 animate-spin rounded-full border-4 border-orange-200 border-t-orange-600"></div>
+              <p className="mt-4 text-gray-600 font-medium animate-pulse">Đang phân tích dữ liệu ứng viên...</p>
             </div>
           ) : filteredCandidates.length === 0 ? (
-            <div className="mt-4 rounded-xl border border-dashed border-gray-200 p-6 text-center text-gray-500">
-              Chưa có gợi ý phù hợp.
+            <div className="flex flex-col items-center justify-center py-16 bg-white rounded-xl border border-dashed border-gray-300">
+              <User className="h-16 w-16 text-gray-200 mb-4" />
+              <p className="text-gray-500 font-medium">Chưa tìm thấy ứng viên phù hợp.</p>
+              <p className="text-sm text-gray-400 mt-1">Thử điều chỉnh lại địa điểm hoặc yêu cầu công việc.</p>
             </div>
           ) : (
-            <div className="mt-4 space-y-3">
-              {filteredCandidates.map((candidate: any) => (
-                <article
-                  key={candidate.candidate_id || candidate.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
-                >
-                  <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                      <Lightbulb className="h-5 w-5" />
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex flex-wrap items-center justify-between gap-2">
-                        <div>
-                          <p className="text-sm font-semibold text-gray-900">
-                            {candidate.full_name || "Chưa cập nhật tên"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            Email:{" "}
-                            {candidate.email || candidate.user?.email || "—"}
-                          </p>
-                        </div>
-                        {typeof candidate.match_score === "number" && (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                            <Target className="h-4 w-4" />
-                            {Math.round(candidate.match_score * 100)}%
-                          </span>
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
+              {filteredCandidates.map((candidate: any) => {
+                const scorePercent = Math.round((candidate.match_score || 0) * 100);
+                const provinceCode = candidate.address?.province_code || candidate.province_code;
+                const expYears = candidate.matching_vector?.total_experience_years || 0;
+                const userInfo = candidate.candidate || {}; // Alias User info
+
+                return (
+                  <div
+                    key={candidate.candidate_id || candidate.id}
+                    className="group relative flex flex-col gap-4 rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:border-orange-300 hover:shadow-md"
+                  >
+                    {/* Header Card */}
+                    <div className="flex items-start gap-4">
+                      <div className="flex-shrink-0">
+                        {userInfo.avatar_url ? (
+                          <img 
+                            src={userInfo.avatar_url} 
+                            alt="Avatar" 
+                            className="h-14 w-14 rounded-full object-cover border border-gray-100"
+                          />
+                        ) : (
+                          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-orange-100 to-orange-200 text-orange-600 font-bold text-xl shadow-inner">
+                            {(candidate.full_name || "U").charAt(0).toUpperCase()}
+                          </div>
                         )}
                       </div>
-                      {candidate.skills && (
-                        <div className="mt-2 flex flex-wrap gap-2 text-xs text-gray-600">
-                          {(Array.isArray(candidate.skills)
-                            ? candidate.skills
-                            : String(candidate.skills).split(",")
-                          )
-                            .filter(Boolean)
-                            .slice(0, 5)
-                            .map((skill: string) => (
-                              <span
-                                key={skill}
-                                className="rounded-full bg-slate-100 px-3 py-1 font-semibold text-gray-700"
-                              >
-                                {skill.trim()}
-                              </span>
-                            ))}
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="text-base font-bold text-gray-900 group-hover:text-orange-600 transition truncate">
+                              {candidate.full_name}
+                            </h4>
+                            <div className="flex items-center gap-2 text-xs text-gray-500 mt-1">
+                              {candidate.email && <span className="flex items-center gap-1"><Mail size={12}/> {candidate.email}</span>}
+                              {candidate.phone && <span className="flex items-center gap-1"><Phone size={12}/> {candidate.phone}</span>}
+                            </div>
+                          </div>
+                          
+                          {/* Score Badge */}
+                          <div className={`flex flex-col items-end`}>
+                            <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-bold border ${
+                              scorePercent >= 70 ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                              scorePercent >= 40 ? 'bg-blue-50 text-blue-700 border-blue-200' : 
+                              'bg-gray-50 text-gray-600 border-gray-200'
+                            }`}>
+                              {scorePercent}%
+                            </span>
+                          </div>
                         </div>
-                      )}
+                      </div>
                     </div>
+
+                    <hr className="border-gray-100" />
+
+                    {/* Details Grid */}
+                    <div className="grid grid-cols-2 gap-y-2 gap-x-4 text-sm">
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Briefcase className="h-4 w-4 text-gray-400" />
+                        <span>{expYears > 0 ? `${expYears} năm KN` : "Chưa có KN"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <MapPin className="h-4 w-4 text-gray-400" />
+                        <span className="truncate">{getProvinceName(provinceCode) || "Chưa cập nhật"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <GraduationCap className="h-4 w-4 text-gray-400" />
+                        <span className="truncate">{candidate.graduation_rank || "Đại học"}</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-gray-700">
+                        <Clock className="h-4 w-4 text-gray-400" />
+                        <span className="truncate">{candidate.working_time || "Toàn thời gian"}</span>
+                      </div>
+                    </div>
+
+                    {/* Skills Tags */}
+                    {(candidate.matching_vector?.fields_wish || candidate.fields_wish) && (
+                      <div className="flex flex-wrap gap-1.5 mt-2">
+                        {parseArray(candidate.matching_vector?.fields_wish || candidate.fields_wish)
+                          .slice(0, 3)
+                          .map((field: string, idx: number) => (
+                            <span key={idx} className="rounded px-2 py-0.5 text-[11px] bg-gray-100 text-gray-600 font-medium border border-gray-200">
+                              {field}
+                            </span>
+                          ))}
+                         {parseArray(candidate.matching_vector?.fields_wish || candidate.fields_wish).length > 3 && (
+                            <span className="text-[10px] text-gray-400 self-center">+ thêm</span>
+                         )}
+                      </div>
+                    )}
                   </div>
-                </article>
-              ))}
+                );
+              })}
             </div>
           )}
         </section>
       </div>
     </RecruiterLayout>
   );
+};
+
+// Helper parse
+const parseArray = (input: any): string[] => {
+  if (!input) return [];
+  if (Array.isArray(input)) return input.map(String);
+  if (typeof input === 'string') return input.split(/[,;]/).map(s => s.trim()).filter(Boolean);
+  return [];
 };
 
 export default SuggestedCandidates;
