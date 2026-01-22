@@ -23,12 +23,10 @@ const InterviewList: React.FC = () => {
     return interviews.filter((interview) => {
       const searchLower = searchTerm.toLowerCase();
       const position = interview.job_post?.position?.toLowerCase() || "";
-      const company = interview.job_post?.recruiter?.company_name?.toLowerCase() || "";
+      const company =
+        interview.job_post?.recruiter?.company_name?.toLowerCase() || "";
 
-      return (
-        position.includes(searchLower) ||
-        company.includes(searchLower)
-      );
+      return position.includes(searchLower) || company.includes(searchLower);
     });
   }, [interviews, searchTerm]);
 
