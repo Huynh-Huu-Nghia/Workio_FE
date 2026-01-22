@@ -292,10 +292,8 @@ const CenterList: React.FC = () => {
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Bạn có chắc chắn muốn xóa trung tâm{" "}
-              <strong>
-                {selectedToDelete?.name || "N/A"}
-              </strong>
-              ? Hành động này không thể hoàn tác.
+              <strong>{selectedToDelete?.name || "N/A"}</strong>? Hành động này
+              không thể hoàn tác.
             </p>
             <div className="flex justify-end gap-3">
               <button
