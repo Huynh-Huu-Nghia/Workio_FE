@@ -11,6 +11,7 @@ import {
   useWardByCodeQuery,
 } from "@/api/provinces.api";
 import {
+  ArrowLeft,
   ArrowUpDown,
   Filter,
   Loader2,
@@ -18,7 +19,6 @@ import {
   SlidersHorizontal,
   Users,
 } from "lucide-react";
-import BackButton from "@/components/ui/BackButton";
 
 const STUDENT_STATUS = {
   PENDING: "cho_duyet",
@@ -237,7 +237,15 @@ export default function CenterView() {
 
   const handleCloseStudentDetail = () => setSelectedStudentDetail(null);
 
-  const handleBack = useBack(() => path.ADMIN_CENTER_LIST);
+  const handleBack = () => {
+    const canUseHistory =
+      typeof window !== "undefined" && window.history.length > 1;
+    if (canUseHistory) {
+      navigate(-1);
+      return;
+    }
+    navigate(path.ADMIN_CENTER_LIST);
+  };
 
   const renderStudentDetailModal = () => {
     if (!selectedStudentDetail) return null;
@@ -653,11 +661,12 @@ export default function CenterView() {
     >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <BackButton
-            text="Quay lại"
-            to={path.ADMIN_CENTER_LIST}
-            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          />
+          <button
+            onClick={handleBack}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          >
+            <ArrowLeft size={16} /> Quay lại
+          </button>
         </div>
 
         {isLoading && (

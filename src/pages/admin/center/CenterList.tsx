@@ -25,6 +25,7 @@ const CenterList: React.FC = () => {
   const [provinceCode, setProvinceCode] = useState("");
   const [wardCode, setWardCode] = useState("");
   const [trainingField, setTrainingField] = useState("");
+  const [selectedToDelete, setSelectedToDelete] = useState<any | null>(null);
 
   const filters = useMemo(
     () => ({
@@ -43,27 +44,30 @@ const CenterList: React.FC = () => {
   const centers = data?.data ?? [];
   const deleteCenterMutation = useDeleteAdminCenterMutation();
 
-  const handleDelete = async (center: any) => {
-    const ok = window.confirm(
-      `Bạn có chắc chắn muốn xóa trung tâm "${center.name || "N/A"}"?`,
-    );
-    if (!ok) return;
+  const handleDelete = (center: any) => {
+    setSelectedToDelete(center);
+  };
 
+  const confirmDelete = async () => {
+    if (!selectedToDelete) return;
     try {
-      const res = await deleteCenterMutation.mutateAsync(center.center_id);
+      const res = await deleteCenterMutation.mutateAsync(
+        selectedToDelete.center_id,
+      );
       if (res?.err === 1) {
-        // API returned an error
         toast.error(res?.mes || "Có lỗi xảy ra khi xóa trung tâm");
         return;
       }
       toast.success("Xóa trung tâm thành công!");
       refetch();
+      setSelectedToDelete(null);
     } catch (error: any) {
       toast.error(
         error?.response?.data?.mes ||
           error?.message ||
           "Có lỗi xảy ra khi xóa trung tâm",
       );
+      setSelectedToDelete(null);
     }
   };
 
@@ -293,6 +297,37 @@ const CenterList: React.FC = () => {
           </div>
         )}
       </div>
+      {selectedToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              Xác nhận xóa
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Bạn có chắc chắn muốn xóa trung tâm{" "}
+              <strong>{selectedToDelete?.name || "N/A"}</strong>? Hành động này
+              không thể hoàn tác.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedToDelete(null)}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteCenterMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleteCenterMutation.isPending ? "Đang xóa..." : "Xóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 };
