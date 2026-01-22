@@ -105,7 +105,7 @@ const ReportOverview: React.FC = () => {
               className="inline-flex items-center gap-2 rounded-lg border border-orange-200 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 transition hover:bg-orange-100"
             >
               <RefreshCw className="h-4 w-4" />
-              Làm mới
+              Cập nhật
             </button>
           </div>
         </div>

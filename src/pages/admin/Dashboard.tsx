@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
             onClick={handleRefresh}
             className="rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600"
           >
-            Làm mới
+            Cập nhật
           </button>
         </div>
       </div>
