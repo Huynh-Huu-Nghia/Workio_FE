@@ -16,6 +16,7 @@ import CandidateView from "@/pages/admin/candidate/CandidateView";
 import CandidateEdit from "@/pages/admin/candidate/CandidateEdit";
 import RecruiterList from "@/pages/admin/recruiter/RecruiterList";
 import RecruiterView from "@/pages/admin/recruiter/RecruiterView";
+import RecruiterEdit from "@/pages/admin/recruiter/RecruiterEdit";
 import JobList from "@/pages/admin/jobs/JobList";
 import JobFormAdmin from "@/pages/admin/jobs/JobForm";
 import PendingJobs from "@/pages/admin/jobs/PendingJobs";
@@ -126,6 +127,10 @@ export const AppRouter = createBrowserRouter([
       {
         path: path.ADMIN_RECRUITER_VIEW,
         element: <RecruiterView />,
+      },
+      {
+        path: path.ADMIN_RECRUITER_EDIT,
+        element: <RecruiterEdit />,
       },
       {
         // Khi truy cập /admin/users

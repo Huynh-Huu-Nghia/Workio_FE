@@ -2,11 +2,13 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Lightbulb, Search } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useAdminSuggestedJobsQuery } from "@/api/job-post.api";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useGetAllCandidatesQuery } from "@/api/candidate.api";
+import path from "@/constants/path";
 
 const SuggestedJobs: React.FC = () => {
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   const [candidateId, setCandidateId] = useState("");
   const [submittedId, setSubmittedId] = useState("");
   const [searchTerm, setSearchTerm] = useState("");
@@ -99,24 +101,32 @@ const SuggestedJobs: React.FC = () => {
                   Không có gợi ý.
                 </div>
               ) : (
-                jobs.map((job) => (
-                  <div
-                    key={job.id}
-                    className="flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4"
-                  >
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
-                      <Lightbulb className="h-5 w-5" />
+                jobs.map((job) => {
+                  const jobId = String(
+                    job.id || job.job_post_id || job.job_post?.id || "",
+                  );
+                  return (
+                    <div
+                      key={jobId}
+                      onClick={() =>
+                        navigate(path.ADMIN_JOB_VIEW.replace(":id", jobId))
+                      }
+                      className="cursor-pointer hover:shadow-md flex items-start gap-3 rounded-xl border border-gray-100 bg-gray-50/70 p-4 transition"
+                    >
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-50 text-orange-600">
+                        <Lightbulb className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {job.position}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Trạng thái: {job.status || "—"}
+                        </p>
+                      </div>
                     </div>
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800">
-                        {job.position}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        Trạng thái: {job.status || "—"}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           )}

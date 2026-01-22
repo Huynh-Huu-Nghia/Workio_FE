@@ -9,6 +9,10 @@ import {
 } from "@/api/candidate.api";
 import { useQueryClient } from "@tanstack/react-query";
 import {
+  useProvinceByCodeQuery,
+  useWardByCodeQuery,
+} from "@/api/provinces.api";
+import {
   ArrowLeft,
   BookOpen,
   Briefcase,
@@ -20,6 +24,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useNavigate, useParams } from "react-router-dom";
+import useBack from "@/hooks/useBack";
 import { toast } from "react-toastify";
 import ConfirmDialog from "@/components/common/ConfirmDialog";
 
@@ -155,6 +160,12 @@ export default function CandidateView() {
   });
 
   const candidate = apiResponse?.data as AdminCandidateDetail | undefined;
+  const { data: province } = useProvinceByCodeQuery(
+    candidate?.address?.province_code || undefined,
+  );
+  const { data: ward } = useWardByCodeQuery(
+    candidate?.address?.ward_code || undefined,
+  );
   const trainingHistory: CandidateTrainingRecord[] = Array.isArray(
     candidate?.training_history,
   )
@@ -239,15 +250,7 @@ export default function CandidateView() {
     });
   };
 
-  const handleBack = () => {
-    const canUseHistory =
-      typeof window !== "undefined" && window.history.length > 1;
-    if (canUseHistory) {
-      navigate(-1);
-      return;
-    }
-    navigate(path.ADMIN_USER_CANDIDATE_LIST);
-  };
+  const handleBack = useBack(() => path.ADMIN_USER_CANDIDATE_LIST);
 
   return (
     <AdminLayout
@@ -386,15 +389,18 @@ export default function CandidateView() {
                   <div>
                     <div className="text-gray-500">Phường/Xã</div>
                     <div className="font-medium text-gray-800">
-                      {candidate.address?.ward ||
-                        candidate.address?.ward_code ||
+                      {ward?.name ||
+                        candidate?.address?.ward ||
+                        candidate?.address?.ward_code ||
                         "—"}
                     </div>
                   </div>
                   <div>
                     <div className="text-gray-500">Tỉnh/TP</div>
                     <div className="font-medium text-gray-800">
-                      {candidate.address?.province_code || "—"}
+                      {province?.name ||
+                        candidate?.address?.province_code ||
+                        "—"}
                     </div>
                   </div>
                 </div>

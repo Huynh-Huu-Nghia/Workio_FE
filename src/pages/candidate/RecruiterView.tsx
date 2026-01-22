@@ -2,7 +2,12 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import CandidateLayout from "@/layouts/CandidateLayout";
 import { useCandidateRecruiterDetailQuery } from "@/api/recruiter.api";
-import { ArrowLeft, Loader2, Mail, MapPin, Phone, Globe, Building2 } from "lucide-react";
+import {
+  useProvinceByCodeQuery,
+  useWardByCodeQuery,
+} from "@/api/provinces.api";
+import { Loader2, Mail, MapPin, Phone, Globe, Building2 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 
 type InfoRowProps = {
   label: string;
@@ -22,17 +27,20 @@ const CandidateRecruiterView: React.FC = () => {
   const { data, isLoading, isError } = useCandidateRecruiterDetailQuery(id);
   const apiErr = data && (data as any).err !== 0;
   const recruiter = !apiErr ? (data?.data as any) : null;
+  const { data: province } = useProvinceByCodeQuery(
+    recruiter?.address?.province_code || undefined,
+  );
+  const { data: ward } = useWardByCodeQuery(
+    recruiter?.address?.ward_code || undefined,
+  );
 
   return (
     <CandidateLayout title="Nhà tuyển dụng">
       <div className="space-y-4">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
+        <BackButton
+          text="Quay lại"
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 shadow-sm hover:bg-gray-50"
-        >
-          <ArrowLeft className="h-4 w-4" /> Quay lại
-        </button>
+        />
 
         {isLoading && (
           <div className="flex items-center gap-2 rounded-xl border border-gray-100 bg-white p-5 text-gray-600">
@@ -71,17 +79,40 @@ const CandidateRecruiterView: React.FC = () => {
               </div>
 
               <div className="mt-4 space-y-3">
-                <InfoRow label="Số điện thoại" value={recruiter.phone || "Chưa cập nhật"} />
-                <InfoRow label="Website" value={recruiter.website || "Không có website"} />
-                <InfoRow label="Mã số thuế" value={recruiter.tax_number || "—"} />
-                <InfoRow label="Trạng thái" value={recruiter.is_verified ? "Đã xác thực" : "Chưa xác thực"} />
-                <InfoRow label="Đã tuyển" value={typeof recruiter.hired_count === "number" ? recruiter.hired_count : 0} />
+                <InfoRow
+                  label="Số điện thoại"
+                  value={recruiter.phone || "Chưa cập nhật"}
+                />
+                <InfoRow
+                  label="Website"
+                  value={recruiter.website || "Không có website"}
+                />
+                <InfoRow
+                  label="Mã số thuế"
+                  value={recruiter.tax_number || "—"}
+                />
+                <InfoRow
+                  label="Trạng thái"
+                  value={
+                    recruiter.is_verified ? "Đã xác thực" : "Chưa xác thực"
+                  }
+                />
+                <InfoRow
+                  label="Đã tuyển"
+                  value={
+                    typeof recruiter.hired_count === "number"
+                      ? recruiter.hired_count
+                      : 0
+                  }
+                />
               </div>
             </div>
 
             <div className="lg:col-span-2 space-y-5">
               <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                <h2 className="text-sm font-semibold text-gray-800">Thông tin liên hệ</h2>
+                <h2 className="text-sm font-semibold text-gray-800">
+                  Thông tin liên hệ
+                </h2>
                 <div className="mt-3 space-y-2 text-sm text-gray-700">
                   <div className="flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-400" />
@@ -89,7 +120,9 @@ const CandidateRecruiterView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <Mail className="h-4 w-4 text-gray-400" />
-                    {recruiter?.recruiter?.email || recruiter.email || "Chưa cập nhật"}
+                    {recruiter?.recruiter?.email ||
+                      recruiter.email ||
+                      "Chưa cập nhật"}
                   </div>
                   <div className="flex items-center gap-2">
                     <Globe className="h-4 w-4 text-gray-400" />
@@ -107,15 +140,19 @@ const CandidateRecruiterView: React.FC = () => {
                   </div>
                   <div className="flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-400" />
-                    {recruiter.address?.ward_code || "—"} • {recruiter.address?.province_code || "—"}
+                    {ward?.name || recruiter?.address?.ward_code || "—"} •{" "}
+                    {province?.name || recruiter?.address?.province_code || "—"}
                   </div>
                 </div>
               </div>
 
               <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                <h2 className="text-sm font-semibold text-gray-800">Giới thiệu</h2>
+                <h2 className="text-sm font-semibold text-gray-800">
+                  Giới thiệu
+                </h2>
                 <p className="mt-2 text-sm text-gray-700">
-                  {recruiter.description || "Nhà tuyển dụng chưa cập nhật mô tả chi tiết."}
+                  {recruiter.description ||
+                    "Nhà tuyển dụng chưa cập nhật mô tả chi tiết."}
                 </p>
               </div>
             </div>

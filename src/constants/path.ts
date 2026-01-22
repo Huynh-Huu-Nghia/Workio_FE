@@ -22,6 +22,7 @@ const path = {
   ADMIN_RECRUITER_LIST: "/admin/recruiters",
   // ADMIN_RECRUITER_PENDING: "/admin/recruiters/pending",
   ADMIN_RECRUITER_VIEW: "/admin/recruiters/view/:id",
+  ADMIN_RECRUITER_EDIT: "/admin/recruiters/edit/:id",
   ADMIN_CENTER_LIST: "/admin/centers",
   ADMIN_CENTER_CREATE: "/admin/centers/create",
   ADMIN_CENTER_EDIT: "/admin/centers/edit/:id",

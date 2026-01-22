@@ -9,6 +9,10 @@ import {
 } from "@/api/candidate.api";
 import type { CandidateCourse } from "@/api/candidate.api";
 import {
+  useProvinceByCodeQuery,
+  useWardByCodeQuery,
+} from "@/api/provinces.api";
+import {
   BookOpen,
   GraduationCap,
   MapPin,
@@ -88,9 +92,17 @@ const CandidateCourses: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [registeringId, setRegisteringId] = useState<string | null>(null);
   const [selectedCourse, setSelectedCourse] = useState<CandidateCourse | null>(
-    null
+    null,
   );
-  const [lockedCourses, setLockedCourses] = useState<Record<string, boolean>>({});
+  const { data: province } = useProvinceByCodeQuery(
+    selectedCourse?.center?.address?.province_code || undefined,
+  );
+  const { data: ward } = useWardByCodeQuery(
+    selectedCourse?.center?.address?.ward_code || undefined,
+  );
+  const [lockedCourses, setLockedCourses] = useState<Record<string, boolean>>(
+    {},
+  );
   const [localCourseStates, setLocalCourseStates] = useState<
     Record<string, { status: string; requested_at?: string }>
   >({});
@@ -227,37 +239,51 @@ const CandidateCourses: React.FC = () => {
       label: "Bị từ chối",
       tone: "bg-red-100 text-red-600",
       state: "rejected",
-      description: "Trung tâm đã từ chối yêu cầu. Vui lòng liên hệ để biết thêm chi tiết.",
+      description:
+        "Trung tâm đã từ chối yêu cầu. Vui lòng liên hệ để biết thêm chi tiết.",
     },
     rejected: {
       label: "Bị từ chối",
       tone: "bg-red-100 text-red-600",
       state: "rejected",
-      description: "Trung tâm đã từ chối yêu cầu. Vui lòng liên hệ để biết thêm chi tiết.",
+      description:
+        "Trung tâm đã từ chối yêu cầu. Vui lòng liên hệ để biết thêm chi tiết.",
     },
   };
 
   const getStatusMeta = (course: CandidateCourse) => {
     const override = localCourseStates[course.id];
     const rawStatus =
-      override?.status || course.candidate_status || course.registration?.status || undefined;
+      override?.status ||
+      course.candidate_status ||
+      course.registration?.status ||
+      undefined;
     const normalized = rawStatus?.toLowerCase();
-    const baseMeta = normalized && STATUS_META_CONFIG[normalized]
-      ? STATUS_META_CONFIG[normalized]
-      : STATUS_META_CONFIG.default;
+    const baseMeta =
+      normalized && STATUS_META_CONFIG[normalized]
+        ? STATUS_META_CONFIG[normalized]
+        : STATUS_META_CONFIG.default;
 
     return {
       ...baseMeta,
-      requested_at: override?.requested_at || course.candidate_requested_at || null,
+      requested_at:
+        override?.requested_at || course.candidate_requested_at || null,
     };
   };
 
   const canRegisterCourse = (course: CandidateCourse) => {
     const statusMeta = getStatusMeta(course);
-    return course.can_register !== false && !lockedCourses[course.id] && statusMeta.state === "idle";
+    return (
+      course.can_register !== false &&
+      !lockedCourses[course.id] &&
+      statusMeta.state === "idle"
+    );
   };
 
-  const getDateValue = (value?: string | null, fallback = Number.MAX_SAFE_INTEGER) => {
+  const getDateValue = (
+    value?: string | null,
+    fallback = Number.MAX_SAFE_INTEGER,
+  ) => {
     if (!value) return fallback;
     const ts = new Date(value).getTime();
     return Number.isNaN(ts) ? fallback : ts;
@@ -268,12 +294,26 @@ const CandidateCourses: React.FC = () => {
     const filtered = courses.filter((course) => {
       const statusMeta = getStatusMeta(course);
       if (onlyAvailable && !canRegisterCourse(course)) return false;
-      if (statusFilter !== "all" && statusMeta.state !== statusFilter) return false;
-      if (centerFilter !== "all" && (course.center_name || "Khác") !== centerFilter) return false;
-      if (fieldFilter !== "all" && (course.training_field || "Khác") !== fieldFilter) return false;
+      if (statusFilter !== "all" && statusMeta.state !== statusFilter)
+        return false;
+      if (
+        centerFilter !== "all" &&
+        (course.center_name || "Khác") !== centerFilter
+      )
+        return false;
+      if (
+        fieldFilter !== "all" &&
+        (course.training_field || "Khác") !== fieldFilter
+      )
+        return false;
 
       if (keyword) {
-        const haystack = [course.name, course.description, course.center_name, course.location]
+        const haystack = [
+          course.name,
+          course.description,
+          course.center_name,
+          course.location,
+        ]
           .filter(Boolean)
           .map((field) => (field as string).toLowerCase());
         if (!haystack.some((field) => field.includes(keyword))) return false;
@@ -351,7 +391,7 @@ const CandidateCourses: React.FC = () => {
                 candidate_status: "cho_duyet",
                 candidate_requested_at: requestedAt,
               }
-            : prev
+            : prev,
         );
         refetch();
       } else {
@@ -371,7 +411,9 @@ const CandidateCourses: React.FC = () => {
     const allowRegister = canRegisterCourse(selectedCourse);
     const requestedAt = statusMeta.requested_at;
     const centerName =
-      selectedCourse.center?.name || selectedCourse.center_name || "Chưa cập nhật";
+      selectedCourse.center?.name ||
+      selectedCourse.center_name ||
+      "Chưa cập nhật";
     const centerEmail =
       selectedCourse.center?.email || selectedCourse.center_email || null;
     const centerPhone =
@@ -380,9 +422,9 @@ const CandidateCourses: React.FC = () => {
       selectedCourse.center?.website || selectedCourse.center_website || null;
     const centerAddressParts = [
       selectedCourse.center?.address?.street,
-      selectedCourse.center?.address?.ward_code,
+      ward?.name || selectedCourse.center?.address?.ward_code,
       selectedCourse.center?.address?.district_code,
-      selectedCourse.center?.address?.province_code,
+      province?.name || selectedCourse.center?.address?.province_code,
     ].filter(Boolean);
     const centerAddress =
       (centerAddressParts.length ? centerAddressParts.join(", ") : null) ||
@@ -411,12 +453,19 @@ const CandidateCourses: React.FC = () => {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/40" onClick={() => setSelectedCourse(null)} />
+        <div
+          className="absolute inset-0 bg-black/40"
+          onClick={() => setSelectedCourse(null)}
+        />
         <div className="relative z-10 h-[90vh] w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-2xl">
           <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
             <div>
-              <p className="text-xs uppercase text-gray-400">Chi tiết khóa học</p>
-              <h2 className="text-2xl font-bold text-gray-900">{selectedCourse.name}</h2>
+              <p className="text-xs uppercase text-gray-400">
+                Chi tiết khóa học
+              </p>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {selectedCourse.name}
+              </h2>
             </div>
             <button
               aria-label="Đóng"
@@ -430,10 +479,14 @@ const CandidateCourses: React.FC = () => {
           <div className="grid h-[calc(90vh-5rem)] grid-cols-1 overflow-y-auto p-6 md:grid-cols-[1.3fr_1fr] md:gap-6">
             <div className="space-y-6">
               <section className="rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs font-semibold uppercase text-gray-400">Thông tin khóa học</p>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Thông tin khóa học
+                </p>
                 <div className="mt-4 space-y-4 text-sm text-gray-600">
                   {selectedCourse.description && (
-                    <p className="text-base text-gray-700">{selectedCourse.description}</p>
+                    <p className="text-base text-gray-700">
+                      {selectedCourse.description}
+                    </p>
                   )}
                   {detailLines.length > 0 && (
                     <div className="space-y-2">
@@ -446,28 +499,42 @@ const CandidateCourses: React.FC = () => {
                   )}
                   <div className="grid gap-3 md:grid-cols-2">
                     <div>
-                      <p className="text-xs uppercase text-gray-400">Thời gian</p>
-                      <p className="font-medium text-gray-900">
-                        {formatDate(selectedCourse.start_date)} → {formatDate(selectedCourse.end_date)}
+                      <p className="text-xs uppercase text-gray-400">
+                        Thời gian
                       </p>
-                      <p className="text-xs text-gray-500">Yêu cầu có mặt theo lịch trung tâm</p>
+                      <p className="font-medium text-gray-900">
+                        {formatDate(selectedCourse.start_date)} →{" "}
+                        {formatDate(selectedCourse.end_date)}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Yêu cầu có mặt theo lịch trung tâm
+                      </p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase text-gray-400">Địa điểm</p>
+                      <p className="text-xs uppercase text-gray-400">
+                        Địa điểm
+                      </p>
                       <p className="font-medium text-gray-900">
                         {selectedCourse.location || "Chưa cập nhật"}
                       </p>
                     </div>
                     <div>
-                      <p className="text-xs uppercase text-gray-400">Sĩ số hiện tại</p>
+                      <p className="text-xs uppercase text-gray-400">
+                        Sĩ số hiện tại
+                      </p>
                       <p className="font-medium text-gray-900">
-                        {selectedCourse.registered_count || 0}/{selectedCourse.capacity || "100"} học viên
+                        {selectedCourse.registered_count || 0}/
+                        {selectedCourse.capacity || "100"} học viên
                       </p>
                     </div>
                     {selectedCourse.training_field && (
                       <div>
-                        <p className="text-xs uppercase text-gray-400">Lĩnh vực đào tạo</p>
-                        <p className="font-medium text-gray-900">{selectedCourse.training_field}</p>
+                        <p className="text-xs uppercase text-gray-400">
+                          Lĩnh vực đào tạo
+                        </p>
+                        <p className="font-medium text-gray-900">
+                          {selectedCourse.training_field}
+                        </p>
                       </div>
                     )}
                   </div>
@@ -488,7 +555,9 @@ const CandidateCourses: React.FC = () => {
               </section>
 
               <section className="rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs font-semibold uppercase text-gray-400">Trung tâm phụ trách</p>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Trung tâm phụ trách
+                </p>
                 <div className="mt-4 space-y-3 text-sm text-gray-700">
                   <div className="flex items-center gap-2 text-base font-semibold text-gray-900">
                     <Users className="h-4 w-4 text-gray-400" />
@@ -498,7 +567,10 @@ const CandidateCourses: React.FC = () => {
                     {centerEmail && (
                       <div className="flex items-center gap-2">
                         <Mail className="h-4 w-4 text-gray-400" />
-                        <a href={`mailto:${centerEmail}`} className="text-orange-600 hover:underline">
+                        <a
+                          href={`mailto:${centerEmail}`}
+                          className="text-orange-600 hover:underline"
+                        >
                           {centerEmail}
                         </a>
                       </div>
@@ -506,7 +578,10 @@ const CandidateCourses: React.FC = () => {
                     {centerPhone && (
                       <div className="flex items-center gap-2">
                         <Phone className="h-4 w-4 text-gray-400" />
-                        <a href={`tel:${centerPhone}`} className="text-orange-600 hover:underline">
+                        <a
+                          href={`tel:${centerPhone}`}
+                          className="text-orange-600 hover:underline"
+                        >
                           {centerPhone}
                         </a>
                       </div>
@@ -537,8 +612,12 @@ const CandidateCourses: React.FC = () => {
 
             <div className="space-y-4">
               <section className="rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs font-semibold uppercase text-gray-400">Trạng thái đăng ký</p>
-                <p className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.tone}`}>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Trạng thái đăng ký
+                </p>
+                <p
+                  className={`mt-3 inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.tone}`}
+                >
                   {statusMeta.label}
                 </p>
                 <p className="mt-2 text-sm text-gray-600">
@@ -549,9 +628,14 @@ const CandidateCourses: React.FC = () => {
               </section>
 
               <section className="rounded-2xl border border-gray-100 p-5">
-                <p className="text-xs font-semibold uppercase text-gray-400">Hành động</p>
+                <p className="text-xs font-semibold uppercase text-gray-400">
+                  Hành động
+                </p>
                 <div className="mt-4 space-y-3 text-sm text-gray-600">
-                  <p>Trung tâm sẽ xem xét yêu cầu và liên hệ nếu thông tin phù hợp.</p>
+                  <p>
+                    Trung tâm sẽ xem xét yêu cầu và liên hệ nếu thông tin phù
+                    hợp.
+                  </p>
                   {isSubmitting && (
                     <div className="rounded-2xl border border-orange-100 bg-orange-50 px-4 py-2 text-center text-sm font-semibold text-orange-600">
                       Đang gửi yêu cầu...
@@ -601,8 +685,8 @@ const CandidateCourses: React.FC = () => {
                 Khóa học dành cho ứng viên
               </h1>
               <p className="text-white/90">
-                Xem thông tin chi tiết và gửi yêu cầu đăng ký để Trung tâm xem xét,
-                phê duyệt.
+                Xem thông tin chi tiết và gửi yêu cầu đăng ký để Trung tâm xem
+                xét, phê duyệt.
               </p>
             </div>
             <div className="flex items-center gap-4 rounded-2xl bg-white/10 px-6 py-4 backdrop-blur">
@@ -610,7 +694,9 @@ const CandidateCourses: React.FC = () => {
                 <GraduationCap className="h-8 w-8" />
               </div>
               <div>
-                <p className="text-sm uppercase text-white/80">Khóa học khả dụng</p>
+                <p className="text-sm uppercase text-white/80">
+                  Khóa học khả dụng
+                </p>
                 <p className="text-3xl font-extrabold">{courses.length}</p>
               </div>
             </div>
@@ -644,7 +730,9 @@ const CandidateCourses: React.FC = () => {
               <select
                 className="mt-2 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-semibold text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
                 value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value as StatusState | "all")}
+                onChange={(e) =>
+                  setStatusFilter(e.target.value as StatusState | "all")
+                }
               >
                 {STATUS_FILTER_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>
@@ -696,13 +784,16 @@ const CandidateCourses: React.FC = () => {
                 value={sortOption}
                 onChange={(e) => setSortOption(e.target.value as SortKey)}
               >
-                {(Object.entries(SORT_OPTION_CONFIG) as [SortKey, { label: string; helper: string }][]).map(
-                  ([value, config]) => (
-                    <option key={value} value={value}>
-                      {config.label}
-                    </option>
-                  )
-                )}
+                {(
+                  Object.entries(SORT_OPTION_CONFIG) as [
+                    SortKey,
+                    { label: string; helper: string },
+                  ][]
+                ).map(([value, config]) => (
+                  <option key={value} value={value}>
+                    {config.label}
+                  </option>
+                ))}
               </select>
               <p className="mt-1 text-xs text-gray-400">
                 {SORT_OPTION_CONFIG[sortOption].helper}
@@ -769,7 +860,9 @@ const CandidateCourses: React.FC = () => {
                       <div className="space-y-4">
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div>
-                            <p className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.tone}`}>
+                            <p
+                              className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${statusMeta.tone}`}
+                            >
                               {statusMeta.state === "approved" && (
                                 <CheckCircle2 className="mr-1 h-4 w-4" />
                               )}
@@ -808,14 +901,16 @@ const CandidateCourses: React.FC = () => {
                           <div className="flex items-center gap-2">
                             <Clock className="h-4 w-4 text-gray-400" />
                             <span>
-                              {formatDate(course.start_date)} → {formatDate(course.end_date)}
+                              {formatDate(course.start_date)} →{" "}
+                              {formatDate(course.end_date)}
                             </span>
                           </div>
                           {(course.capacity || course.registered_count) && (
                             <div className="flex items-center gap-2">
                               <BookOpen className="h-4 w-4 text-gray-400" />
                               <span>
-                                {course.registered_count || 0}/{course.capacity || "100"} học viên 
+                                {course.registered_count || 0}/
+                                {course.capacity || "100"} học viên
                               </span>
                             </div>
                           )}
@@ -849,11 +944,13 @@ const CandidateCourses: React.FC = () => {
                               Đăng ký khóa học
                             </button>
                           )}
-                          {!allowRegister && !isSubmitting && statusMeta.state !== "idle" && (
-                            <span className="text-sm font-semibold text-gray-400">
-                              {statusMeta.label}
-                            </span>
-                          )}
+                          {!allowRegister &&
+                            !isSubmitting &&
+                            statusMeta.state !== "idle" && (
+                              <span className="text-sm font-semibold text-gray-400">
+                                {statusMeta.label}
+                              </span>
+                            )}
                         </div>
                       </div>
                     </article>
@@ -864,7 +961,7 @@ const CandidateCourses: React.FC = () => {
           </div>
         )}
 
-          {renderCourseDetailModal()}
+        {renderCourseDetailModal()}
       </div>
     </CandidateLayout>
   );

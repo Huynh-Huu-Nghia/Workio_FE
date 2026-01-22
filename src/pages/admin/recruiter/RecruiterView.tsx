@@ -1,6 +1,7 @@
 import AdminLayout from "@/layouts/AdminLayout";
 import path from "@/constants/path";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import BackButton from "@/components/ui/BackButton";
 import { useAdminRecruiterDetailQuery } from "@/api/recruiter.api";
 import {
   useProvinceByCodeQuery,
@@ -8,15 +9,14 @@ import {
 } from "@/api/provinces.api";
 import {
   Loader2,
-  ArrowLeft,
   BadgeCheck,
   Building2,
   Briefcase,
   Globe,
   Phone,
-  Mail,
   MapPin,
   Users,
+  Mail,
 } from "lucide-react";
 
 const parseList = (value?: string[] | string | null) => {
@@ -74,7 +74,6 @@ const TagGroup = ({ label, items }: { label: string; items: string[] }) => (
 
 export default function RecruiterView() {
   const { id } = useParams();
-  const navigate = useNavigate();
   const { data, isLoading, isError } = useAdminRecruiterDetailQuery(id);
   const apiErr = data && (data as any).err !== 0;
   const recruiter = !apiErr ? (data?.data as any) : null;
@@ -82,18 +81,11 @@ export default function RecruiterView() {
   const relatedFields = recruiter ? parseList(recruiter.related_fields) : [];
   const industries = recruiter ? parseList(recruiter.industry) : [];
   const { data: province } = useProvinceByCodeQuery(
-    recruiter?.address?.province_code,
+    recruiter?.address?.province_code || undefined,
   );
-  const { data: ward } = useWardByCodeQuery(recruiter?.address?.ward_code);
-  const handleBack = () => {
-    const canUseHistory =
-      typeof window !== "undefined" && window.history.length > 1;
-    if (canUseHistory) {
-      navigate(-1);
-      return;
-    }
-    navigate(path.ADMIN_RECRUITER_LIST);
-  };
+  const { data: ward } = useWardByCodeQuery(
+    recruiter?.address?.ward_code || undefined,
+  );
 
   return (
     <AdminLayout
@@ -104,12 +96,11 @@ export default function RecruiterView() {
     >
       <div className="bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeft size={16} /> Quay lại danh sách
-          </button>
+          <BackButton
+            text="Quay lại danh sách"
+            to={path.ADMIN_RECRUITER_LIST}
+            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          />
         </div>
 
         {isLoading && (
@@ -240,62 +231,6 @@ export default function RecruiterView() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-3 items-start">
-              <div className="space-y-5">
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">
-                    Trạng thái kiểm duyệt
-                  </h3>
-                  <div className="flex items-center justify-between rounded-xl bg-slate-50 p-4">
-                    <div>
-                      <p className="text-xs uppercase tracking-wider text-gray-400">
-                        Xác thực tài khoản
-                      </p>
-                      <p className="text-base font-semibold text-gray-900">
-                        {recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"}
-                      </p>
-                    </div>
-                    <BadgeCheck
-                      className={`h-10 w-10 ${
-                        recruiter.is_verified
-                          ? "text-emerald-500"
-                          : "text-amber-500"
-                      }`}
-                    />
-                  </div>
-                  <p className="mt-3 text-sm text-gray-500">
-                    Trạng thái được đồng bộ từ hệ thống quản trị dựa trên giấy
-                    tờ pháp lý và lịch sử hợp tác với Workio.
-                  </p>
-                </div>
-
-                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-                  <h3 className="text-sm font-bold text-gray-900 mb-4">
-                    Thông tin liên hệ
-                  </h3>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <InfoItem label="Website" value={recruiter.website} />
-                    <InfoItem
-                      label="Email liên hệ"
-                      value={recruiter?.recruiter?.email || recruiter.email}
-                    />
-                    <InfoItem label="Điện thoại" value={recruiter.phone} />
-                  </div>
-                  <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
-                    <InfoItem label="Mã số thuế" value={recruiter.tax_number} />
-                    <InfoItem
-                      label="Đã tuyển"
-                      value={formatNumber(recruiter.hired_count)}
-                    />
-                    <InfoItem
-                      label="Trạng thái"
-                      value={
-                        recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
-
               <div className="lg:col-span-2 space-y-5">
                 <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
@@ -358,9 +293,42 @@ export default function RecruiterView() {
                       </p>
                     </div>
                   </div>
-                  <div className="mt-4 rounded-xl bg-slate-50 p-4 text-sm text-gray-600">
-                    Các thông tin địa lý này phục vụ đối chiếu khu vực tuyển
-                    dụng và giao tiếp với trung tâm đào tạo.
+                </div>
+              </div>
+
+              <div className="space-y-5">
+                <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
+                  <h3 className="text-sm font-bold text-gray-900 mb-4">
+                    Thông tin nhanh
+                  </h3>
+                  <div className="space-y-2 text-sm text-gray-600">
+                    <div className="inline-flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-400" />
+                      <span>{recruiter.phone || "—"}</span>
+                    </div>
+                    <div className="inline-flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-400" />
+                      <span>
+                        {recruiter?.recruiter?.email || recruiter.email || "—"}
+                      </span>
+                    </div>
+                    <div className="inline-flex items-center gap-2">
+                      <Globe className="h-4 w-4 text-gray-400" />
+                      <span>{recruiter.website || "—"}</span>
+                    </div>
+                  </div>
+                  <div className="mt-4 grid gap-4 border-t border-gray-100 pt-4 sm:grid-cols-2">
+                    <InfoItem label="Mã số thuế" value={recruiter.tax_number} />
+                    <InfoItem
+                      label="Đã tuyển"
+                      value={formatNumber(recruiter.hired_count)}
+                    />
+                    <InfoItem
+                      label="Trạng thái"
+                      value={
+                        recruiter.is_verified ? "Đã xác thực" : "Chờ xác thực"
+                      }
+                    />
                   </div>
                 </div>
               </div>

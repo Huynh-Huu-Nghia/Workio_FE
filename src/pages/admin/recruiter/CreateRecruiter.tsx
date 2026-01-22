@@ -152,6 +152,7 @@ export default function CreateRecruiter() {
                 <AccountSection
                   register={register as any}
                   errors={errors as any}
+                  setValue={setValue as any}
                 />
               </SectionWrapper>
 

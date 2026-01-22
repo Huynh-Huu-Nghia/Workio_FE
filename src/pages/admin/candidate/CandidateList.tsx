@@ -366,7 +366,40 @@ export default function CandidateList() {
     refetch();
   };
 
-  const printCandidateProfile = (candidate: any, password?: string) => {
+  const printCandidateProfile = async (candidate: any, password?: string) => {
+    // Fetch province and ward names (with CORS error handling)
+    let provinceName = candidate.address?.province_code;
+    let wardName = candidate.address?.ward_code;
+
+    try {
+      if (candidate.address?.province_code) {
+        const provinceRes = await fetch(
+          `https://provinces.open-api.vn/api/v2/p/${candidate.address.province_code}`,
+        );
+        if (provinceRes.ok) {
+          const provinceData = await provinceRes.json();
+          provinceName = provinceData?.name || candidate.address.province_code;
+        }
+      }
+    } catch (error) {
+      // Keep the code as fallback
+      console.warn("Failed to fetch province data:", error);
+    }
+
+    try {
+      if (candidate.address?.ward_code) {
+        const wardRes = await fetch(
+          `https://provinces.open-api.vn/api/v2/w/${candidate.address.ward_code}`,
+        );
+        if (wardRes.ok) {
+          const wardData = await wardRes.json();
+          wardName = wardData?.name || candidate.address.ward_code;
+        }
+      }
+    } catch (error) {
+      // Keep the code as fallback
+      console.warn("Failed to fetch ward data:", error);
+    }
     const html = `
       <!DOCTYPE html>
       <html lang="vi">
@@ -608,7 +641,7 @@ export default function CandidateList() {
             </div>
             <div class="info-row">
               <span class="label">Ngôn ngữ:</span>
-              <span class="value">${candidate.languages && candidate.languages.length > 0 ? candidate.languages.join(", ") : "Chưa cập nhật"}</span>
+              <span class="value">${candidate.languguages && candidate.languguages.length > 0 ? candidate.languguages.join(", ") : "Chưa cập nhật"}</span>
             </div>
             <div class="info-row">
               <span class="label">Ngành nghề quan tâm:</span>
@@ -620,6 +653,10 @@ export default function CandidateList() {
                 ${candidate.user?.is_verified ? "✓ Đã xác thực" : "⏳ Chờ xác thực"}
               </span>
             </div>
+            <div class="info-row">
+              <span class="label">Tình trạng việc làm:</span>
+              <span class="value">${candidate.is_employed ? "Đã có việc" : "Đang tìm việc"}</span>
+            </div>
           </div>
 
           <div class="section">
@@ -627,10 +664,10 @@ export default function CandidateList() {
             <div class="info-row">
               <span class="label">Địa chỉ:</span>
               <span class="value">
-                ${candidate.address?.street || ""}${candidate.address?.street && (candidate.address?.ward_code || candidate.address?.province_code) ? ", " : ""}
-                ${candidate.address?.ward_code ? "Phường/Xã " + candidate.address?.ward_code : ""}${candidate.address?.ward_code && candidate.address?.province_code ? ", " : ""}
-                ${candidate.address?.province_code ? "Tỉnh/TP " + candidate.address?.province_code : ""}
-                ${!candidate.address?.street && !candidate.address?.ward_code && !candidate.address?.province_code ? "Chưa cập nhật" : ""}
+                ${candidate.address?.street || ""}${candidate.address?.street && (wardName || provinceName) ? ", " : ""}
+                ${wardName ? wardName : ""}${wardName && provinceName ? ", " : ""}
+                ${provinceName ? provinceName : ""}
+                ${!candidate.address?.street && !wardName && !provinceName ? "Chưa cập nhật" : ""}
               </span>
             </div>
           </div>
@@ -1327,7 +1364,10 @@ export default function CandidateList() {
                   </h2>
                   <button
                     type="button"
-                    onClick={() => setShowFilters(!showFilters)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFilters((s) => !s);
+                    }}
                     className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
                   >
                     <ChevronDown

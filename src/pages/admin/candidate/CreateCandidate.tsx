@@ -174,7 +174,11 @@ export default function CreateCandidate() {
                 description="Email & mật khẩu đăng nhập hệ thống."
                 icon={<Shield className="text-orange-500" />}
               >
-                <AccountSection register={register} errors={errors} />
+                <AccountSection
+                  register={register}
+                  errors={errors}
+                  setValue={setValue}
+                />
               </SectionWrapper>
 
               <SectionWrapper

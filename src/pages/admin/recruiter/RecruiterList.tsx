@@ -30,7 +30,6 @@ const RecruiterList: React.FC = () => {
   >("all");
   const [provinceFilter, setProvinceFilter] = useState("");
   const [wardFilter, setWardFilter] = useState("");
-  const [showAdvanced, setShowAdvanced] = useState(false);
   const [sortBy, setSortBy] = useState("");
   const [order, setOrder] = useState<"ASC" | "DESC">("DESC");
   const [showCreate, setShowCreate] = useState(false);
@@ -75,10 +74,6 @@ const RecruiterList: React.FC = () => {
       label: `Phường/Xã: ${wardFilter}`,
       onRemove: () => setWardFilter(""),
     });
-  // --- UI FILTERS ---
-  // Helper text for filter
-  const filterHelper =
-    "Chỉ lọc theo các tiêu chí quan trọng. Bộ lọc nâng cao giúp quản trị chi tiết hơn.";
 
   // --- RENDER ---
   // Place filter UI inside main return block, wrapped in a fragment or parent element
@@ -185,17 +180,32 @@ const RecruiterList: React.FC = () => {
     wardFilter,
   ]);
 
-  const handleDelete = (recruiterId: string) => {
-    if (window.confirm("Bạn có chắc chắn muốn xóa nhà tuyển dụng này?")) {
-      deleteMutation.mutate(recruiterId, {
-        onSuccess: () => {
-          refetch();
-        },
-        onError: (error) => {
-          alert("Xóa thất bại: " + error.message);
-        },
-      });
-    }
+  const [selectedToDelete, setSelectedToDelete] = useState<any | null>(null);
+
+  const handleDelete = (recruiterId: string | any) => {
+    // open confirmation modal with recruiter object or id
+    setSelectedToDelete(recruiterId ?? null);
+  };
+
+  const confirmDelete = () => {
+    if (!selectedToDelete) return;
+    const id =
+      typeof selectedToDelete === "string"
+        ? selectedToDelete
+        : selectedToDelete.recruiter_id;
+    deleteMutation.mutate(id, {
+      onSuccess: () => {
+        setSelectedToDelete(null);
+        refetch();
+      },
+      onError: (error: any) => {
+        alert(
+          "Xóa thất bại: " +
+            (error?.message || error?.response?.data?.mes || ""),
+        );
+        setSelectedToDelete(null);
+      },
+    });
   };
 
   const printRecruiterProfile = (rec: any, password?: string) => {
@@ -620,7 +630,42 @@ const RecruiterList: React.FC = () => {
           </div>
         </div>
       )}
-      <div className="relative bg-white rounded-2xl border border-gray-100 shadow-sm">
+      {selectedToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm overflow-y-auto">
+          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+            <h3 className="text-lg font-bold text-gray-800 mb-2">
+              Xác nhận xóa
+            </h3>
+            <p className="text-sm text-gray-600 mb-4">
+              Bạn có chắc chắn muốn xóa nhà tuyển dụng{" "}
+              <strong>
+                {typeof selectedToDelete === "string"
+                  ? selectedToDelete
+                  : selectedToDelete?.company_name}
+              </strong>
+              ? Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setSelectedToDelete(null)}
+                className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
+              >
+                Hủy
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleteMutation.isPending}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:opacity-60"
+              >
+                {deleteMutation.isPending ? "Đang xóa..." : "Xóa"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      <div className="bg-white rounded-xl border border-gray-200/60 shadow-sm overflow-hidden">
         <div className="p-5">
           <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
             <div>
@@ -646,249 +691,181 @@ const RecruiterList: React.FC = () => {
               </button>
             </div>
           </div>
-          <div className="flex flex-col gap-4">
-            {/* Filter Header with Toggle */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <h2 className="text-lg font-semibold text-gray-800">Bộ lọc</h2>
-                <button
-                  type="button"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
-                >
-                  <ChevronDown
-                    className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
-                  />
-                  {showFilters ? "Thu gọn" : "Mở rộng"}
-                </button>
-              </div>
-            </div>
-
-            {/* Collapsible Main Filters */}
-            {showFilters && (
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6 pt-3 border-t border-gray-100">
-                <div className="md:col-span-2 xl:col-span-3">
+          <div className="p-5 border-b border-gray-100">
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <h2 className="text-lg font-semibold text-gray-800">
+                    Bộ lọc
+                  </h2>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowFilters((s) => !s);
+                    }}
+                    className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
+                  >
+                    <ChevronDown
+                      className={`w-4 h-4 transition-transform ${showFilters ? "rotate-180" : ""}`}
+                    />
+                    {showFilters ? "Thu gọn" : "Mở rộng"}
+                  </button>
+                </div>
+                <div className="flex items-center gap-3">
                   <div className="relative">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                    <Search
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={18}
+                    />
                     <input
                       type="text"
                       placeholder="Tìm theo tên công ty, email"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                      className="w-full rounded-lg border border-gray-200 pl-9 pr-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 md:w-72"
                     />
                   </div>
-                </div>
-                <select
-                  value={showVerified}
-                  onChange={(e) =>
-                    setShowVerified(
-                      e.target.value as "all" | "verified" | "pending",
-                    )
-                  }
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                >
-                  <option value="all">Tất cả</option>
-                  <option value="verified">Đã xác thực</option>
-                  <option value="pending">Chờ xác thực</option>
-                </select>
-                <select
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                >
-                  <option value="">Sắp xếp</option>
-                  <option value="company_name">Tên công ty</option>
-                  <option value="created_at">Ngày tạo</option>
-                  <option value="updated_at">Ngày cập nhật</option>
-                </select>
-                <select
-                  value={order}
-                  onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                >
-                  <option value="DESC">Giảm dần</option>
-                  <option value="ASC">Tăng dần</option>
-                </select>
-                <select
-                  value={provinceFilter}
-                  onChange={(e) => setProvinceFilter(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                >
-                  <option value="">Tỉnh/TP</option>
-                  {provinceData?.map((province) => (
-                    <option key={province.code} value={province.code}>
-                      {province.name}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  value={wardFilter}
-                  onChange={(e) => setWardFilter(e.target.value)}
-                  disabled={!provinceFilter}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-                >
-                  <option value="">Phường/Xã</option>
-                  {filteredWardOptions.map((ward) => (
-                    <option key={ward.code} value={ward.code}>
-                      {ward.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-              <button
-                type="button"
-                className="text-xs text-orange-600 underline"
-                onClick={() => setShowAdvanced((v) => !v)}
-              >
-                {showAdvanced ? "Thu gọn" : "Bộ lọc nâng cao"}
-              </button>
-            </div>
-
-            {showAdvanced && (
-              <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
-                {/* Advanced filters can be added here */}
-              </div>
-            )}
-
-            <div className="text-xs text-gray-400 mb-2">{filterHelper}</div>
-
-            {/* Active filter tags */}
-            {activeFilterTags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-2">
-                {activeFilterTags.map((tag, idx) => (
-                  <span
-                    key={idx}
-                    className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs text-orange-700"
+                  <button
+                    onClick={() => refetch()}
+                    className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                   >
-                    {tag.label}
-                    <button
-                      type="button"
-                      onClick={tag.onRemove}
-                      className="text-orange-500 hover:text-orange-700"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-
-            <div className="flex flex-wrap gap-2 text-xs text-gray-700">
-              <span className="text-xs text-gray-500">Ngành:</span>
-              {INDUSTRY_OPTIONS.map((opt) => (
-                <label
-                  key={opt}
-                  className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
-                >
-                  <input
-                    type="checkbox"
-                    checked={fields.includes(opt)}
-                    onChange={(e) => {
-                      if (e.target.checked) setFields([...fields, opt]);
-                      else setFields(fields.filter((f) => f !== opt));
-                    }}
-                    className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                  />
-                  {opt}
-                </label>
-              ))}
-            </div>
-            <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
-              <div className="md:col-span-2 xl:col-span-3">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <input
-                    type="text"
-                    placeholder="Tìm theo tên công ty, email"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                  />
+                    Áp dụng lọc
+                  </button>
                 </div>
               </div>
-              <select
-                value={showVerified}
-                onChange={(e) =>
-                  setShowVerified(
-                    e.target.value as "all" | "verified" | "pending",
-                  )
-                }
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="all">Tất cả</option>
-                <option value="verified">Đã xác thực</option>
-                <option value="pending">Chờ xác thực</option>
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Sắp xếp</option>
-                <option value="company_name">Tên công ty</option>
-                <option value="created_at">Ngày tạo</option>
-                <option value="updated_at">Ngày cập nhật</option>
-              </select>
-              <select
-                value={order}
-                onChange={(e) => setOrder(e.target.value as "ASC" | "DESC")}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="DESC">Giảm dần</option>
-                <option value="ASC">Tăng dần</option>
-              </select>
-              <select
-                value={provinceFilter}
-                onChange={(e) => setProvinceFilter(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-              >
-                <option value="">Tỉnh/TP</option>
-                {provinceData?.map((province) => (
-                  <option key={province.code} value={province.code}>
-                    {province.name}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={wardFilter}
-                onChange={(e) => setWardFilter(e.target.value)}
-                disabled={!provinceFilter}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
-              >
-                <option value="">Phường/Xã</option>
-                {filteredWardOptions.map((ward) => (
-                  <option key={ward.code} value={ward.code}>
-                    {ward.name}
-                  </option>
-                ))}
-              </select>
+
+              {showFilters && (
+                <>
+                  {/* Active filter tags */}
+                  {activeFilterTags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-2">
+                      {activeFilterTags.map((tag, idx) => (
+                        <span
+                          key={idx}
+                          className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2 py-1 text-xs text-orange-700"
+                        >
+                          {tag.label}
+                          <button
+                            type="button"
+                            onClick={tag.onRemove}
+                            className="text-orange-500 hover:text-orange-700"
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex flex-wrap gap-2 text-xs text-gray-700">
+                    <span className="text-xs text-gray-500">Ngành:</span>
+                    {INDUSTRY_OPTIONS.map((opt) => (
+                      <label
+                        key={opt}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={fields.includes(opt)}
+                          onChange={(e) => {
+                            if (e.target.checked) setFields([...fields, opt]);
+                            else setFields(fields.filter((f) => f !== opt));
+                          }}
+                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-6">
+                    <select
+                      value={showVerified}
+                      onChange={(e) =>
+                        setShowVerified(
+                          e.target.value as "all" | "verified" | "pending",
+                        )
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    >
+                      <option value="all">Tất cả</option>
+                      <option value="verified">Đã xác thực</option>
+                      <option value="pending">Chờ xác thực</option>
+                    </select>
+                    <select
+                      value={sortBy}
+                      onChange={(e) => setSortBy(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    >
+                      <option value="">Sắp xếp</option>
+                      <option value="company_name">Tên công ty</option>
+                      <option value="created_at">Ngày tạo</option>
+                      <option value="updated_at">Ngày cập nhật</option>
+                    </select>
+                    <select
+                      value={order}
+                      onChange={(e) =>
+                        setOrder(e.target.value as "ASC" | "DESC")
+                      }
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    >
+                      <option value="DESC">Giảm dần</option>
+                      <option value="ASC">Tăng dần</option>
+                    </select>
+                    <select
+                      value={provinceFilter}
+                      onChange={(e) => setProvinceFilter(e.target.value)}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                    >
+                      <option value="">Tỉnh/TP</option>
+                      {provinceData?.map((province) => (
+                        <option key={province.code} value={province.code}>
+                          {province.name}
+                        </option>
+                      ))}
+                    </select>
+                    <select
+                      value={wardFilter}
+                      onChange={(e) => setWardFilter(e.target.value)}
+                      disabled={!provinceFilter}
+                      className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100 disabled:cursor-not-allowed disabled:bg-gray-50"
+                    >
+                      <option value="">Phường/Xã</option>
+                      {filteredWardOptions.map((ward) => (
+                        <option key={ward.code} value={ward.code}>
+                          {ward.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="flex flex-wrap gap-2 px-5 pb-4 text-xs text-gray-700">
+                    <span className="text-xs text-gray-500">
+                      Ngành liên quan:
+                    </span>
+                    {INDUSTRY_OPTIONS.map((opt) => (
+                      <label
+                        key={opt}
+                        className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
+                      >
+                        <input
+                          type="checkbox"
+                          checked={fields.includes(opt)}
+                          onChange={(e) => {
+                            if (e.target.checked) setFields([...fields, opt]);
+                            else setFields(fields.filter((f) => f !== opt));
+                          }}
+                          className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
+                        />
+                        {opt}
+                      </label>
+                    ))}
+                  </div>
+                </>
+              )}
             </div>
-          </div>
-          <div className="flex flex-wrap gap-2 px-5 pb-4 text-xs text-gray-700">
-            <span className="text-xs text-gray-500">Ngành liên quan:</span>
-            {INDUSTRY_OPTIONS.map((opt) => (
-              <label
-                key={opt}
-                className="inline-flex items-center gap-1 rounded-full border border-gray-200 px-2 py-1 text-xs text-gray-700"
-              >
-                <input
-                  type="checkbox"
-                  checked={fields.includes(opt)}
-                  onChange={(e) => {
-                    if (e.target.checked) setFields([...fields, opt]);
-                    else setFields(fields.filter((f) => f !== opt));
-                  }}
-                  className="rounded border-gray-300 text-orange-600 focus:ring-orange-500"
-                />
-                {opt}
-              </label>
-            ))}
           </div>
         </div>
+
         <div className="overflow-x-auto">
           {isLoading && (
             <div className="flex h-48 items-center justify-center text-gray-500">
@@ -905,28 +882,19 @@ const RecruiterList: React.FC = () => {
           )}
 
           {!isLoading && !isError && (
-            <table className="w-full text-left text-sm">
+            <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="bg-gray-50 text-xs uppercase text-gray-500">
-                  <th className="px-4 py-3">Công ty</th>
-                  <th className="px-4 py-3">Liên hệ</th>
-                  <th className="px-4 py-3">Mã số thuế</th>
-                  <th className="px-4 py-3">Nhân viên đã tuyển</th>
-                  <th className="px-4 py-3">Trạng thái</th>
-                  <th className="px-4 py-3 text-center">Hành động</th>
+                <tr className="bg-gray-50 border-b border-gray-200 text-xs uppercase text-gray-500 font-bold tracking-wider">
+                  <th className="px-4 py-4">Công ty</th>
+                  <th className="px-4 py-4">Liên hệ</th>
+                  <th className="px-4 py-4">Mã số thuế</th>
+                  <th className="px-4 py-4">Nhân viên đã tuyển</th>
+                  <th className="px-4 py-4">Trạng thái</th>
+                  <th className="px-4 py-4 text-center">Hành động</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-100">
+              <tbody className="divide-y divide-gray-50 text-sm">
                 {apiErr ? (
-                  <tr>
-                    <td
-                      colSpan={6}
-                      className="px-4 py-6 text-center text-red-600 bg-red-50"
-                    >
-                      {(data as any)?.mes || "Không tải được danh sách NTD."}
-                    </td>
-                  </tr>
-                ) : filtered.length === 0 ? (
                   <tr>
                     <td
                       colSpan={6}
@@ -939,7 +907,7 @@ const RecruiterList: React.FC = () => {
                   filtered.map((rec) => (
                     <tr
                       key={rec.recruiter_id}
-                      className="hover:bg-orange-50/40"
+                      className={`hover:bg-orange-50/40 transition-colors group`}
                     >
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-3">
@@ -986,42 +954,44 @@ const RecruiterList: React.FC = () => {
                         </span>
                       </td>
                       <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/admin/recruiters/view/${rec.recruiter_id}`,
-                            )
-                          }
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Chi tiết
-                        </button>
-                        <button
-                          onClick={() =>
-                            navigate(
-                              `/admin/recruiters/edit/${rec.recruiter_id}`,
-                            )
-                          }
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-blue-50 ml-2"
-                        >
-                          <Pencil className="h-4 w-4" />
-                          Sửa
-                        </button>
-                        <button
-                          onClick={() => handleDelete(rec.recruiter_id)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-red-50 ml-2"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                          Xóa
-                        </button>
-                        <button
-                          onClick={() => printRecruiterProfile(rec)}
-                          className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-green-50 ml-2"
-                        >
-                          <Printer className="h-4 w-4" />
-                          In
-                        </button>
+                        <div className="flex items-center justify-center gap-1">
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/admin/recruiters/view/${rec.recruiter_id}`,
+                              )
+                            }
+                            className="p-2 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                            title="Xem chi tiết"
+                          >
+                            <Eye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => printRecruiterProfile(rec)}
+                            className="p-2 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-all"
+                            title="In"
+                          >
+                            <Printer className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() =>
+                              navigate(
+                                `/admin/recruiters/edit/${rec.recruiter_id}`,
+                              )
+                            }
+                            className="p-2 text-gray-400 hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-all"
+                            title="Chỉnh sửa"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(rec)}
+                            className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                            title="Xóa"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

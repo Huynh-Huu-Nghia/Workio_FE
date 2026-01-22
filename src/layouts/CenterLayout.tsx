@@ -9,7 +9,6 @@ import {
   Settings,
   Bell,
   LogOut,
-  ClipboardList,
   Home,
   X,
   UserPlus,
@@ -17,8 +16,9 @@ import {
 import LOGO_SRC from "@/assets/networking.png";
 import { pathtotitle } from "@/configs/pagetitle";
 import { useUser } from "@/context/user/user.context";
-import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
+import { useLogoutMutation } from "@/api/auth.api";
 import { useCenterNotificationsQuery } from "@/api/center.api";
+import { clearAuthTokens } from "../utils/authStorage";
 
 type Props = {
   title?: string;
@@ -106,7 +106,7 @@ export default function CenterLayout({ title, children }: Props) {
   const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
   const { pathname, hash } = location;
-  const { user, logout: contextLogout, setUser } = useUser();
+  const { user, setUser } = useUser();
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(() => {
     if (typeof window === "undefined") {
       return true;
@@ -117,35 +117,42 @@ export default function CenterLayout({ title, children }: Props) {
   const [openMenus, setOpenMenus] = useState<string[]>([]);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
-  const [readNotifications, setReadNotifications] = useState<Set<string>>(() => {
-    try {
-      const saved = localStorage.getItem('center_read_notifications');
-      return saved ? new Set(JSON.parse(saved)) : new Set();
-    } catch {
-      return new Set();
-    }
-  });
-  
+  const [readNotifications, setReadNotifications] = useState<Set<string>>(
+    () => {
+      try {
+        const saved = localStorage.getItem("center_read_notifications");
+        return saved ? new Set(JSON.parse(saved)) : new Set();
+      } catch {
+        return new Set();
+      }
+    },
+  );
+
   const { data: notificationsData } = useCenterNotificationsQuery();
   const allNotifications = notificationsData?.data?.notifications || [];
-  
+
   // Filter out read notifications
-  const unreadNotifications = allNotifications.filter(notif => !readNotifications.has(notif.id));
+  const unreadNotifications = allNotifications.filter(
+    (notif) => !readNotifications.has(notif.id),
+  );
   const notificationCount = unreadNotifications.length;
 
   // Save read notifications to localStorage whenever it changes
   useEffect(() => {
-    localStorage.setItem('center_read_notifications', JSON.stringify([...readNotifications]));
+    localStorage.setItem(
+      "center_read_notifications",
+      JSON.stringify([...readNotifications]),
+    );
   }, [readNotifications]);
 
   // Mark notification as read
   const markAsRead = (notificationId: string) => {
-    setReadNotifications(prev => new Set([...prev, notificationId]));
+    setReadNotifications((prev) => new Set([...prev, notificationId]));
   };
 
   // Mark all as read
   const markAllAsRead = () => {
-    const allIds = allNotifications.map(notif => notif.id);
+    const allIds = allNotifications.map((notif) => notif.id);
     setReadNotifications(new Set(allIds));
   };
 
@@ -219,16 +226,6 @@ export default function CenterLayout({ title, children }: Props) {
 
   const isExpanded = sidebarOpen;
 
-  const handleBack = () => {
-    const canUseHistory =
-      typeof window !== "undefined" && window.history.length > 1;
-    if (canUseHistory) {
-      navigate(-1);
-      return;
-    }
-    navigate(path.CENTER_HOME);
-  };
-
   // // HÀM ĐĂNG XUẤT CHUẨN
   // const handleLogout = () => {
   //   // 1. Xóa bản nháp của user hiện tại (nếu có)
@@ -259,8 +256,8 @@ export default function CenterLayout({ title, children }: Props) {
               <Menu className="h-5 w-5" />
             </button>
           </div>
-          <Link 
-            to={path.CENTER_HOME} 
+          <Link
+            to={path.CENTER_HOME}
             className="flex flex-col items-center justify-center transition-all duration-300 cursor-pointer hover:opacity-80"
           >
             <div
@@ -440,7 +437,7 @@ export default function CenterLayout({ title, children }: Props) {
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
-                <button 
+                <button
                   onClick={() => setShowNotifications(!showNotifications)}
                   className="relative rounded-full p-2 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500"
                 >
@@ -451,13 +448,17 @@ export default function CenterLayout({ title, children }: Props) {
                     </span>
                   )}
                 </button>
-                
+
                 {showNotifications && (
                   <div className="absolute right-0 mt-2 w-96 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50 max-h-[500px] overflow-hidden flex flex-col">
                     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                       <div>
-                        <h3 className="text-sm font-bold text-gray-800">Thông báo</h3>
-                        <p className="text-xs text-gray-500">{notificationCount} yêu cầu chưa đọc</p>
+                        <h3 className="text-sm font-bold text-gray-800">
+                          Thông báo
+                        </h3>
+                        <p className="text-xs text-gray-500">
+                          {notificationCount} yêu cầu chưa đọc
+                        </p>
                       </div>
                       <div className="flex items-center gap-2">
                         {unreadNotifications.length > 0 && (
@@ -476,13 +477,17 @@ export default function CenterLayout({ title, children }: Props) {
                         </button>
                       </div>
                     </div>
-                    
+
                     <div className="overflow-y-auto flex-1">
                       {allNotifications.length === 0 ? (
                         <div className="flex flex-col items-center justify-center py-12 px-4">
                           <Bell className="h-12 w-12 text-gray-300 mb-3" />
-                          <p className="text-sm font-medium text-gray-600">Không có thông báo mới</p>
-                          <p className="text-xs text-gray-400 mt-1">Bạn sẽ nhận được thông báo khi có yêu cầu đăng ký</p>
+                          <p className="text-sm font-medium text-gray-600">
+                            Không có thông báo mới
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Bạn sẽ nhận được thông báo khi có yêu cầu đăng ký
+                          </p>
                         </div>
                       ) : (
                         <div className="py-1">
@@ -497,32 +502,49 @@ export default function CenterLayout({ title, children }: Props) {
                                   setShowNotifications(false);
                                 }}
                                 className={`flex items-start gap-3 px-4 py-3 transition-colors border-b border-gray-50 last:border-0 ${
-                                  isRead 
-                                    ? 'bg-gray-50 hover:bg-gray-100' 
-                                    : 'bg-white hover:bg-orange-50'
+                                  isRead
+                                    ? "bg-gray-50 hover:bg-gray-100"
+                                    : "bg-white hover:bg-orange-50"
                                 }`}
                               >
-                                <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
-                                  isRead ? 'bg-gray-200' : 'bg-amber-100'
-                                }`}>
-                                  <UserPlus className={`h-5 w-5 ${isRead ? 'text-gray-500' : 'text-amber-600'}`} />
+                                <div
+                                  className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full ${
+                                    isRead ? "bg-gray-200" : "bg-amber-100"
+                                  }`}
+                                >
+                                  <UserPlus
+                                    className={`h-5 w-5 ${isRead ? "text-gray-500" : "text-amber-600"}`}
+                                  />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-semibold break-words ${
-                                    isRead ? 'text-gray-600' : 'text-gray-800'
-                                  }`}>
+                                  <p
+                                    className={`text-sm font-semibold break-words ${
+                                      isRead ? "text-gray-600" : "text-gray-800"
+                                    }`}
+                                  >
                                     {notif.candidate_name}
                                   </p>
-                                  <p className={`text-xs mt-0.5 ${isRead ? 'text-gray-500' : 'text-gray-600'}`}>
-                                    Yêu cầu tham gia: <span className={`font-medium ${isRead ? 'text-gray-600' : 'text-gray-700'}`}>{notif.course_name}</span>
+                                  <p
+                                    className={`text-xs mt-0.5 ${isRead ? "text-gray-500" : "text-gray-600"}`}
+                                  >
+                                    Yêu cầu tham gia:{" "}
+                                    <span
+                                      className={`font-medium ${isRead ? "text-gray-600" : "text-gray-700"}`}
+                                    >
+                                      {notif.course_name}
+                                    </span>
                                   </p>
                                   {notif.candidate_email && (
                                     <p className="text-xs text-gray-500 mt-1 break-all">
                                       {notif.candidate_email}
                                     </p>
                                   )}
-                                  <p className={`text-xs mt-1 ${isRead ? 'text-gray-500' : 'text-amber-600'}`}>
-                                    {new Date(notif.requested_at).toLocaleString("vi-VN", {
+                                  <p
+                                    className={`text-xs mt-1 ${isRead ? "text-gray-500" : "text-amber-600"}`}
+                                  >
+                                    {new Date(
+                                      notif.requested_at,
+                                    ).toLocaleString("vi-VN", {
                                       day: "2-digit",
                                       month: "2-digit",
                                       year: "numeric",
@@ -540,7 +562,7 @@ export default function CenterLayout({ title, children }: Props) {
                         </div>
                       )}
                     </div>
-                    
+
                     {allNotifications.length > 0 && (
                       <div className="border-t border-gray-100 px-4 py-2">
                         <Link

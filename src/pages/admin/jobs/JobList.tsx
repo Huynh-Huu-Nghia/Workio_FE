@@ -174,10 +174,6 @@ const JobList: React.FC = () => {
       onRemove: () => setWardFilter(""),
     });
 
-  // Helper text for filter
-  const filterHelper =
-    "Chỉ lọc theo các tiêu chí quan trọng. Bộ lọc nâng cao giúp quản trị chi tiết hơn.";
-
   const parseFields = (val: any): string[] => {
     if (Array.isArray(val)) return val;
     if (typeof val === "string") {
@@ -416,9 +412,6 @@ const JobList: React.FC = () => {
                 </button>
               </div>
             </div>
-
-            <div className="text-xs text-gray-400 mb-2">{filterHelper}</div>
-
             {/* Active filter tags */}
             {activeFilterTags.length > 0 && (
               <div className="flex flex-wrap gap-2 mb-2">

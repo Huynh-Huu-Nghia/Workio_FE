@@ -10,7 +10,6 @@ type FormValues = {
   email: string;
   password: string;
   name: string;
-  code?: string;
   phone?: string;
   website?: string;
   description?: string;
@@ -27,7 +26,6 @@ const CenterCreate: React.FC = () => {
       email: "",
       password: "",
       name: "",
-      code: "",
       phone: "",
       website: "",
       description: "",

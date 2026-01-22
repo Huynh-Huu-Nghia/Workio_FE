@@ -1,23 +1,15 @@
 import AdminLayout from "@/layouts/AdminLayout";
 import path from "@/constants/path";
 import { useParams, useNavigate } from "react-router-dom";
+import BackButton from "@/components/ui/BackButton";
 import { useAdminJobPostDetailQuery } from "@/api/job-post.api";
-import { ArrowLeft, Building2, Calendar, Loader2, MapPin } from "lucide-react";
+import { Building2, Calendar, Loader2, MapPin } from "lucide-react";
 
 export default function JobView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { data, isLoading, isError } = useAdminJobPostDetailQuery(id);
   const job = data?.data as any;
-  const handleBack = () => {
-    const canUseHistory =
-      typeof window !== "undefined" && window.history.length > 1;
-    if (canUseHistory) {
-      navigate(-1);
-      return;
-    }
-    navigate(path.ADMIN_JOB_LIST);
-  };
 
   return (
     <AdminLayout
@@ -27,12 +19,11 @@ export default function JobView() {
     >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeft size={16} /> Quay lại danh sách
-          </button>
+          <BackButton
+            text="Quay lại danh sách"
+            to={path.ADMIN_JOB_LIST}
+            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          />
         </div>
 
         {isLoading && (

@@ -7,7 +7,10 @@ import {
 } from "@/api/center.api";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft,
+  useProvinceByCodeQuery,
+  useWardByCodeQuery,
+} from "@/api/provinces.api";
+import {
   ArrowUpDown,
   Filter,
   Loader2,
@@ -15,6 +18,7 @@ import {
   SlidersHorizontal,
   Users,
 } from "lucide-react";
+import BackButton from "@/components/ui/BackButton";
 
 const STUDENT_STATUS = {
   PENDING: "cho_duyet",
@@ -169,6 +173,12 @@ export default function CenterView() {
     isError: errorCourses,
   } = useAdminCenterCoursesQuery(id);
   const center = data?.data as any;
+  const { data: province } = useProvinceByCodeQuery(
+    center?.address?.province_code || undefined,
+  );
+  const { data: ward } = useWardByCodeQuery(
+    center?.address?.ward_code || undefined,
+  );
   const courses = coursesRes?.data ?? [];
   const [courseSearch, setCourseSearch] = useState("");
   const [courseSort, setCourseSort] = useState<CourseSortKey>("students_desc");
@@ -227,15 +237,7 @@ export default function CenterView() {
 
   const handleCloseStudentDetail = () => setSelectedStudentDetail(null);
 
-  const handleBack = () => {
-    const canUseHistory =
-      typeof window !== "undefined" && window.history.length > 1;
-    if (canUseHistory) {
-      navigate(-1);
-      return;
-    }
-    navigate(path.ADMIN_CENTER_LIST);
-  };
+  const handleBack = useBack(() => path.ADMIN_CENTER_LIST);
 
   const renderStudentDetailModal = () => {
     if (!selectedStudentDetail) return null;
@@ -454,8 +456,8 @@ export default function CenterView() {
                     <div className="font-semibold text-gray-800">
                       {[
                         center.address?.street,
-                        center.address?.ward_code,
-                        center.address?.province_code,
+                        ward?.name || center.address?.ward_code,
+                        province?.name || center.address?.province_code,
                       ]
                         .filter(Boolean)
                         .join(", ") || "—"}
@@ -651,12 +653,11 @@ export default function CenterView() {
     >
       <div className="min-h-screen bg-slate-50 p-6">
         <div className="mb-5 flex items-center justify-between gap-3">
-          <button
-            onClick={handleBack}
-            className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            <ArrowLeft size={16} /> Quay lại
-          </button>
+          <BackButton
+            text="Quay lại"
+            to={path.ADMIN_CENTER_LIST}
+            className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+          />
         </div>
 
         {isLoading && (

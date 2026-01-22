@@ -1,7 +1,10 @@
 import CandidateLayout from "@/layouts/CandidateLayout";
 import path from "@/constants/path";
 import { useParams, useNavigate } from "react-router-dom";
-import { useCandidateJobPostsQuery } from "@/api/candidate.api";
+import {
+  useCandidateJobPostsQuery,
+  useCandidateSuggestedJobsQuery,
+} from "@/api/candidate.api";
 import {
   ArrowLeft,
   Building2,
@@ -18,11 +21,25 @@ import { useJobLocationResolver } from "@/hooks/useJobLocationResolver";
 export default function CandidateJobView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { data, isLoading, isError } = useCandidateJobPostsQuery();
+  const {
+    data: jobPostsData,
+    isLoading: loadingJobPosts,
+    isError: errorJobPosts,
+  } = useCandidateJobPostsQuery();
+  const {
+    data: suggestedJobsData,
+    isLoading: loadingSuggestedJobs,
+    isError: errorSuggestedJobs,
+  } = useCandidateSuggestedJobsQuery();
   const { resolveJobLocation } = useJobLocationResolver();
 
-  // Find the specific job from the list
-  const job = data?.data?.find((job: any) => job.id === id);
+  // Find the specific job from either job posts or suggested jobs
+  const job =
+    jobPostsData?.data?.find((job: any) => job.id === id) ||
+    suggestedJobsData?.data?.find((job: any) => job.id === id);
+
+  const isLoading = loadingJobPosts || loadingSuggestedJobs;
+  const isError = errorJobPosts || errorSuggestedJobs;
 
   const handleBack = () => {
     const canUseHistory =
@@ -31,7 +48,14 @@ export default function CandidateJobView() {
       navigate(-1);
       return;
     }
-    navigate(path.CANDIDATE_SUGGESTED_JOBS);
+
+    // Determine where to go back based on job source
+    const isSuggestedJob = suggestedJobsData?.data?.some(
+      (j: any) => j.id === id,
+    );
+    navigate(
+      isSuggestedJob ? path.CANDIDATE_SUGGESTED_JOBS : path.CANDIDATE_JOBS,
+    );
   };
 
   const formatCurrency = (value?: number | string | null) => {
