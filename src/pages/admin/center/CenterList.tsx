@@ -51,21 +51,13 @@ const CenterList: React.FC = () => {
   const confirmDelete = async () => {
     if (!selectedToDelete) return;
     try {
-      const res = await deleteCenterMutation.mutateAsync(
-        selectedToDelete.center_id,
-      );
-      if (res?.err === 1) {
-        toast.error(res?.mes || "Có lỗi xảy ra khi xóa trung tâm");
-        return;
-      }
+      await deleteCenterMutation.mutateAsync(selectedToDelete.center_id);
       toast.success("Xóa trung tâm thành công!");
       refetch();
       setSelectedToDelete(null);
     } catch (error: any) {
       toast.error(
-        error?.response?.data?.mes ||
-          error?.message ||
-          "Có lỗi xảy ra khi xóa trung tâm",
+        error?.response?.data?.mes || "Có lỗi xảy ra khi xóa trung tâm",
       );
       setSelectedToDelete(null);
     }
@@ -103,11 +95,6 @@ const CenterList: React.FC = () => {
                   e.stopPropagation();
                   setShowFilters((s) => !s);
                 }}
-                onPointerDown={(e) => {
-                  e.stopPropagation();
-                  setShowFilters((s) => !s);
-                }}
-                aria-expanded={showFilters}
                 className="inline-flex items-center gap-2 px-3 py-1 text-sm font-medium text-orange-600 hover:text-orange-800 hover:bg-orange-50 rounded-lg transition-colors"
               >
                 <ChevronDown
@@ -305,8 +292,10 @@ const CenterList: React.FC = () => {
             </h3>
             <p className="text-sm text-gray-600 mb-4">
               Bạn có chắc chắn muốn xóa trung tâm{" "}
-              <strong>{selectedToDelete?.name || "N/A"}</strong>? Hành động này
-              không thể hoàn tác.
+              <strong>
+                {selectedToDelete?.name || "N/A"}
+              </strong>
+              ? Hành động này không thể hoàn tác.
             </p>
             <div className="flex justify-end gap-3">
               <button
