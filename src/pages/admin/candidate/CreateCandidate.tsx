@@ -1,6 +1,10 @@
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
-import { useForm, type SubmitHandler } from "react-hook-form";
+import {
+  useForm,
+  type SubmitHandler,
+  type UseFormSetValue,
+} from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { format, isValid } from "date-fns";
 import {
@@ -16,6 +20,7 @@ import {
 import {
   createCandidateSchema,
   type CreateCandidateSchema,
+  type UpdateCandidateSchema,
 } from "@/schemas/candidate.schema";
 import {
   useCreateCandidateMutation,
@@ -190,7 +195,11 @@ export default function CreateCandidate() {
                   register={register}
                   errors={errors}
                   control={control as any}
-                  setValue={setValue}
+                  setValue={
+                    setValue as UseFormSetValue<
+                      CreateCandidateSchema | UpdateCandidateSchema
+                    >
+                  }
                   watch={watch}
                 />
               </SectionWrapper>
@@ -204,7 +213,11 @@ export default function CreateCandidate() {
                   register={register}
                   errors={errors}
                   watch={watch}
-                  setValue={setValue}
+                  setValue={
+                    setValue as UseFormSetValue<
+                      CreateCandidateSchema | UpdateCandidateSchema
+                    >
+                  }
                 />
               </SectionWrapper>
 

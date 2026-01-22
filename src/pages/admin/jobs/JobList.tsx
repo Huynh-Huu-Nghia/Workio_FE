@@ -190,6 +190,14 @@ const JobList: React.FC = () => {
   const filtered = useMemo(() => {
     const jobs = data?.data ?? [];
     return jobs.filter((job: any) => {
+      // Search filter
+      if (search.trim()) {
+        const keyword = search.trim().toLowerCase();
+        const searchableText =
+          `${job.position || ""} ${job.requirements || ""} ${job.fields ? parseFields(job.fields).join(" ") : ""}`.toLowerCase();
+        if (!searchableText.includes(keyword)) return false;
+      }
+
       if (fields.length) {
         const jf = parseFields(job.fields);
         if (!jf.some((f) => fields.includes(f))) return false;
@@ -225,6 +233,7 @@ const JobList: React.FC = () => {
     });
   }, [
     data,
+    search,
     fields,
     jobType,
     workingTime,

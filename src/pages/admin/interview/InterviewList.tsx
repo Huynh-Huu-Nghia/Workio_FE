@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   CalendarClock,
   Loader2,
@@ -6,6 +6,7 @@ import {
   XCircle,
   Eye,
   ChevronUp,
+  Search,
 } from "lucide-react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { useGetAdminInterviewsQuery } from "@/api/interview.api";
@@ -14,6 +15,22 @@ const InterviewList: React.FC = () => {
   const { data, isLoading, isError } = useGetAdminInterviewsQuery();
   const interviews = data?.data ?? [];
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState("");
+
+  const filteredInterviews = useMemo(() => {
+    if (!searchTerm.trim()) return interviews;
+
+    return interviews.filter((interview) => {
+      const searchLower = searchTerm.toLowerCase();
+      const position = interview.job_post?.position?.toLowerCase() || "";
+      const company = interview.job_post?.recruiter?.company_name?.toLowerCase() || "";
+
+      return (
+        position.includes(searchLower) ||
+        company.includes(searchLower)
+      );
+    });
+  }, [interviews, searchTerm]);
 
   return (
     <AdminLayout
@@ -28,7 +45,19 @@ const InterviewList: React.FC = () => {
             <h1 className="text-xl font-semibold text-gray-800">
               Tất cả lịch phỏng vấn
             </h1>
-            <p className="text-sm text-gray-500"></p>
+            <p className="text-sm text-gray-500">
+              {filteredInterviews.length} lịch phỏng vấn
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Tìm kiếm theo vị trí, công ty..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-80 rounded-lg border border-gray-200 py-2 pl-10 pr-4 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500"
+            />
           </div>
         </div>
 
@@ -48,12 +77,14 @@ const InterviewList: React.FC = () => {
 
         {!isLoading && !isError && (
           <div className="divide-y divide-gray-100">
-            {interviews.length === 0 ? (
+            {filteredInterviews.length === 0 ? (
               <div className="p-6 text-center text-gray-500">
-                Chưa có lịch phỏng vấn nào.
+                {searchTerm.trim()
+                  ? "Không tìm thấy lịch phỏng vấn nào phù hợp."
+                  : "Chưa có lịch phỏng vấn nào."}
               </div>
             ) : (
-              interviews.map((itv) => (
+              filteredInterviews.map((itv) => (
                 <article key={itv.id} className="divide-y divide-gray-100">
                   <div className="flex flex-col gap-2 p-5 hover:bg-orange-50/40">
                     <div className="flex flex-wrap items-center justify-between gap-3">

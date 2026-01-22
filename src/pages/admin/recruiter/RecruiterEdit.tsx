@@ -3,10 +3,10 @@ import { useNavigate, useParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { format, isValid } from "date-fns";
 import { Save, Building2, MapPin, Shield } from "lucide-react";
 import BackButton from "@/components/ui/BackButton";
 import { axiosInstance } from "@/utils/axios";
+import useBack from "@/hooks/useBack";
 
 import AdminLayout from "@/layouts/AdminLayout";
 import path from "@/constants/path";
@@ -14,10 +14,7 @@ import {
   createRecruiterSchema,
   type CreateRecruiterSchema,
 } from "@/schemas/recruiter.schema";
-import {
-  useAdminRecruiterDetailQuery,
-  useCreateRecruiterMutation,
-} from "@/api/recruiter.api";
+import { useAdminRecruiterDetailQuery } from "@/api/recruiter.api";
 import AddressSection from "../sections/AddressSection";
 import AccountSection from "../sections/AccountSection";
 import CompanyInfoSection from "../sections/CompanyInfoSection";
@@ -29,7 +26,6 @@ export default function RecruiterEdit() {
   const queryClient = useQueryClient();
 
   const { data: detailRes } = useAdminRecruiterDetailQuery(id as string);
-  const createMutation = useCreateRecruiterMutation();
 
   const {
     register,
@@ -58,12 +54,6 @@ export default function RecruiterEdit() {
       },
     },
   });
-
-  const safeFormatDate = (dateString: string | undefined | null) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return isValid(date) ? format(date, "yyyy-MM-dd") : "";
-  };
 
   useEffect(() => {
     const recruiter: any = detailRes?.data;
@@ -144,22 +134,18 @@ export default function RecruiterEdit() {
     >
       <div className="min-h-screen bg-slate-50 pb-20 pt-6">
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="mb-5 flex items-center justify-between gap-3">
+            <BackButton
+              text="Quay lại danh sách"
+              to={path.ADMIN_RECRUITER_LIST}
+              className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            />
+          </div>
           <div className="mb-6 flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-gray-800">
                 Chỉnh sửa Nhà tuyển dụng
               </h1>
-              <p className="text-sm text-gray-500 mt-1">
-                Hiển thị thông tin hiện tại. Lưu tạm thời sẽ hiển thị thông báo
-                nếu server chưa hỗ trợ.
-              </p>
-            </div>
-            <div className="flex gap-2">
-              <BackButton
-                text=""
-                to={path.ADMIN_RECRUITER_LIST}
-                className="rounded-lg border bg-white px-3 py-2"
-              />
             </div>
           </div>
 
@@ -234,10 +220,6 @@ export default function RecruiterEdit() {
 
             <div className="rounded-xl bg-white p-6 shadow-sm border border-gray-100">
               <h3 className="font-semibold text-gray-800 mb-4">Hoàn tất</h3>
-              <p className="text-sm text-gray-500 mb-6">
-                Chỉnh sửa qua giao diện quản trị sẽ phụ thuộc vào API backend.
-              </p>
-
               <div className="flex gap-3">
                 <button
                   type="submit"
