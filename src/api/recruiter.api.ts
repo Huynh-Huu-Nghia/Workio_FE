@@ -372,3 +372,26 @@ export const useDeleteRecruiterInterviewMutation = () => {
     },
   });
 };
+
+// [THÊM] Interface và Hook Notifications
+export interface RecruiterNotification {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
+  type?: string;
+}
+
+const getRecruiterNotificationsRequest = async (): Promise<ApiResponse<{ notifications: RecruiterNotification[], count: number }>> => {
+  const response = await axiosInstance.get("/recruiter/notifications");
+  return response.data;
+};
+
+export const useRecruiterNotificationsQuery = () =>
+  useQuery({
+    queryKey: ["recruiter-notifications"],
+    queryFn: getRecruiterNotificationsRequest,
+    staleTime: 1000 * 30,
+    refetchInterval: 1000 * 60,
+  });

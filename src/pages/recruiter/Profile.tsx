@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Building2, Save, MapPin } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Building2, Save, MapPin, Camera, User } from "lucide-react"; // Import thêm icon
 import { pathtotitle } from "@/configs/pagetitle";
 import { useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
@@ -11,8 +11,22 @@ import RecruiterLayout from "@/layouts/RecruiterLayout";
 const RecruiterProfile: React.FC = () => {
   const location = useLocation();
   const title = pathtotitle[location.pathname] || "Hồ sơ doanh nghiệp";
-  const { user } = useUser();
+  const { user, setUser } = useUser();
   const updateProfile = useUpdateRecruiterProfileMutation();
+
+  // [MỚI] State Avatar
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Helper convert base64 (giống bên Candidate)
+  const convertToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = (error) => reject(error);
+    });
+  };
   
   // Lấy hàm refetch để làm mới dữ liệu sau khi update
   const { data: profileRes, refetch } = useRecruiterProfileQuery();
@@ -65,6 +79,8 @@ const RecruiterProfile: React.FC = () => {
     // 2. Nếu không có nháp (hoặc đã xóa nháp sau khi lưu) -> Load từ Server
     if (!hasLoadedDraft && profileRes?.data) {
       const profile = profileRes.data;
+      // [MỚI] Load avatar từ user context hoặc profile
+      setAvatarUrl(user.avatar_url || "");
       setRecruiterInfo({
         company_name: profile.company_name || "",
         description: profile.description || "",
@@ -94,10 +110,24 @@ const RecruiterProfile: React.FC = () => {
     toast.info("Đã lưu nháp trên máy.");
   };
 
+  // [MỚI] Handle chọn ảnh
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      try {
+        const base64 = await convertToBase64(file);
+        setAvatarUrl(base64);
+      } catch {
+        toast.error("Lỗi xử lý ảnh");
+      }
+    }
+  };
+
   const onSubmit = async () => {
     try {
       const payload = {
         recruiterInfo,
+        avatar_url: avatarUrl, // [MỚI] Gửi avatar lên server
         addressInfo: {
           street: addressInfo.street,
           ward_code: addressInfo.ward_code,
@@ -108,11 +138,17 @@ const RecruiterProfile: React.FC = () => {
       await updateProfile.mutateAsync(payload);
       toast.success("Cập nhật hồ sơ doanh nghiệp thành công.");
       
-      // Quan trọng: Xóa nháp & Reset cờ để cho phép load data mới từ server
+      // [MỚI] Update Context User ngay lập tức để Header đổi Avatar/Tên
+      if (user) {
+          setUser({
+              ...user,
+              avatar_url: avatarUrl, // URL trả về từ server sẽ chuẩn hơn nếu backend trả về, nhưng tạm thời dùng base64 để hiện ngay
+              name: recruiterInfo.company_name // Update tên hiển thị
+          });
+      }
+
       localStorage.removeItem(storageKey);
       setHasLoadedDraft(false);
-      
-      // Gọi API lấy dữ liệu mới nhất
       refetch();
 
     } catch (e: any) {
@@ -165,6 +201,36 @@ const RecruiterProfile: React.FC = () => {
                 {updateProfile.isPending ? "Đang lưu..." : "Lưu hồ sơ"}
               </button>
             </div>
+          </div>
+
+          {/* [MỚI] PHẦN UPLOAD AVATAR */}
+          <div className="mb-8 flex flex-col items-center justify-center border-b border-gray-100 pb-6">
+            <div className="relative group">
+              <div className="h-28 w-28 rounded-full border-4 border-orange-50 overflow-hidden bg-gray-100">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Logo Công ty" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-400">
+                    <Building2 size={40} />
+                  </div>
+                )}
+              </div>
+              <button 
+                type="button"
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute bottom-0 right-0 rounded-full bg-orange-500 p-2 text-white shadow-md hover:bg-orange-600 transition-colors"
+              >
+                <Camera size={16} />
+              </button>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                className="hidden" 
+                accept="image/*"
+                onChange={handleAvatarChange} 
+              />
+            </div>
+            <p className="mt-2 text-sm text-gray-500">Logo doanh nghiệp</p>
           </div>
 
           <div className="grid gap-4 md:grid-cols-2">

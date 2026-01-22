@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Save, User } from "lucide-react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Save, User, Camera, Upload, X } from "lucide-react"; // Import thêm icon
 import { pathtotitle } from "@/configs/pagetitle";
 import { Link, useLocation } from "react-router-dom";
 import { useUser } from "@/context/user/user.context";
@@ -23,6 +23,9 @@ const CandidateProfile: React.FC = () => {
   const { user } = useUser();
   const updateProfile = useUpdateCandidateProfileMutation();
   const { data: profileRes, refetch } = useCandidateProfileQuery();
+  // [MỚI] State cho Avatar
+  const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const storageKey = useMemo(
     () => `workio_candidate_profile_draft_${user?.id || "guest"}`,
@@ -53,10 +56,11 @@ const CandidateProfile: React.FC = () => {
     ward_code: "",
     province_code: "",
   });
+  // [SỬA] Cập nhật state StudyHistory để dùng date string thay vì year number
   const [studyHistories, setStudyHistories] = useState<
-    { school_name: string; major: string; start_year: number | ""; end_year: number | ""; degree: string }[]
+    { school_name: string; major: string; start_date: string; end_date: string; degree: string }[]
   >([
-    { school_name: "", major: "", start_year: "", end_year: "", degree: "" },
+    { school_name: "", major: "", start_date: "", end_date: "", degree: "" },
   ]);
   const [workExperiences, setWorkExperiences] = useState<
     { company_name: string; position: string; start_date: string; end_date: string; description: string }[]
@@ -70,11 +74,12 @@ const CandidateProfile: React.FC = () => {
   const normalizeYearInput = (value: string): number | "" =>
     value.trim() === "" ? "" : Number(value);
 
+
   useEffect(() => {
     if (!user) return; 
 
+    // 1. Load Draft
     const rawDraft = localStorage.getItem(storageKey);
-    
     if (rawDraft) {
       try {
         const parsed = JSON.parse(rawDraft);
@@ -84,14 +89,14 @@ const CandidateProfile: React.FC = () => {
         if (Array.isArray(parsed.workExperiences)) setWorkExperiences(parsed.workExperiences);
         setHasLoadedDraft(true);
         return; 
-      } catch (e) {
-        console.error("Lỗi đọc bản nháp", e);
-      }
+      } catch (e) { console.error(e); }
     }
 
+    // 2. Load API
     if (!hasLoadedDraft) {
         const profile = profileRes?.data;
         if (profile) {
+          setAvatarUrl(profile.candidate?.avatar_url || user.avatar_url || "");
           setCandidateInfo((prev: any) => ({
             ...prev,
             full_name: profile.full_name || "",
@@ -100,8 +105,8 @@ const CandidateProfile: React.FC = () => {
             ethnicity: profile.ethnicity || "Kinh",
             gender: profile.gender || "Nam",
             date_of_birth: profile.date_of_birth || "",
-            graduation_rank: profile.graduation_rank || "", // Bind data
-            computer_skill: profile.computer_skill || "",     // Bind data
+            graduation_rank: profile.graduation_rank || "",
+            computer_skill: profile.computer_skill || "",
             other_computer_skill: profile.other_computer_skill || "",
             job_type: profile.job_type || "",
             working_time: profile.working_time || "",
@@ -110,23 +115,27 @@ const CandidateProfile: React.FC = () => {
             languguages: profile.languguages || [],
             fields_wish: profile.fields_wish || [],
           }));
-          // ... (Rest of binding logic stays same)
-           setAddressInfo({
+          
+          setAddressInfo({
             street: profile.address?.street || "",
             ward_code: profile.address?.ward_code || "",
             province_code: profile.address?.province_code || "",
           });
+
+          // [SỬA] Bind dữ liệu StudyHistory từ API (start_date/end_date)
           if (Array.isArray(profile.study_history)) {
             setStudyHistories(
               profile.study_history.map((s: any) => ({
                 school_name: s.school_name || "",
-                major: s.major || "",
-                start_year: s.start_year || "",
-                end_year: s.end_year || "",
+                // Map field_of_study (DB) -> major (Frontend)
+                major: s.field_of_study || s.major || "", 
+                start_date: s.start_date || "", 
+                end_date: s.end_date || "",
                 degree: s.degree || "",
               }))
             );
           }
+
           if (Array.isArray(profile.work_experience)) {
             setWorkExperiences(
               profile.work_experience.map((w: any) => ({
@@ -151,24 +160,45 @@ const CandidateProfile: React.FC = () => {
     toast.info("Đã lưu nháp trên máy.");
   };
 
+  // Thêm hàm convert file sang Base64
+const convertToBase64 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = (error) => reject(error);
+  });
+};
+
+// Trong component:
+const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+        // Convert sang Base64
+        const base64 = await convertToBase64(file);
+        setAvatarUrl(base64); // Hiển thị preview ngay lập tức
+        // Lưu ý: Lúc này avatarUrl chứa chuỗi rất dài "data:image/png;base64,..."
+    }
+};
+
   const onSubmit = async () => {
     try {
       const payload = {
+        avatar_url: avatarUrl,
         candidateInfo,
-        addressInfo: {
-          street: addressInfo.street,
-          ward_code: addressInfo.ward_code,
-          province_code: addressInfo.province_code,
-        },
+        addressInfo,
+        // [SỬA] Payload gửi đi giữ nguyên định dạng ngày tháng
         studyHistories: studyHistories
-          .filter((s) => s.school_name || s.major || s.degree)
+          .filter((s) => s.school_name.trim()) // Chỉ lấy dòng có tên trường
           .map((s) => ({
-            ...s,
-            start_year: s.start_year ? Number(s.start_year) : null,
-            end_year: s.end_year ? Number(s.end_year) : null,
+            school_name: s.school_name,
+            major: s.major,
+            degree: s.degree,
+            start_date: s.start_date || null,
+            end_date: s.end_date || null,
           })),
         workExperiences: workExperiences
-          .filter((w) => w.company_name || w.position || w.description)
+          .filter((w) => w.company_name.trim())
           .map((w) => ({
             ...w,
             start_date: w.start_date || null,
@@ -186,6 +216,7 @@ const CandidateProfile: React.FC = () => {
       toast.error(e?.response?.data?.msg || "Cập nhật hồ sơ thất bại.");
     }
   };
+  
 
   return (
     <CandidateLayout title={title}>
@@ -212,6 +243,25 @@ const CandidateProfile: React.FC = () => {
               <button type="button" onClick={onSubmit} disabled={updateProfile.isPending} className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:bg-orange-200">
                 <Save className="h-4 w-4" />{updateProfile.isPending ? "Đang lưu..." : "Lưu hồ sơ"}
               </button>
+            </div>
+          </div>
+
+          {/* AVATAR UPLOAD */}
+          <div className="mb-8 flex flex-col items-center justify-center border-b border-gray-100 pb-6">
+            <div className="relative group">
+              <div className="h-28 w-28 rounded-full border-4 border-orange-50 overflow-hidden bg-gray-100">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center text-gray-400">
+                    <User size={40} />
+                  </div>
+                )}
+              </div>
+              <button type="button" onClick={() => fileInputRef.current?.click()} className="absolute bottom-0 right-0 rounded-full bg-orange-500 p-2 text-white shadow-md hover:bg-orange-600 transition-colors">
+                <Camera size={16} />
+              </button>
+              <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleAvatarChange} />
             </div>
           </div>
           
@@ -355,22 +405,36 @@ const CandidateProfile: React.FC = () => {
             </div>
           </div>
 
-          {/* ... Phần Học vấn & Kinh nghiệm làm việc giữ nguyên ... */}
-           <div className="mt-6 grid gap-4 md:grid-cols-2">
+          {/* [SỬA] UI HỌC VẤN (Giống UI Kinh nghiệm làm việc) */}
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2"><h2 className="text-sm font-semibold text-gray-800">Học vấn</h2></div>
             {studyHistories.map((s, idx) => (
               <div key={idx} className="md:col-span-2 grid gap-3 md:grid-cols-5 rounded-lg border border-gray-100 bg-gray-50 p-3">
                 <input value={s.school_name} onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, school_name: e.target.value } : item))} placeholder="Trường" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
                 <input value={s.major} onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, major: e.target.value } : item))} placeholder="Ngành học" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
                 <input value={s.degree} onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, degree: e.target.value } : item))} placeholder="Bằng cấp" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
-                <input value={s.start_year} onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, start_year: normalizeYearInput(e.target.value) } : item))} placeholder="Năm bắt đầu" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+                
+                {/* [THAY ĐỔI] Input Date cho ngày bắt đầu */}
+                <input 
+                    type="date" 
+                    value={s.start_date} 
+                    onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, start_date: e.target.value } : item))} 
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" 
+                />
+
+                {/* [THAY ĐỔI] Input Date cho ngày kết thúc */}
                 <div className="flex gap-2">
-                  <input value={s.end_year} onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, end_year: normalizeYearInput(e.target.value) } : item))} placeholder="Năm kết thúc" className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" />
+                  <input 
+                    type="date" 
+                    value={s.end_date} 
+                    onChange={(e) => setStudyHistories((prev) => prev.map((item, i) => i === idx ? { ...item, end_date: e.target.value } : item))} 
+                    className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm" 
+                  />
                   <button type="button" onClick={() => setStudyHistories((prev) => prev.length === 1 ? prev : prev.filter((_, i) => i !== idx))} className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50">Xoá</button>
                 </div>
               </div>
             ))}
-            <div className="md:col-span-2"><button type="button" onClick={() => setStudyHistories((prev) => [...prev, { school_name: "", major: "", start_year: "", end_year: "", degree: "" },])} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">+ Thêm học vấn</button></div>
+            <div className="md:col-span-2"><button type="button" onClick={() => setStudyHistories((prev) => [...prev, { school_name: "", major: "", start_date: "", end_date: "", degree: "" },])} className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50">+ Thêm học vấn</button></div>
           </div>
           <div className="mt-6 grid gap-4 md:grid-cols-2">
             <div className="md:col-span-2"><h2 className="text-sm font-semibold text-gray-800">Kinh nghiệm làm việc</h2></div>

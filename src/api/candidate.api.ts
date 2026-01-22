@@ -9,6 +9,7 @@ import type { JobPost } from "@/api/job-post.api";
 export interface CandidatePayload {
   email: string;
   password?: string;
+  avatar_url?: string; // <--- Add this
   candidateInfo: {
     full_name: string;
     gender: string;
@@ -418,3 +419,27 @@ const cancelAppliedJobCandidateRequest = async (jobPostId: string) => {
 // [UPDATE] Thêm hook mutation cho hủy ứng tuyển
 export const useCancelAppliedJobMutation = () =>
   useMutation({ mutationFn: cancelAppliedJobCandidateRequest });
+
+// 2. Thêm Hook lấy thông báo (Copy logic từ Center qua)
+// Lưu ý: Bạn cần đảm bảo Backend có route GET /candidate/notifications
+export interface CandidateNotification {
+  id: string;
+  title: string;
+  message: string;
+  created_at: string;
+  is_read: boolean;
+  type?: string;
+}
+
+const getCandidateNotificationsRequest = async (): Promise<ApiResponse<{ notifications: CandidateNotification[], count: number }>> => {
+  const response = await axiosInstance.get("/candidate/notifications");
+  return response.data;
+};
+
+export const useCandidateNotificationsQuery = () =>
+  useQuery({
+    queryKey: ["candidate-notifications"],
+    queryFn: getCandidateNotificationsRequest,
+    staleTime: 1000 * 30, // Cache 30s
+    refetchInterval: 1000 * 60, // Tự động gọi lại mỗi 1 phút
+  });

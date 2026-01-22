@@ -1,56 +1,3 @@
-// import React from "react";
-// import CandidateLayout from "@/layouts/CandidateLayout";
-// import path from "@/constants/path";
-// import { Link } from "react-router-dom";
-// import { Briefcase, ClipboardList, Calendar, LifeBuoy } from "lucide-react";
-
-// const CandidateHome: React.FC = () => {
-//   return (
-//     <CandidateLayout title="Trang chủ ứng viên">
-//       <div className="space-y-4">
-//         <div className="rounded-2xl border border-gray-100 bg-white p-5 shadow-sm">
-//           <h1 className="text-2xl font-bold text-gray-800">Chào mừng bạn!</h1>
-//           <p className="mt-1 text-sm text-gray-600">
-//             Truy cập nhanh các tác vụ: xem việc làm, việc đã ứng tuyển, lịch phỏng vấn hoặc gửi hỗ trợ.
-//           </p>
-//           <div className="mt-4 flex flex-wrap gap-2">
-//             <Link
-//               to={path.CANDIDATE_JOBS}
-//               className="inline-flex items-center gap-2 rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-orange-600"
-//             >
-//               <Briefcase className="h-4 w-4" />
-//               Việc làm
-//             </Link>
-//             <Link
-//               to={path.CANDIDATE_APPLIED_JOBS}
-//               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-//             >
-//               <ClipboardList className="h-4 w-4" />
-//               Đã ứng tuyển
-//             </Link>
-//             <Link
-//               to={path.CANDIDATE_INTERVIEWS}
-//               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-//             >
-//               <Calendar className="h-4 w-4" />
-//               Lịch phỏng vấn
-//             </Link>
-//             <Link
-//               to={path.CANDIDATE_SUPPORT}
-//               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50"
-//             >
-//               <LifeBuoy className="h-4 w-4" />
-//               Hỗ trợ
-//             </Link>
-//           </div>
-//         </div>
-//       </div>
-//     </CandidateLayout>
-//   );
-// };
-
-// export default CandidateHome;
-
 import { useState, useMemo } from "react";
 import { useUser } from "@/context/user/user.context";
 import {
@@ -77,8 +24,9 @@ import path from "@/constants/path";
 import { useQuery } from "@tanstack/react-query";
 import { axiosInstance } from "@/utils/axios";
 import CandidateLayout from "@/layouts/CandidateLayout";
-// 👇 Import API lấy địa danh
 import { useProvincesQuery, useWardsQuery } from "@/api/provinces.api";
+// [MỚI] 1. Import hook lấy profile mới nhất
+import { useCandidateProfileQuery } from "@/api/profile.api";
 
 import "@/styles/calendar-custom.css";
 
@@ -86,10 +34,14 @@ export default function CandidateHome() {
   const { user } = useUser();
   const [date, setDate] = useState<any>(new Date());
 
-  // 1. Gọi API lấy danh sách Tỉnh/Phường
   const { data: provinces } = useProvincesQuery();
-  const { data: wards } = useWardsQuery(true); // true để lấy tất cả phường
+  const { data: wards } = useWardsQuery(true);
 
+  // [MỚI] 2. Gọi API Profile để lấy avatar/tên mới nhất (Realtime)
+  const { data: profileRes } = useCandidateProfileQuery();
+  const realtimeProfile = profileRes?.data;
+
+  // Gọi API Dashboard (Thống kê)
   const { data: dashboardRes, isLoading } = useQuery({
     queryKey: ["candidate-dashboard"],
     queryFn: async () => {
@@ -105,10 +57,24 @@ export default function CandidateHome() {
     profile: {},
   };
 
-  const profile = stats.profile || {};
-  const addrInfo = profile.address_info || {};
+  // [SỬA] 3. Logic ưu tiên dữ liệu mới nhất
+  // - Dashboard API trả về stats.profile (có thể cũ)
+  // - Profile API trả về realtimeProfile (mới nhất)
+  const displayProfile = realtimeProfile || stats.profile || {};
+  
+  // Logic lấy Avatar: Ưu tiên API Profile -> User Context
+  const avatarSrc = displayProfile.candidate?.avatar_url || user?.avatar_url;
+  
+  // Logic lấy Tên hiển thị
+  const displayName = displayProfile.full_name || user?.name || "Ứng viên";
 
-  // 2. Logic "Dịch" mã địa chỉ thành tên
+  // Logic lấy chữ cái đầu (Fallback)
+  const avatarInitial = (displayName || "U").charAt(0).toUpperCase();
+
+  // Logic lấy Địa chỉ: Profile API thường trả về 'address', Dashboard API trả về 'address_info'
+  // Ta cần check cả 2 trường hợp để đảm bảo không lỗi
+  const addrInfo = displayProfile.address || displayProfile.address_info || {};
+
   const fullAddress = useMemo(() => {
     if (!addrInfo.province_code && !addrInfo.street)
       return "Chưa cập nhật địa chỉ";
@@ -118,11 +84,9 @@ export default function CandidateHome() {
     )?.name;
     const wName = wards?.find((w: any) => w.code == addrInfo.ward_code)?.name;
 
-    // Ghép chuỗi: Đường, Phường, Tỉnh
     return [addrInfo.street, wName, pName].filter(Boolean).join(", ");
   }, [addrInfo, provinces, wards]);
 
-  // ... (Phần logic biểu đồ & lịch giữ nguyên) ...
   const tileContent = ({ date, view }: any) => {
     if (view === "month" && stats.interviewStats.events.length > 0) {
       const hasEvent = stats.interviewStats.events.some(
@@ -159,16 +123,15 @@ export default function CandidateHome() {
           <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 flex flex-col items-center text-center h-full">
             <div className="relative">
               <div className="w-28 h-28 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 text-4xl font-bold mb-4 border-4 border-white shadow-md overflow-hidden">
-                {user?.avatar_url ? (
+                {/* [SỬA] Sử dụng avatarSrc đã xử lý ở trên */}
+                {avatarSrc ? (
                   <img
-                    src={user.avatar_url}
+                    src={avatarSrc}
                     alt="Avatar"
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  (profile.full_name || user?.name || "U")
-                    .charAt(0)
-                    .toUpperCase()
+                  avatarInitial
                 )}
               </div>
               <Link
@@ -179,23 +142,24 @@ export default function CandidateHome() {
               </Link>
             </div>
 
+            {/* [SỬA] Sử dụng displayName đã xử lý ở trên */}
             <h2 className="text-xl font-bold text-gray-800 break-words w-full px-2">
-              {profile.full_name || user?.name}
+              {displayName}
             </h2>
             <p className="text-gray-500 mb-6 text-sm">Ứng viên</p>
 
             <div className="w-full space-y-4 text-left bg-gray-50 p-4 rounded-lg">
               <div className="flex items-center gap-3 text-gray-700">
                 <Mail size={18} className="text-orange-500 flex-shrink-0" />
-                <span className="truncate text-sm" title={profile.email}>
-                  {profile.email}
+                <span className="truncate text-sm" title={displayProfile.email}>
+                  {displayProfile.email || user?.email}
                 </span>
               </div>
 
               <div className="flex items-center gap-3 text-gray-700">
                 <Phone size={18} className="text-orange-500 flex-shrink-0" />
                 <span className="text-sm">
-                  {profile.phone || (
+                  {displayProfile.phone || (
                     <span className="text-gray-400 italic">
                       Chưa cập nhật SĐT
                     </span>
@@ -203,7 +167,6 @@ export default function CandidateHome() {
                 </span>
               </div>
 
-              {/* HIỂN THỊ ĐỊA CHỈ FULL (Đã xử lý ở useMemo) */}
               <div className="flex items-start gap-3 text-gray-700">
                 <MapPin
                   size={18}
@@ -227,7 +190,7 @@ export default function CandidateHome() {
         {/* --- CỘT PHẢI (2/3): THỐNG KÊ & LỊCH (Giữ nguyên) --- */}
         <div className="lg:col-span-8 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* ... Giữ nguyên phần biểu đồ ... */}
+            {/* ... Phần biểu đồ giữ nguyên ... */}
             <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center relative min-h-[300px]">
               <h3 className="font-bold text-gray-700 flex items-center gap-2 w-full mb-2">
                 <Briefcase size={20} className="text-blue-500" /> Việc làm đã

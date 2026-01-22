@@ -21,6 +21,8 @@ import LOGO_SRC from "@/assets/networking.png";
 import { useLogoutMutation, type AuthRole } from "@/api/auth.api";
 import { clearAuthTokens } from "@/utils/authStorage";
 import { useNavigate } from "react-router-dom";
+import { useRecruiterNotificationsQuery } from "@/api/recruiter.api"; // Import hook thông báo
+import { useRecruiterProfileQuery } from "@/api/profile.api"; // Import hook profile để lấy dữ liệu realtime
 
 type Props = {
   title?: string;
@@ -130,15 +132,30 @@ export default function RecruiterLayout({ title, children }: Props) {
     );
   }, [sidebarOpen]);
 
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // [MỚI] Lấy dữ liệu Profile realtime để hiển thị Avatar/Tên đúng nhất
+  const { data: profileRes } = useRecruiterProfileQuery();
+  const profile = profileRes?.data;
+
+  // [MỚI] Lấy dữ liệu Thông báo
+  const { data: notifData } = useRecruiterNotificationsQuery();
+  const notifications = notifData?.data?.notifications || [];
+  const unreadCount = notifications.length; // Hoặc lọc theo is_read nếu DB có lưu
+
+  // [SỬA] Logic hiển thị Tên & Avatar (Ưu tiên từ Profile API)
+  const displayName = profile?.company_name || user?.name || "Nhà tuyển dụng";
+  const displayEmail = user?.email;
+  const avatarSrc = user?.avatar_url; // Avatar User được update từ Profile
+
+  const avatarInitial = useMemo(() => {
+    return (displayName || "RC").charAt(0).toUpperCase();
+  }, [displayName]);
+
   const displayTitle = useMemo(
     () => pathtotitle[pathname] || title || "Không gian nhà tuyển dụng",
     [pathname, title],
   );
-
-  const avatarInitial = useMemo(() => {
-    const source = user?.name || user?.email || "RC";
-    return source.trim().charAt(0).toUpperCase();
-  }, [user?.name, user?.email]);
 
   const navigate = useNavigate();
 
@@ -316,31 +333,89 @@ export default function RecruiterLayout({ title, children }: Props) {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <button className="relative rounded-full p-2 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500">
-                <Bell size={18} />
-                <span className="absolute right-1 top-1 h-2 w-2 rounded-full border border-white bg-red-500" />
-              </button>
+              {/* --- 1. NOTIFICATIONS --- */}
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="relative rounded-full p-2 text-gray-400 transition hover:bg-gray-50 hover:text-orange-500"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-red-500 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+
+                {showNotifications && (
+                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50 max-h-[400px] overflow-y-auto">
+                     <div className="px-4 py-2 border-b border-gray-50 flex justify-between items-center">
+                        <span className="font-semibold text-gray-700 text-sm">Thông báo</span>
+                        <span className="text-xs text-orange-600 cursor-pointer">Đánh dấu đã đọc</span>
+                     </div>
+                     {notifications.length === 0 ? (
+                       <div className="p-4 text-center text-sm text-gray-500">Không có thông báo mới</div>
+                     ) : (
+                       notifications.map((notif: any, idx: number) => (
+                         <div key={idx} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer">
+                            <p className="text-sm text-gray-800 font-medium">{notif.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                            <p className="text-[10px] text-gray-400 mt-1 text-right">
+                                {new Date(notif.created_at).toLocaleDateString('vi-VN')}
+                            </p>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                )}
+              </div>
+
+              {/* --- 2. USER MENU --- */}
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600 hover:bg-orange-200 transition-colors"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-orange-200 bg-orange-100 text-sm font-bold text-orange-600 hover:bg-orange-200 transition-colors overflow-hidden"
                 >
-                  {avatarInitial}
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    avatarInitial
+                  )}
                 </button>
+                
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                    <button
-                      onClick={handleLogout}
-                      disabled={logoutMutation.isPending}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <LogOut size={16} />
-                      <span>
-                        {logoutMutation.isPending
-                          ? "Đang đăng xuất..."
-                          : "Đăng xuất"}
-                      </span>
-                    </button>
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                    {/* Header Menu: Avatar + Tên + Email */}
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden border border-orange-200">
+                           {avatarSrc ? <img src={avatarSrc} className="w-full h-full object-cover" /> : avatarInitial}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+                          <p className="text-xs text-gray-500 truncate">{displayEmail}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <Link
+                         to={path.RECRUITER_PROFILE}
+                         onClick={() => setShowUserMenu(false)}
+                         className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User size={16} />
+                        <span>Hồ sơ công ty</span>
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        disabled={logoutMutation.isPending}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <LogOut size={16} />
+                        <span>{logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

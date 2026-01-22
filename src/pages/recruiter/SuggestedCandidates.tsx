@@ -141,7 +141,7 @@ const SuggestedCandidates: React.FC = () => {
             <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-2">
               {filteredCandidates.map((candidate: any) => {
                 const scorePercent = Math.round(
-                  (candidate.match_score || 0) * 100,
+                  (candidate.match_score || 0),
                 );
                 const provinceCode =
                   candidate.address?.province_code || candidate.province_code;

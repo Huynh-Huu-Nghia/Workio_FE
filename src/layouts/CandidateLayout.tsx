@@ -21,6 +21,9 @@ import { useUser } from "@/context/user/user.context";
 import { pathtotitle } from "@/configs/pagetitle";
 import LOGO_SRC from "@/assets/networking.png";
 import { clearAuthTokens } from "@/utils/authStorage";
+import { useCandidateNotificationsQuery } from "@/api/candidate.api";
+// [THÊM] Import hook profile
+import { useCandidateProfileQuery } from "@/api/profile.api";
 
 type Props = {
   title?: string;
@@ -128,16 +131,31 @@ const menuGroups: MenuGroup[] = [
 ];
 
 export default function CandidateLayout({ title, children }: Props) {
-  const navigate = useNavigate();
+const navigate = useNavigate();
   const logoutMutation = useLogoutMutation();
   const { user, setUser } = useUser();
   const { pathname } = useLocation();
+  
+  // [THÊM] Gọi API lấy profile mới nhất
+  const { data: profileRes } = useCandidateProfileQuery();
+  const profile = profileRes?.data;
+  
+  // State quản lý Sidebar
   const [open, setOpen] = useState(() => {
     const saved = localStorage.getItem("candidateSidebarOpen");
     return saved !== null ? JSON.parse(saved) : true;
   });
   const [openMenus, setOpenMenus] = useState<string[]>([]);
+  
+  // State quản lý Dropdown
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+  
+  // Lấy dữ liệu thông báo
+  const { data: notifData } = useCandidateNotificationsQuery();
+  const notifications = notifData?.data?.notifications || [];
+  // Đếm số thông báo chưa đọc (giả sử logic là tất cả list trả về, hoặc lọc theo field is_read)
+  const unreadCount = notifications.length;
 
   // HÀM ĐĂNG XUẤT CHUẨN
   // const handleLogout = () => {
@@ -183,10 +201,18 @@ export default function CandidateLayout({ title, children }: Props) {
     () => pathtotitle[pathname] || title || "Candidate",
     [pathname, title],
   );
+  
+// [SỬA] Logic ưu tiên hiển thị tên và avatar từ Profile mới nhất
+  // Nếu profile có tên -> dùng tên profile. Nếu không -> dùng tên user login -> dùng email
+  const displayName = profile?.full_name || user?.name || user?.email?.split('@')[0] || "Ứng viên";
+  
+  // Avatar cũng ưu tiên từ profile mới upload
+  const avatarSrc = profile?.candidate?.avatar_url || user?.avatar_url;
+  
   const avatarInitial = useMemo(() => {
-    const source = user?.name || user?.email || "CA";
+    const source = displayName || "CA";
     return source.trim().charAt(0).toUpperCase();
-  }, [user?.name, user?.email]);
+  }, [displayName]);
 
   useEffect(() => {
     const currentPath = pathname;
@@ -391,11 +417,7 @@ export default function CandidateLayout({ title, children }: Props) {
                 className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 text-gray-600 hover:bg-gray-50"
                 onClick={() => setOpen((v: boolean) => !v)}
               >
-                {open ? (
-                  <X className="h-5 w-5" />
-                ) : (
-                  <Menu className="h-5 w-5" />
-                )}
+                {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
               </button>
               <div>
                 <h1 className="text-lg font-bold leading-tight text-gray-800">
@@ -403,32 +425,89 @@ export default function CandidateLayout({ title, children }: Props) {
                 </h1>
               </div>
             </div>
+
             <div className="flex items-center gap-3">
-              <button className="p-2 rounded-full text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors relative">
-                <Bell size={18} />
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500 border border-white"></span>
-              </button>
+              {/* --- DROPDOWN THÔNG BÁO --- */}
+              <div className="relative">
+                <button 
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  className="p-2 rounded-full text-gray-400 hover:bg-gray-50 hover:text-orange-500 transition-colors relative"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                     <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full border border-white bg-red-500 text-[10px] font-bold text-white">
+                      {unreadCount > 9 ? "9+" : unreadCount}
+                    </span>
+                  )}
+                </button>
+                
+                {showNotifications && (
+                   <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50 max-h-[400px] overflow-y-auto">
+                     <div className="px-4 py-2 border-b border-gray-50 flex justify-between items-center">
+                        <span className="font-semibold text-gray-700 text-sm">Thông báo</span>
+                        <span className="text-xs text-orange-600 cursor-pointer">Đánh dấu đã đọc</span>
+                     </div>
+                     {notifications.length === 0 ? (
+                       <div className="p-4 text-center text-sm text-gray-500">Không có thông báo mới</div>
+                     ) : (
+                       notifications.map((notif: any, idx: number) => (
+                         <div key={idx} className="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0 cursor-pointer">
+                            <p className="text-sm text-gray-800 font-medium">{notif.title}</p>
+                            <p className="text-xs text-gray-500 mt-1">{notif.message}</p>
+                         </div>
+                       ))
+                     )}
+                   </div>
+                )}
+              </div>
+
+              {/* --- DROPDOWN USER (AVATAR) --- */}
               <div className="relative">
                 <button
                   onClick={() => setShowUserMenu(!showUserMenu)}
-                  className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm border border-orange-200 hover:bg-orange-200 transition-colors"
+                  className="h-9 w-9 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold text-sm border border-orange-200 hover:bg-orange-200 transition-colors overflow-hidden"
                 >
-                  {avatarInitial}
+                  {avatarSrc ? (
+                    <img src={avatarSrc} alt="Avatar" className="w-full h-full object-cover" />
+                  ) : (
+                    displayName.charAt(0).toUpperCase()
+                  )}
                 </button>
+                
                 {showUserMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-100 py-1 z-50">
-                    <button
-                      onClick={handleLogout}
-                      disabled={logoutMutation.isPending}
-                      className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <LogOut size={16} />
-                      <span>
-                        {logoutMutation.isPending
-                          ? "Đang đăng xuất..."
-                          : "Đăng xuất"}
-                      </span>
-                    </button>
+                  <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-100 py-2 z-50">
+                     <div className="px-4 py-3 border-b border-gray-100">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 font-bold overflow-hidden">
+                           {avatarSrc ? <img src={avatarSrc} className="w-full h-full object-cover" /> : displayName.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          {/* [HIỂN THỊ TÊN CHÍNH XÁC TẠI ĐÂY] */}
+                          <p className="text-sm font-bold text-gray-900 truncate">{displayName}</p>
+                          <p className="text-xs text-gray-500 truncate">{user?.email}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="py-1">
+                      <Link 
+                        to={path.CANDIDATE_PROFILE} 
+                        onClick={() => setShowUserMenu(false)}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                      >
+                        <User size={16} />
+                        <span>Hồ sơ cá nhân</span>
+                      </Link>
+                      
+                      <button
+                        onClick={handleLogout}
+                        disabled={logoutMutation.isPending}
+                        className="flex items-center gap-3 w-full px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors"
+                      >
+                        <LogOut size={16} />
+                        <span>{logoutMutation.isPending ? "Đang đăng xuất..." : "Đăng xuất"}</span>
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>
