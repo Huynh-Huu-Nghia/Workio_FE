@@ -12,6 +12,7 @@ import {
   List,
   MessageSquare,
   ShieldCheck,
+  School,
 } from "lucide-react";
 
 import LOGO_SRC from "@/assets/networking.png";
@@ -134,7 +135,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen, activeMenu }) => {
           {
             id: "centers",
             label: "Trung tâm",
-            icon: <Building2 size={20} />,
+            icon: <School size={20} />,
             link: "#",
             subItems: [
               {

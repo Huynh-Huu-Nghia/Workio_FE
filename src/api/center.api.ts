@@ -143,6 +143,8 @@ export interface Course {
   end_date?: string | null;
   capacity?: number | null;
   registered_count?: number | null;
+  training_field?: string | null;
+  duration_hours?: number | null;
   candidates?: CourseCandidate[];
 }
 

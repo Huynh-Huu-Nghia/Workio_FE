@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
+import {
+  useCreateSupportRequestMutation,
+  useMySupportRequestsQuery,
+} from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 import CenterLayout from "@/layouts/CenterLayout";
@@ -11,7 +14,9 @@ const CenterSupportRequests: React.FC = () => {
   const title = pathtotitle[location.pathname] || "Yêu cầu hỗ trợ";
   const { user } = useUser();
 
-  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(user?.id);
+  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(
+    user?.id,
+  );
   const createMutation = useCreateSupportRequestMutation();
 
   const formatDate = (value?: string | number | Date | null) => {
@@ -54,6 +59,7 @@ const CenterSupportRequests: React.FC = () => {
         minute: "2-digit",
       });
     } catch (e) {
+      console.error("formatDate error:", e);
       return "Invalid Date";
     }
   };
@@ -62,7 +68,9 @@ const CenterSupportRequests: React.FC = () => {
   const [titleInput, setTitleInput] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc">("created_desc");
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc">(
+    "created_desc",
+  );
 
   const items = data?.data ?? [];
   const filtered = useMemo(() => {
@@ -72,7 +80,7 @@ const CenterSupportRequests: React.FC = () => {
       : items.filter(
           (it) =>
             it.title.toLowerCase().includes(q) ||
-            (it.description || "").toLowerCase().includes(q)
+            (it.description || "").toLowerCase().includes(q),
         );
 
     const sorted = [...list];
@@ -145,135 +153,138 @@ const CenterSupportRequests: React.FC = () => {
         </Link>
       </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-1">
-            <h2 className="text-base font-bold text-gray-900">Tạo yêu cầu</h2>
-            <div className="mt-4 space-y-4">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
-                  Tiêu đề
-                </label>
-                <input
-                  value={titleInput}
-                  onChange={(e) => setTitleInput(e.target.value)}
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                  placeholder="VD: Không truy cập được module"
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
-                  Mô tả
-                </label>
-                <textarea
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="min-h-28 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                  placeholder="Mô tả chi tiết..."
-                />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">
-                  Ưu tiên
-                </label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as any)}
-                  className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                >
-                  <option value="low">Thấp</option>
-                  <option value="medium">Trung bình</option>
-                  <option value="high">Cao</option>
-                </select>
-              </div>
-              <button
-                type="button"
-                onClick={submit}
-                disabled={createMutation.isPending}
-                className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:bg-orange-200"
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-1">
+          <h2 className="text-base font-bold text-gray-900">Tạo yêu cầu</h2>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600">
+                Tiêu đề
+              </label>
+              <input
+                value={titleInput}
+                onChange={(e) => setTitleInput(e.target.value)}
+                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                placeholder="VD: Không truy cập được module"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600">
+                Mô tả
+              </label>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                className="min-h-28 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                placeholder="Mô tả chi tiết..."
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-600">
+                Ưu tiên
+              </label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as any)}
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
               >
-                {createMutation.isPending ? "Đang gửi..." : "Gửi yêu cầu"}
-              </button>
+                <option value="low">Thấp</option>
+                <option value="medium">Trung bình</option>
+                <option value="high">Cao</option>
+              </select>
             </div>
-          </div>
-
-          <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-2">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-700">
-                <span>
-                  Tổng: <b className="text-lg text-gray-900">{items.length}</b>
-                </span>
-                <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                  Hiển thị: {filtered.length}
-                </span>
-              </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  className="w-full sm:w-72 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                  placeholder="Tìm theo tiêu đề/mô tả..."
-                />
-                <select
-                  value={sortBy}
-                  onChange={(e) =>
-                    setSortBy((e.target.value as "created_desc" | "created_asc") || "created_desc")
-                  }
-                  className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm focus:border-orange-500 focus:outline-none"
-                >
-                  <option value="created_desc">Mới nhất</option>
-                  <option value="created_asc">Cũ nhất</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-5 space-y-3">
-              {isLoading ? (
-                <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
-                  Đang tải...
-                </div>
-              ) : isError ? (
-                <div className="rounded-2xl border-2 border-dashed border-red-300 bg-red-50 p-12 text-center text-red-600">
-                  Không thể tải danh sách. Kiểm tra token/backend.
-                </div>
-              ) : filtered.length === 0 ? (
-                <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
-                  Chưa có yêu cầu nào.
-                </div>
-              ) : (
-                filtered.map((it) => (
-                  <article
-                    key={it.id}
-                    className="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-5 shadow-md transition hover:shadow-lg"
-                  >
-                    <div className="flex items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="text-base font-bold text-gray-900">
-                          {it.title}
-                        </h3>
-                        {it.description && (
-                          <p className="mt-2 text-sm text-gray-600">
-                            {it.description}
-                          </p>
-                        )}
-                        <p className="mt-2 text-xs text-gray-400">
-                          {formatDate(it.created_at)}
-                        </p>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
-                          Ưu tiên: {toViPriority(it.priority)}
-                        </span>
-                        <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
-                          {toViStatus(it.status)}
-                        </span>
-                      </div>
-                    </div>
-                  </article>
-                ))
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={submit}
+              disabled={createMutation.isPending}
+              className="w-full rounded-lg bg-orange-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-orange-600 disabled:bg-orange-200"
+            >
+              {createMutation.isPending ? "Đang gửi..." : "Gửi yêu cầu"}
+            </button>
           </div>
         </div>
+
+        <div className="rounded-2xl border border-gray-200 bg-white p-6 shadow-lg lg:col-span-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-wrap items-center gap-2 text-sm font-medium text-gray-700">
+              <span>
+                Tổng: <b className="text-lg text-gray-900">{items.length}</b>
+              </span>
+              <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                Hiển thị: {filtered.length}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                className="w-full sm:w-72 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                placeholder="Tìm theo tiêu đề/mô tả..."
+              />
+              <select
+                value={sortBy}
+                onChange={(e) =>
+                  setSortBy(
+                    (e.target.value as "created_desc" | "created_asc") ||
+                      "created_desc",
+                  )
+                }
+                className="rounded-lg border border-gray-300 bg-white px-3 py-2.5 text-sm text-gray-700 shadow-sm focus:border-orange-500 focus:outline-none"
+              >
+                <option value="created_desc">Mới nhất</option>
+                <option value="created_asc">Cũ nhất</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {isLoading ? (
+              <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
+                Đang tải...
+              </div>
+            ) : isError ? (
+              <div className="rounded-2xl border-2 border-dashed border-red-300 bg-red-50 p-12 text-center text-red-600">
+                Không thể tải danh sách. Kiểm tra token/backend.
+              </div>
+            ) : filtered.length === 0 ? (
+              <div className="rounded-2xl border-2 border-dashed border-gray-300 bg-gray-50 p-12 text-center text-gray-500">
+                Chưa có yêu cầu nào.
+              </div>
+            ) : (
+              filtered.map((it) => (
+                <article
+                  key={it.id}
+                  className="rounded-xl border border-gray-200 bg-gradient-to-br from-white to-gray-50 p-5 shadow-md transition hover:shadow-lg"
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1">
+                      <h3 className="text-base font-bold text-gray-900">
+                        {it.title}
+                      </h3>
+                      {it.description && (
+                        <p className="mt-2 text-sm text-gray-600">
+                          {it.description}
+                        </p>
+                      )}
+                      <p className="mt-2 text-xs text-gray-400">
+                        {formatDate(it.created_at)}
+                      </p>
+                    </div>
+                    <div className="flex flex-col items-end gap-2">
+                      <span className="rounded-full bg-gray-100 px-3 py-1 text-xs font-semibold text-gray-700">
+                        Ưu tiên: {toViPriority(it.priority)}
+                      </span>
+                      <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+                        {toViStatus(it.status)}
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
     </CenterLayout>
   );
 };

@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import AdminLayout from "@/layouts/AdminLayout";
 import { toast } from "react-toastify";
+import { Search } from "lucide-react";
 
 interface CategoryItem {
   id: string;
@@ -105,12 +106,18 @@ const Industries: React.FC = () => {
               <div className="text-sm text-gray-600">
                 Tổng: <b className="text-gray-900">{items.length}</b>
               </div>
-              <input
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                className="w-full sm:w-80 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
-                placeholder="Tìm ngành nghề..."
-              />
+              <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
+                <input
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  className="w-full sm:w-80 rounded-lg border border-gray-200 bg-white pl-9 pr-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-2 focus:ring-orange-100"
+                  placeholder="Tìm ngành nghề..."
+                />
+              </div>
             </div>
 
             <div className="mt-4 space-y-2">

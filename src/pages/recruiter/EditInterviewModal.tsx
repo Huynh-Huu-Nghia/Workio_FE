@@ -1,13 +1,13 @@
 // File: src/components/EditInterviewModal.tsx
 import React, { useEffect, useState } from "react";
-import { X, Calendar, MapPin, FileText, Globe, Link as LinkIcon } from "lucide-react";
+import { X, Calendar, MapPin, Globe, Link as LinkIcon } from "lucide-react";
 import { useUpdateRecruiterInterviewMutation } from "@/api/recruiter.api";
 import { toast } from "react-toastify";
 
 interface EditInterviewModalProps {
   isOpen: boolean;
   onClose: () => void;
-  interview: any; 
+  interview: any;
 }
 
 const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
@@ -16,29 +16,36 @@ const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
   interview,
 }) => {
   const updateMutation = useUpdateRecruiterInterviewMutation();
-  
+
   const [scheduledTime, setScheduledTime] = useState("");
-  const [interviewType, setInterviewType] = useState<"Online" | "Offline">("Online");
+  const [interviewType, setInterviewType] = useState<"Online" | "Offline">(
+    "Online",
+  );
   const [location, setLocation] = useState("");
   const [notes, setNotes] = useState("");
   const [status, setStatus] = useState("Đang diễn ra");
 
   useEffect(() => {
     if (interview && isOpen) {
-        try {
-            // Convert to Local ISO String for input
-            const date = new Date(interview.scheduled_time);
-            // Trick để lấy định dạng YYYY-MM-DDTHH:mm theo giờ địa phương
-            const localIso = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-            setScheduledTime(localIso);
-        } catch (e) {
-            setScheduledTime("");
-        }
+      try {
+        // Convert to Local ISO String for input
+        const date = new Date(interview.scheduled_time);
+        // Trick để lấy định dạng YYYY-MM-DDTHH:mm theo giờ địa phương
+        const localIso = new Date(
+          date.getTime() - date.getTimezoneOffset() * 60000,
+        )
+          .toISOString()
+          .slice(0, 16);
+        setScheduledTime(localIso);
+      } catch (e) {
+        console.error("Error parsing date:", e);
+        setScheduledTime("");
+      }
 
-        setInterviewType(interview.interview_type || "Online");
-        setLocation(interview.location || "");
-        setNotes(interview.notes || "");
-        setStatus(interview.status || "Đang diễn ra");
+      setInterviewType(interview.interview_type || "Online");
+      setLocation(interview.location || "");
+      setNotes(interview.notes || "");
+      setStatus(interview.status || "Đang diễn ra");
     }
   }, [interview, isOpen]);
 
@@ -52,14 +59,14 @@ const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
         interview_type: interviewType,
         location: location,
         notes: notes,
-        status: status
+        status: status,
       };
 
       await updateMutation.mutateAsync({
-          interviewId: interview.id,
-          payload
+        interviewId: interview.id,
+        payload,
       });
-      
+
       toast.success("Cập nhật lịch phỏng vấn thành công!");
       onClose();
     } catch (error: any) {
@@ -71,27 +78,38 @@ const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl animate-in fade-in zoom-in duration-200">
         <div className="flex items-center justify-between border-b border-gray-100 pb-4">
-          <h3 className="text-lg font-bold text-gray-900">Chỉnh sửa lịch hẹn</h3>
-          <button onClick={onClose} className="rounded-full p-2 text-gray-400 hover:bg-gray-100"><X size={20} /></button>
+          <h3 className="text-lg font-bold text-gray-900">
+            Chỉnh sửa lịch hẹn
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded-full p-2 text-gray-400 hover:bg-gray-100"
+          >
+            <X size={20} />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="mt-5 space-y-4">
           {/* Trạng thái */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Trạng thái</label>
-            <select 
-                value={status} 
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 outline-none"
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Trạng thái
+            </label>
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 outline-none"
             >
-                <option value="Đang diễn ra">Đang diễn ra</option>
-                <option value="Đã kết thúc">Đã kết thúc</option>
+              <option value="Đang diễn ra">Đang diễn ra</option>
+              <option value="Đã kết thúc">Đã kết thúc</option>
             </select>
           </div>
 
           {/* Thời gian */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Thời gian</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Thời gian
+            </label>
             <div className="relative">
               <Calendar className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input
@@ -106,31 +124,59 @@ const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
 
           {/* Hình thức & Địa điểm */}
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Hình thức</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Hình thức
+            </label>
             <div className="flex gap-4 mb-3">
-              <label className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 cursor-pointer ${interviewType === "Online" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}>
-                <input type="radio" value="Online" checked={interviewType === "Online"} onChange={() => setInterviewType("Online")} className="hidden"/>
+              <label
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 cursor-pointer ${interviewType === "Online" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}
+              >
+                <input
+                  type="radio"
+                  value="Online"
+                  checked={interviewType === "Online"}
+                  onChange={() => setInterviewType("Online")}
+                  className="hidden"
+                />
                 <Globe size={16} /> Online
               </label>
-              <label className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 cursor-pointer ${interviewType === "Offline" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}>
-                <input type="radio" value="Offline" checked={interviewType === "Offline"} onChange={() => setInterviewType("Offline")} className="hidden"/>
+              <label
+                className={`flex flex-1 items-center justify-center gap-2 rounded-lg border px-3 py-2 cursor-pointer ${interviewType === "Offline" ? "border-orange-500 bg-orange-50 text-orange-700" : "border-gray-200"}`}
+              >
+                <input
+                  type="radio"
+                  value="Offline"
+                  checked={interviewType === "Offline"}
+                  onChange={() => setInterviewType("Offline")}
+                  className="hidden"
+                />
                 <MapPin size={16} /> Offline
               </label>
             </div>
-            
+
             <div className="relative">
-                {interviewType === "Online" ? <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" /> : <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />}
-                <input
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    placeholder={interviewType === "Online" ? "Link cuộc họp" : "Địa điểm văn phòng"}
-                    className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 outline-none"
-                />
+              {interviewType === "Online" ? (
+                <LinkIcon className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              ) : (
+                <MapPin className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              )}
+              <input
+                value={location}
+                onChange={(e) => setLocation(e.target.value)}
+                placeholder={
+                  interviewType === "Online"
+                    ? "Link cuộc họp"
+                    : "Địa điểm văn phòng"
+                }
+                className="w-full rounded-lg border border-gray-200 pl-9 pr-3 py-2 text-sm focus:border-orange-500 outline-none"
+              />
             </div>
           </div>
 
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Ghi chú</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              Ghi chú
+            </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
@@ -140,7 +186,13 @@ const EditInterviewModal: React.FC<EditInterviewModalProps> = ({
           </div>
 
           <div className="mt-6 flex justify-end gap-3 border-t border-gray-100 pt-4">
-            <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100">Hủy bỏ</button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100"
+            >
+              Hủy bỏ
+            </button>
             <button
               type="submit"
               disabled={updateMutation.isPending}

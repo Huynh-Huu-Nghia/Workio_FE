@@ -38,7 +38,15 @@ const STUDENT_STATUS = {
 
 type StudentStatus = (typeof STUDENT_STATUS)[keyof typeof STUDENT_STATUS];
 type StatusKey = StudentStatus | "default";
-type CourseSortKey = "students_desc" | "students_asc" | "name_asc" | "name_desc" | "start_date_asc" | "start_date_desc" | "duration_asc" | "duration_desc";
+type CourseSortKey =
+  | "students_desc"
+  | "students_asc"
+  | "name_asc"
+  | "name_desc"
+  | "start_date_asc"
+  | "start_date_desc"
+  | "duration_asc"
+  | "duration_desc";
 type CenterTabId = "create" | "manage";
 
 type EditFormState = {
@@ -167,16 +175,19 @@ const getCourseId = (course?: Course | null) =>
   course?.id || course?.course_id || "";
 
 const getCourseCandidates = (course?: Course | null) =>
-  Array.isArray(course?.candidates) ? (course?.candidates as CourseCandidate[]) : [];
+  Array.isArray(course?.candidates)
+    ? (course?.candidates as CourseCandidate[])
+    : [];
 
-const getStudentCount = (course?: Course | null) => getCourseCandidates(course).length;
+const getStudentCount = (course?: Course | null) =>
+  getCourseCandidates(course).length;
 
 const getRequestedTimestamp = (student: CourseCandidate) =>
   student?.requested_at ? new Date(student.requested_at).getTime() : 0;
 
 const buildCandidateKey = (
   courseId?: string | null,
-  candidateId?: string | null
+  candidateId?: string | null,
 ) => `${courseId || "course"}-${candidateId || "candidate"}`;
 
 const makeCandidateKey = (courseKey: string, candidateId: string) =>
@@ -193,7 +204,7 @@ const summarizeCourse = (course: Course) => {
       else if (status === STUDENT_STATUS.REJECTED) summary.rejected += 1;
       return summary;
     },
-    { pending: 0, learning: 0, completed: 0, rejected: 0 }
+    { pending: 0, learning: 0, completed: 0, rejected: 0 },
   );
 };
 
@@ -227,7 +238,10 @@ const CoursesPage = () => {
       setActiveTabState(tabId);
     }
     if (location.hash !== `#${tabId}`) {
-      navigate({ pathname: location.pathname, hash: tabId }, { replace: false });
+      navigate(
+        { pathname: location.pathname, hash: tabId },
+        { replace: false },
+      );
     }
   };
   const [courseName, setCourseName] = useState("");
@@ -237,54 +251,79 @@ const CoursesPage = () => {
   const [courseCapacity, setCourseCapacity] = useState("");
   const [trainingField, setTrainingField] = useState("");
   const [durationHours, setDurationHours] = useState("");
-  const [trainingFields, setTrainingFields] = useState<Array<{id: number; name: string; code: string}>>([]);
+  const [trainingFields, setTrainingFields] = useState<
+    Array<{ id: number; name: string; code: string }>
+  >([]);
 
   // Fetch training fields when component mounts
   useEffect(() => {
     const fetchTrainingFields = async () => {
       try {
-        console.log('🔄 Fetching training fields from API...');
-        const response = await fetch('http://localhost:3000/center/training-fields');
-        console.log('📡 Response status:', response.status, response.statusText);
-        
+        console.log("🔄 Fetching training fields from API...");
+        const response = await fetch(
+          "http://localhost:3000/center/training-fields",
+        );
+        console.log(
+          "📡 Response status:",
+          response.status,
+          response.statusText,
+        );
+
         if (!response.ok) {
-          console.error('❌ Response not OK:', response.status, response.statusText);
+          console.error(
+            "❌ Response not OK:",
+            response.status,
+            response.statusText,
+          );
           return;
         }
-        
+
         const data = await response.json();
-        console.log('📦 Raw response data:', data);
-        
+        console.log("📦 Raw response data:", data);
+
         if (data.err === 0 && data.data && Array.isArray(data.data)) {
           setTrainingFields(data.data);
-          console.log('✅ Training fields loaded successfully:', data.data.length, 'fields');
-          console.log('📋 Fields:', data.data.map(f => f.name).join(', '));
+          console.log(
+            "✅ Training fields loaded successfully:",
+            data.data.length,
+            "fields",
+          );
+          console.log(
+            "📋 Fields:",
+            data.data.map((f: any) => f.name).join(", "),
+          );
         } else {
-          console.error('❌ Invalid response format:', data);
+          console.error("❌ Invalid response format:", data);
         }
       } catch (err) {
-        console.error('❌ Error fetching training fields:', err);
+        console.error("❌ Error fetching training fields:", err);
       }
     };
-    
+
     fetchTrainingFields();
   }, []);
   const [courseSearch, setCourseSearch] = useState("");
   const [courseSort, setCourseSort] = useState<CourseSortKey>("students_desc");
   const [trainingFieldFilter, setTrainingFieldFilter] = useState<string>("all");
   const [editingCourse, setEditingCourse] = useState<Course | null>(null);
-  const [editForm, setEditForm] = useState<EditFormState>(createEmptyEditForm());
+  const [editForm, setEditForm] = useState<EditFormState>(
+    createEmptyEditForm(),
+  );
   const [courseToDelete, setCourseToDelete] = useState<Course | null>(null);
-  const [selectedCourseDetail, setSelectedCourseDetail] = useState<Course | null>(null);
-  const [selectedCourseStudents, setSelectedCourseStudents] = useState<Course | null>(null);
+  const [selectedCourseDetail, setSelectedCourseDetail] =
+    useState<Course | null>(null);
+  const [selectedCourseStudents, setSelectedCourseStudents] =
+    useState<Course | null>(null);
   const [selectedCandidateDetail, setSelectedCandidateDetail] = useState<{
     course: Course;
     student: CourseCandidate;
   } | null>(null);
   const [progressForm, setProgressForm] = useState<ProgressFormState>(
-    createEmptyProgressForm()
+    createEmptyProgressForm(),
   );
-  const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({});
+  const [processingMap, setProcessingMap] = useState<Record<string, boolean>>(
+    {},
+  );
   const [removingMap, setRemovingMap] = useState<Record<string, boolean>>({});
   const [showQuickCreate, setShowQuickCreate] = useState(false);
 
@@ -296,7 +335,7 @@ const CoursesPage = () => {
   const toggleProcessing = (
     courseId: string,
     candidateId: string,
-    value: boolean
+    value: boolean,
   ) => {
     setProcessingMap((prev) => {
       const key = buildCandidateKey(courseId, candidateId);
@@ -315,7 +354,7 @@ const CoursesPage = () => {
   const toggleRemoving = (
     courseId: string,
     candidateId: string,
-    value: boolean
+    value: boolean,
   ) => {
     setRemovingMap((prev) => {
       const key = buildCandidateKey(courseId, candidateId);
@@ -337,7 +376,7 @@ const CoursesPage = () => {
           return false;
         }
       }
-      
+
       // Filter by training field
       if (trainingFieldFilter !== "all") {
         const courseField = (course as any).training_field;
@@ -345,7 +384,7 @@ const CoursesPage = () => {
           return false;
         }
       }
-      
+
       return true;
     });
 
@@ -378,7 +417,9 @@ const CoursesPage = () => {
       }
       const nameA = (a.name || "").toLowerCase();
       const nameB = (b.name || "").toLowerCase();
-      const comparison = nameA.localeCompare(nameB, "vi", { sensitivity: "base" });
+      const comparison = nameA.localeCompare(nameB, "vi", {
+        sensitivity: "base",
+      });
       return courseSort === "name_desc" ? -comparison : comparison;
     });
   }, [courses, courseSearch, courseSort, trainingFieldFilter]);
@@ -438,10 +479,12 @@ const CoursesPage = () => {
     }
   };
 
-  const handleOpenCourseDetail = (course: Course) => setSelectedCourseDetail(course);
+  const handleOpenCourseDetail = (course: Course) =>
+    setSelectedCourseDetail(course);
   const handleCloseCourseDetail = () => setSelectedCourseDetail(null);
 
-  const handleOpenCourseStudents = (course: Course) => setSelectedCourseStudents(course);
+  const handleOpenCourseStudents = (course: Course) =>
+    setSelectedCourseStudents(course);
   const handleCloseCourseStudents = () => setSelectedCourseStudents(null);
 
   const handleOpenEditCourse = (course: Course) => {
@@ -453,7 +496,9 @@ const CoursesPage = () => {
       end_date: course.end_date ? course.end_date.slice(0, 10) : "",
       capacity: course.capacity ? String(course.capacity) : "",
       training_field: course.training_field || "",
-      duration_hours: course.duration_hours ? String(course.duration_hours) : "",
+      duration_hours: course.duration_hours
+        ? String(course.duration_hours)
+        : "",
     });
   };
 
@@ -486,7 +531,9 @@ const CoursesPage = () => {
       end_date: editForm.end_date || null,
       capacity: editForm.capacity ? Number(editForm.capacity) : null,
       training_field: editForm.training_field || null,
-      duration_hours: editForm.duration_hours ? Number(editForm.duration_hours) : null,
+      duration_hours: editForm.duration_hours
+        ? Number(editForm.duration_hours)
+        : null,
     };
 
     try {
@@ -506,7 +553,8 @@ const CoursesPage = () => {
     }
   };
 
-  const handleRequestDeleteCourse = (course: Course) => setCourseToDelete(course);
+  const handleRequestDeleteCourse = (course: Course) =>
+    setCourseToDelete(course);
   const handleCancelDeleteCourse = () => setCourseToDelete(null);
 
   const handleConfirmDeleteCourse = async () => {
@@ -534,7 +582,7 @@ const CoursesPage = () => {
   const handleUpdateStatus = async (
     courseId?: string,
     candidateId?: string,
-    status?: StudentStatus
+    status?: StudentStatus,
   ) => {
     if (!courseId || !candidateId || !status) return;
     toggleProcessing(courseId, candidateId, true);
@@ -557,11 +605,16 @@ const CoursesPage = () => {
     }
   };
 
-  const handleOpenCandidateDetail = (course: Course, student: CourseCandidate) => {
+  const handleOpenCandidateDetail = (
+    course: Course,
+    student: CourseCandidate,
+  ) => {
     setSelectedCandidateDetail({ course, student });
     setProgressForm({
       attendance:
-        typeof student.attendance === "number" ? String(student.attendance) : "",
+        typeof student.attendance === "number"
+          ? String(student.attendance)
+          : "",
       tuition_confirmed: Boolean(student.tuition_confirmed),
       signed_at: student.signed_at ? student.signed_at.slice(0, 10) : "",
       notes: student.notes || "",
@@ -573,7 +626,10 @@ const CoursesPage = () => {
     setProgressForm(createEmptyProgressForm());
   };
 
-  const handleProgressChange = (field: keyof ProgressFormState, value: string | boolean) => {
+  const handleProgressChange = (
+    field: keyof ProgressFormState,
+    value: string | boolean,
+  ) => {
     setProgressForm((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -590,7 +646,8 @@ const CoursesPage = () => {
         courseId,
         candidateId: student.candidate_id,
         status: normalizeStatus(student.status),
-        attendance: attendanceValue === "" ? undefined : Number(attendanceValue),
+        attendance:
+          attendanceValue === "" ? undefined : Number(attendanceValue),
         tuition_confirmed: progressForm.tuition_confirmed,
         signed_at: progressForm.signed_at || null,
         notes: progressForm.notes.trim() || null,
@@ -609,7 +666,10 @@ const CoursesPage = () => {
     }
   };
 
-  const handleRemoveStudent = async (course: Course, student: CourseCandidate) => {
+  const handleRemoveStudent = async (
+    course: Course,
+    student: CourseCandidate,
+  ) => {
     const courseId = getCourseId(course);
     if (!courseId || !student.candidate_id) return;
     toggleRemoving(courseId, student.candidate_id, true);
@@ -653,7 +713,9 @@ const CoursesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Mô tả</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Mô tả
+          </label>
           <input
             value={courseDesc}
             onChange={(e) => setCourseDesc(e.target.value)}
@@ -662,7 +724,9 @@ const CoursesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Ngày bắt đầu</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Ngày bắt đầu
+          </label>
           <input
             type="date"
             value={courseStartDate}
@@ -671,7 +735,9 @@ const CoursesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Ngày kết thúc</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Ngày kết thúc
+          </label>
           <input
             type="date"
             value={courseEndDate}
@@ -680,7 +746,9 @@ const CoursesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Sĩ số tối đa</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Sĩ số tối đa
+          </label>
           <input
             type="number"
             min={0}
@@ -691,7 +759,9 @@ const CoursesPage = () => {
           />
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Lĩnh vực đào tạo
+          </label>
           <select
             value={trainingField}
             onChange={(e) => setTrainingField(e.target.value)}
@@ -706,7 +776,9 @@ const CoursesPage = () => {
           </select>
         </div>
         <div>
-          <label className="block text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+          <label className="block text-sm font-semibold text-gray-700">
+            Số giờ đào tạo
+          </label>
           <input
             type="number"
             min={1}
@@ -737,11 +809,15 @@ const CoursesPage = () => {
           <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100">
             <Users className="h-5 w-5 text-blue-600" />
           </div>
-          <h2 className="text-2xl font-bold text-gray-900">Danh sách khóa học</h2>
+          <h2 className="text-2xl font-bold text-gray-900">
+            Danh sách khóa học
+          </h2>
           {isFetching && (
             <div className="flex items-center gap-2 rounded-full bg-orange-50 px-3 py-1">
               <div className="h-2 w-2 animate-pulse rounded-full bg-orange-500" />
-              <span className="text-sm font-medium text-orange-600">Đang tải...</span>
+              <span className="text-sm font-medium text-orange-600">
+                Đang tải...
+              </span>
             </div>
           )}
         </div>
@@ -787,7 +863,9 @@ const CoursesPage = () => {
                 <SlidersHorizontal className="h-4 w-4 text-orange-500" />
                 <select
                   value={courseSort}
-                  onChange={(e) => setCourseSort(e.target.value as CourseSortKey)}
+                  onChange={(e) =>
+                    setCourseSort(e.target.value as CourseSortKey)
+                  }
                   className="bg-transparent text-sm font-semibold text-gray-800 focus:outline-none"
                 >
                   {COURSE_SORT_OPTIONS.map((option) => (
@@ -807,13 +885,21 @@ const CoursesPage = () => {
           <div className="mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gray-100">
             <BookOpen className="h-10 w-10 text-gray-400" />
           </div>
-          <p className="text-lg font-semibold text-gray-600">Chưa có khóa học nào</p>
-          <p className="mt-1 text-sm text-gray-500">Tạo khóa học đầu tiên để bắt đầu</p>
+          <p className="text-lg font-semibold text-gray-600">
+            Chưa có khóa học nào
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Tạo khóa học đầu tiên để bắt đầu
+          </p>
         </div>
       ) : filteredCourses.length === 0 ? (
         <div className="rounded-3xl border-2 border-dashed border-orange-200 bg-white/60 p-12 text-center">
-          <p className="text-base font-semibold text-gray-700">Không tìm thấy khóa học phù hợp</p>
-          <p className="mt-1 text-sm text-gray-500">Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.</p>
+          <p className="text-base font-semibold text-gray-700">
+            Không tìm thấy khóa học phù hợp
+          </p>
+          <p className="mt-1 text-sm text-gray-500">
+            Thử điều chỉnh bộ lọc hoặc từ khóa tìm kiếm.
+          </p>
         </div>
       ) : (
         <div className="grid gap-6">
@@ -834,9 +920,13 @@ const CoursesPage = () => {
                         <BookOpen className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="text-2xl font-bold text-white">{course.name}</h3>
+                        <h3 className="text-2xl font-bold text-white">
+                          {course.name}
+                        </h3>
                         {course.description && (
-                          <p className="mt-1 text-sm text-orange-100">{course.description}</p>
+                          <p className="mt-1 text-sm text-orange-100">
+                            {course.description}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -874,7 +964,9 @@ const CoursesPage = () => {
                         </button>
                         <button
                           type="button"
-                          disabled={courseHasLearning || deleteCourseMutation.isPending}
+                          disabled={
+                            courseHasLearning || deleteCourseMutation.isPending
+                          }
                           onClick={() => handleRequestDeleteCourse(course)}
                           className="inline-flex items-center gap-1 rounded-xl border border-white/60 bg-white/10 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/20 disabled:cursor-not-allowed disabled:opacity-70"
                           title={
@@ -889,7 +981,8 @@ const CoursesPage = () => {
                       </div>
                       {courseHasLearning && (
                         <p className="text-xs text-white/80">
-                          Cần xóa hoặc chuyển toàn bộ học viên đang học trước khi xóa khóa.
+                          Cần xóa hoặc chuyển toàn bộ học viên đang học trước
+                          khi xóa khóa.
                         </p>
                       )}
                     </div>
@@ -907,17 +1000,32 @@ const CoursesPage = () => {
                     const courseKeyForPending = courseId || "pending";
                     const students = getCourseCandidates(course);
                     const pending = students
-                      .filter((student) => normalizeStatus(student.status) === STUDENT_STATUS.PENDING)
-                      .sort((a, b) => getRequestedTimestamp(a) - getRequestedTimestamp(b));
+                      .filter(
+                        (student) =>
+                          normalizeStatus(student.status) ===
+                          STUDENT_STATUS.PENDING,
+                      )
+                      .sort(
+                        (a, b) =>
+                          getRequestedTimestamp(a) - getRequestedTimestamp(b),
+                      );
                     if (!pending.length) {
-                      return <p className="text-sm text-gray-500">Không có yêu cầu đăng ký nào đang chờ duyệt.</p>;
+                      return (
+                        <p className="text-sm text-gray-500">
+                          Không có yêu cầu đăng ký nào đang chờ duyệt.
+                        </p>
+                      );
                     }
                     return (
                       <div className="space-y-3">
                         {pending.map((student) => {
                           const name = getCandidateName(student);
-                          const { email, phone } = getCandidateContacts(student);
-                          const pendingKey = makeCandidateKey(courseKeyForPending, student.candidate_id);
+                          const { email, phone } =
+                            getCandidateContacts(student);
+                          const pendingKey = makeCandidateKey(
+                            courseKeyForPending,
+                            student.candidate_id,
+                          );
                           return (
                             <div
                               key={pendingKey}
@@ -927,24 +1035,30 @@ const CoursesPage = () => {
                                 <Users className="h-5 w-5" />
                               </div>
                               <div className="min-w-[200px] flex-1">
-                                <p className="font-semibold text-gray-900">{name}</p>
+                                <p className="font-semibold text-gray-900">
+                                  {name}
+                                </p>
                                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-600">
                                   {email && <span>{email}</span>}
                                   {phone && <span>{phone}</span>}
                                 </div>
                                 <p className="mt-1 text-xs text-amber-700">
-                                  Gửi yêu cầu lúc {formatDateTime(student.requested_at)}
+                                  Gửi yêu cầu lúc{" "}
+                                  {formatDateTime(student.requested_at)}
                                 </p>
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <button
                                   type="button"
-                                  disabled={isProcessing(courseId, student.candidate_id)}
+                                  disabled={isProcessing(
+                                    courseId,
+                                    student.candidate_id,
+                                  )}
                                   onClick={() =>
                                     handleUpdateStatus(
                                       courseId,
                                       student.candidate_id,
-                                      STUDENT_STATUS.LEARNING
+                                      STUDENT_STATUS.LEARNING,
                                     )
                                   }
                                   className="rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-60"
@@ -955,12 +1069,15 @@ const CoursesPage = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  disabled={isProcessing(courseId, student.candidate_id)}
+                                  disabled={isProcessing(
+                                    courseId,
+                                    student.candidate_id,
+                                  )}
                                   onClick={() =>
                                     handleUpdateStatus(
                                       courseId,
                                       student.candidate_id,
-                                      STUDENT_STATUS.REJECTED
+                                      STUDENT_STATUS.REJECTED,
                                     )
                                   }
                                   className="rounded-lg border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-600 transition hover:bg-rose-50 disabled:cursor-not-allowed disabled:opacity-60"
@@ -969,7 +1086,9 @@ const CoursesPage = () => {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenCandidateDetail(course, student)}
+                                  onClick={() =>
+                                    handleOpenCandidateDetail(course, student)
+                                  }
                                   className="inline-flex items-center gap-1 rounded-lg border border-amber-200 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-50"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
@@ -987,13 +1106,19 @@ const CoursesPage = () => {
                 <div className="p-6">
                   <div className="mb-4 flex items-center gap-2">
                     <GraduationCap className="h-5 w-5 text-blue-600" />
-                    <h4 className="font-bold text-gray-900">Học viên trong khóa</h4>
+                    <h4 className="font-bold text-gray-900">
+                      Học viên trong khóa
+                    </h4>
                   </div>
                   {(() => {
                     const courseKeyForManaged = courseId || "managed";
                     const students = getCourseCandidates(course);
                     const managed = students
-                      .filter((student) => normalizeStatus(student.status) !== STUDENT_STATUS.PENDING)
+                      .filter(
+                        (student) =>
+                          normalizeStatus(student.status) !==
+                          STUDENT_STATUS.PENDING,
+                      )
                       .sort((a, b) => {
                         return (
                           STATUS_SORT_ORDER[normalizeStatus(a.status)] -
@@ -1020,9 +1145,16 @@ const CoursesPage = () => {
                           const statusKey = normalizeStatus(student.status);
                           const meta = STUDENT_STATUS_META[statusKey];
                           const name = getCandidateName(student);
-                          const { email, phone } = getCandidateContacts(student);
-                          const candidateKey = makeCandidateKey(courseKeyForManaged, student.candidate_id);
-                          const removing = isRemovingCandidate(courseId, student.candidate_id);
+                          const { email, phone } =
+                            getCandidateContacts(student);
+                          const candidateKey = makeCandidateKey(
+                            courseKeyForManaged,
+                            student.candidate_id,
+                          );
+                          const removing = isRemovingCandidate(
+                            courseId,
+                            student.candidate_id,
+                          );
                           return (
                             <div
                               key={candidateKey}
@@ -1032,19 +1164,24 @@ const CoursesPage = () => {
                                 <Users className="h-5 w-5" />
                               </div>
                               <div className="min-w-[200px] flex-1">
-                                <p className="font-bold text-gray-900">{name}</p>
+                                <p className="font-bold text-gray-900">
+                                  {name}
+                                </p>
                                 <div className="mt-1 flex flex-wrap gap-3 text-xs text-gray-600">
                                   {email && <span>{email}</span>}
                                   {phone && <span>{phone}</span>}
                                 </div>
                                 {student.requested_at && (
                                   <p className="mt-1 text-[11px] text-gray-400">
-                                    Đăng ký: {formatDateTime(student.requested_at)}
+                                    Đăng ký:{" "}
+                                    {formatDateTime(student.requested_at)}
                                   </p>
                                 )}
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
-                                <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+                                <span
+                                  className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}
+                                >
                                   {statusKey === STUDENT_STATUS.COMPLETED ? (
                                     <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                                   ) : statusKey === STUDENT_STATUS.LEARNING ? (
@@ -1054,7 +1191,9 @@ const CoursesPage = () => {
                                 </span>
                                 <button
                                   type="button"
-                                  onClick={() => handleOpenCandidateDetail(course, student)}
+                                  onClick={() =>
+                                    handleOpenCandidateDetail(course, student)
+                                  }
                                   className="inline-flex items-center gap-1 rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-600 transition hover:bg-gray-50"
                                 >
                                   <Eye className="h-3.5 w-3.5" />
@@ -1063,12 +1202,15 @@ const CoursesPage = () => {
                                 {statusKey === STUDENT_STATUS.LEARNING && (
                                   <button
                                     type="button"
-                                    disabled={isProcessing(courseId, student.candidate_id)}
+                                    disabled={isProcessing(
+                                      courseId,
+                                      student.candidate_id,
+                                    )}
                                     onClick={() =>
                                       handleUpdateStatus(
                                         courseId,
                                         student.candidate_id,
-                                        STUDENT_STATUS.COMPLETED
+                                        STUDENT_STATUS.COMPLETED,
                                       )
                                     }
                                     className="rounded-lg border border-emerald-200 px-3 py-1.5 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-50 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1079,12 +1221,15 @@ const CoursesPage = () => {
                                 {statusKey === STUDENT_STATUS.REJECTED && (
                                   <button
                                     type="button"
-                                    disabled={isProcessing(courseId, student.candidate_id)}
+                                    disabled={isProcessing(
+                                      courseId,
+                                      student.candidate_id,
+                                    )}
                                     onClick={() =>
                                       handleUpdateStatus(
                                         courseId,
                                         student.candidate_id,
-                                        STUDENT_STATUS.LEARNING
+                                        STUDENT_STATUS.LEARNING,
                                       )
                                     }
                                     className="rounded-lg border border-blue-200 px-3 py-1.5 text-xs font-semibold text-blue-600 transition hover:bg-blue-50 disabled:cursor-not-allowed disabled:opacity-60"
@@ -1095,7 +1240,9 @@ const CoursesPage = () => {
                                 <button
                                   type="button"
                                   disabled={removing}
-                                  onClick={() => handleRemoveStudent(course, student)}
+                                  onClick={() =>
+                                    handleRemoveStudent(course, student)
+                                  }
                                   className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-3 py-1.5 text-xs font-semibold text-red-600 transition hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-60"
                                 >
                                   <UserMinus className="h-3.5 w-3.5" />
@@ -1131,7 +1278,9 @@ const CoursesPage = () => {
                 <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
                   Thêm khóa học nhanh
                 </p>
-                <h3 className="text-xl font-bold text-gray-900">Thông tin khóa học</h3>
+                <h3 className="text-xl font-bold text-gray-900">
+                  Thông tin khóa học
+                </h3>
               </div>
             </div>
             <button
@@ -1142,7 +1291,10 @@ const CoursesPage = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleQuickCreateSubmit}>
+          <form
+            className="grid gap-4 md:grid-cols-2"
+            onSubmit={handleQuickCreateSubmit}
+          >
             <div className="md:col-span-2">
               <label className="block text-sm font-semibold text-gray-700">
                 Tên khóa học <span className="text-red-500">*</span>
@@ -1156,7 +1308,9 @@ const CoursesPage = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-sm font-semibold text-gray-700">Mô tả</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Mô tả
+              </label>
               <textarea
                 value={courseDesc}
                 onChange={(e) => setCourseDesc(e.target.value)}
@@ -1166,7 +1320,9 @@ const CoursesPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Ngày bắt đầu</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Ngày bắt đầu
+              </label>
               <input
                 type="date"
                 value={courseStartDate}
@@ -1175,7 +1331,9 @@ const CoursesPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Ngày kết thúc</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Ngày kết thúc
+              </label>
               <input
                 type="date"
                 value={courseEndDate}
@@ -1184,7 +1342,9 @@ const CoursesPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Sĩ số tối đa</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Sĩ số tối đa
+              </label>
               <input
                 type="number"
                 min={0}
@@ -1195,7 +1355,9 @@ const CoursesPage = () => {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Lĩnh vực đào tạo
+              </label>
               <select
                 value={trainingField}
                 onChange={(e) => setTrainingField(e.target.value)}
@@ -1210,7 +1372,9 @@ const CoursesPage = () => {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+              <label className="block text-sm font-semibold text-gray-700">
+                Số giờ đào tạo
+              </label>
               <input
                 type="number"
                 min={1}
@@ -1253,13 +1417,17 @@ const CoursesPage = () => {
               <Trash2 className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase text-gray-400">Xóa khóa học</p>
-              <h3 className="text-xl font-bold text-gray-900">{courseToDelete.name}</h3>
+              <p className="text-xs font-semibold uppercase text-gray-400">
+                Xóa khóa học
+              </p>
+              <h3 className="text-xl font-bold text-gray-900">
+                {courseToDelete.name}
+              </h3>
             </div>
           </div>
           <p className="mt-4 text-sm text-gray-600">
-            Thao tác này sẽ xóa hoàn toàn khóa học khỏi hệ thống. Hiện khóa có {studentCount} học viên trong danh sách.
-            Bạn vẫn muốn tiếp tục?
+            Thao tác này sẽ xóa hoàn toàn khóa học khỏi hệ thống. Hiện khóa có{" "}
+            {studentCount} học viên trong danh sách. Bạn vẫn muốn tiếp tục?
           </p>
           <div className="mt-6 flex flex-wrap justify-end gap-3">
             <button
@@ -1290,8 +1458,12 @@ const CoursesPage = () => {
         <div className="w-full max-w-2xl rounded-3xl bg-white p-6 shadow-2xl">
           <div className="mb-4 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Chỉnh sửa khóa học</p>
-              <h3 className="text-xl font-bold text-gray-900">{editingCourse.name}</h3>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Chỉnh sửa khóa học
+              </p>
+              <h3 className="text-xl font-bold text-gray-900">
+                {editingCourse.name}
+              </h3>
             </div>
             <button
               type="button"
@@ -1301,9 +1473,14 @@ const CoursesPage = () => {
               <X className="h-4 w-4" />
             </button>
           </div>
-          <form className="grid gap-4 md:grid-cols-2" onSubmit={handleSubmitEditCourse}>
+          <form
+            className="grid gap-4 md:grid-cols-2"
+            onSubmit={handleSubmitEditCourse}
+          >
             <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-gray-700">Tên khóa học *</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Tên khóa học *
+              </label>
               <input
                 value={editForm.name}
                 onChange={(e) => handleEditFieldChange("name", e.target.value)}
@@ -1312,49 +1489,69 @@ const CoursesPage = () => {
               />
             </div>
             <div className="md:col-span-2">
-              <label className="text-sm font-semibold text-gray-700">Mô tả</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Mô tả
+              </label>
               <textarea
                 value={editForm.description}
-                onChange={(e) => handleEditFieldChange("description", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("description", e.target.value)
+                }
                 rows={3}
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
                 placeholder="Mô tả ngắn gọn"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Ngày bắt đầu</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Ngày bắt đầu
+              </label>
               <input
                 type="date"
                 value={editForm.start_date}
-                onChange={(e) => handleEditFieldChange("start_date", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("start_date", e.target.value)
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Ngày kết thúc</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Ngày kết thúc
+              </label>
               <input
                 type="date"
                 value={editForm.end_date}
-                onChange={(e) => handleEditFieldChange("end_date", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("end_date", e.target.value)
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Sĩ số tối đa</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Sĩ số tối đa
+              </label>
               <input
                 type="number"
                 min={0}
                 value={editForm.capacity}
-                onChange={(e) => handleEditFieldChange("capacity", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("capacity", e.target.value)
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
                 placeholder="VD: 30"
               />
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Lĩnh vực đào tạo</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Lĩnh vực đào tạo
+              </label>
               <select
                 value={editForm.training_field}
-                onChange={(e) => handleEditFieldChange("training_field", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("training_field", e.target.value)
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
               >
                 <option value="">-- Chọn lĩnh vực --</option>
@@ -1366,12 +1563,16 @@ const CoursesPage = () => {
               </select>
             </div>
             <div>
-              <label className="text-sm font-semibold text-gray-700">Số giờ đào tạo</label>
+              <label className="text-sm font-semibold text-gray-700">
+                Số giờ đào tạo
+              </label>
               <input
                 type="number"
                 min={1}
                 value={editForm.duration_hours}
-                onChange={(e) => handleEditFieldChange("duration_hours", e.target.value)}
+                onChange={(e) =>
+                  handleEditFieldChange("duration_hours", e.target.value)
+                }
                 className="mt-2 w-full rounded-xl border border-gray-300 px-4 py-2.5 text-sm shadow-sm focus:border-orange-400 focus:outline-none focus:ring-4 focus:ring-orange-100"
                 placeholder="VD: 40"
               />
@@ -1412,9 +1613,13 @@ const CoursesPage = () => {
         <div className="w-full max-w-xl rounded-3xl bg-white shadow-2xl my-8">
           <div className="sticky top-0 z-10 flex items-start justify-between rounded-t-3xl bg-white px-6 pt-6 pb-4 border-b border-gray-100">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Học viên</p>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Học viên
+              </p>
               <h3 className="text-xl font-bold text-gray-900">{name}</h3>
-              <p className="text-sm text-gray-500">Thuộc khóa học: {course.name}</p>
+              <p className="text-sm text-gray-500">
+                Thuộc khóa học: {course.name}
+              </p>
             </div>
             <button
               type="button"
@@ -1427,21 +1632,29 @@ const CoursesPage = () => {
 
           <div className="space-y-4 px-6 pb-6 max-h-[calc(100vh-200px)] overflow-y-auto">
             <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500">Thông tin liên hệ</p>
+              <p className="text-xs font-semibold uppercase text-gray-500">
+                Thông tin liên hệ
+              </p>
               <div className="mt-2 grid gap-3 sm:grid-cols-2">
                 <div>
                   <p className="text-xs text-gray-500">Email</p>
-                  <p className="text-sm font-semibold text-gray-800">{email || "Chưa cập nhật"}</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {email || "Chưa cập nhật"}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500">Số điện thoại</p>
-                  <p className="text-sm font-semibold text-gray-800">{phone || "Chưa cập nhật"}</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {phone || "Chưa cập nhật"}
+                  </p>
                 </div>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-gray-100 bg-white p-4">
-              <span className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+              <span
+                className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}
+              >
                 {statusKey === STUDENT_STATUS.COMPLETED ? (
                   <CheckCircle2 className="mr-1 h-3.5 w-3.5" />
                 ) : statusKey === STUDENT_STATUS.LEARNING ? (
@@ -1453,11 +1666,15 @@ const CoursesPage = () => {
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500">Thời gian</p>
+              <p className="text-xs font-semibold uppercase text-gray-500">
+                Thời gian
+              </p>
               <div className="mt-2 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs text-gray-600">Đăng ký:</p>
-                  <p className="text-sm font-semibold text-gray-800">{formatDateTime(student.requested_at)}</p>
+                  <p className="text-sm font-semibold text-gray-800">
+                    {formatDateTime(student.requested_at)}
+                  </p>
                 </div>
                 {student.signed_at && (
                   <div className="flex items-center justify-between">
@@ -1471,40 +1688,56 @@ const CoursesPage = () => {
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">Tiến độ học tập</p>
+              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">
+                Tiến độ học tập
+              </p>
               <div className="space-y-3">
                 <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
                   <div>
                     <p className="text-xs text-gray-600">Điểm danh</p>
-                    <p className="text-lg font-bold text-blue-600">{student.attendance ?? 0}</p>
+                    <p className="text-lg font-bold text-blue-600">
+                      {student.attendance ?? 0}
+                    </p>
                   </div>
                   <div className="text-right">
                     <p className="text-xs text-gray-600">Học phí</p>
-                    <p className={`text-sm font-semibold ${student.tuition_confirmed ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {student.tuition_confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}
+                    <p
+                      className={`text-sm font-semibold ${student.tuition_confirmed ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {student.tuition_confirmed
+                        ? "Đã xác nhận"
+                        : "Chưa xác nhận"}
                     </p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Điểm danh (Buổi)</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">
+                      Điểm danh (Buổi)
+                    </label>
                     <input
                       type="number"
                       min={0}
                       max={100}
                       value={progressForm.attendance}
-                      onChange={(e) => handleProgressChange("attendance", e.target.value)}
+                      onChange={(e) =>
+                        handleProgressChange("attendance", e.target.value)
+                      }
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
                       placeholder="0-100"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-semibold text-gray-600 mb-2">Ngày ký cam kết</label>
+                    <label className="block text-xs font-semibold text-gray-600 mb-2">
+                      Ngày ký cam kết
+                    </label>
                     <input
                       type="date"
                       value={progressForm.signed_at}
-                      onChange={(e) => handleProgressChange("signed_at", e.target.value)}
+                      onChange={(e) =>
+                        handleProgressChange("signed_at", e.target.value)
+                      }
                       className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-orange-400 focus:outline-none focus:ring-2 focus:ring-orange-100"
                     />
                   </div>
@@ -1512,28 +1745,41 @@ const CoursesPage = () => {
 
                 <div className="flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
                   <div>
-                    <p className="text-xs font-semibold text-gray-600">Trạng thái học phí</p>
-                    <p className={`text-sm font-semibold ${progressForm.tuition_confirmed ? 'text-emerald-600' : 'text-amber-600'}`}>
-                      {progressForm.tuition_confirmed ? 'Đã xác nhận' : 'Chưa xác nhận'}
+                    <p className="text-xs font-semibold text-gray-600">
+                      Trạng thái học phí
+                    </p>
+                    <p
+                      className={`text-sm font-semibold ${progressForm.tuition_confirmed ? "text-emerald-600" : "text-amber-600"}`}
+                    >
+                      {progressForm.tuition_confirmed
+                        ? "Đã xác nhận"
+                        : "Chưa xác nhận"}
                     </p>
                   </div>
                   <button
                     type="button"
-                    onClick={() => handleProgressChange("tuition_confirmed", !progressForm.tuition_confirmed)}
+                    onClick={() =>
+                      handleProgressChange(
+                        "tuition_confirmed",
+                        !progressForm.tuition_confirmed,
+                      )
+                    }
                     className={`rounded-lg px-4 py-2 text-xs font-semibold transition ${
                       progressForm.tuition_confirmed
-                        ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                        : 'bg-amber-100 text-amber-700 hover:bg-amber-200'
+                        ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                        : "bg-amber-100 text-amber-700 hover:bg-amber-200"
                     }`}
                   >
-                    {progressForm.tuition_confirmed ? 'Đã thu' : 'Chưa thu'}
+                    {progressForm.tuition_confirmed ? "Đã thu" : "Chưa thu"}
                   </button>
                 </div>
               </div>
             </div>
 
             <div className="rounded-2xl border border-gray-100 bg-white p-4">
-              <label className="block text-xs font-semibold uppercase text-gray-500 mb-2">Ghi chú</label>
+              <label className="block text-xs font-semibold uppercase text-gray-500 mb-2">
+                Ghi chú
+              </label>
               <textarea
                 rows={3}
                 value={progressForm.notes}
@@ -1575,10 +1821,16 @@ const CoursesPage = () => {
         <div className="w-full max-w-lg rounded-3xl bg-white p-6 shadow-2xl">
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">Khóa học</p>
-              <h3 className="text-2xl font-bold text-gray-900">{selectedCourseDetail.name}</h3>
+              <p className="text-xs font-semibold uppercase tracking-wide text-gray-400">
+                Khóa học
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900">
+                {selectedCourseDetail.name}
+              </h3>
               {selectedCourseDetail.description && (
-                <p className="mt-1 text-sm text-gray-600">{selectedCourseDetail.description}</p>
+                <p className="mt-1 text-sm text-gray-600">
+                  {selectedCourseDetail.description}
+                </p>
               )}
             </div>
             <button
@@ -1592,66 +1844,96 @@ const CoursesPage = () => {
           <div className="mt-4 space-y-3">
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Ngày bắt đầu</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Ngày bắt đầu
+                </p>
                 <p className="text-sm font-semibold text-gray-700">
-                  {selectedCourseDetail.start_date 
-                    ? new Date(selectedCourseDetail.start_date).toLocaleDateString("vi-VN")
+                  {selectedCourseDetail.start_date
+                    ? new Date(
+                        selectedCourseDetail.start_date,
+                      ).toLocaleDateString("vi-VN")
                     : "Chưa xác định"}
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Ngày kết thúc</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Ngày kết thúc
+                </p>
                 <p className="text-sm font-semibold text-gray-700">
                   {selectedCourseDetail.end_date
-                    ? new Date(selectedCourseDetail.end_date).toLocaleDateString("vi-VN")
+                    ? new Date(
+                        selectedCourseDetail.end_date,
+                      ).toLocaleDateString("vi-VN")
                     : "Chưa xác định"}
                 </p>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Sĩ số tối đa</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Sĩ số tối đa
+                </p>
                 <p className="text-sm font-semibold text-gray-700">
                   {selectedCourseDetail.capacity || "Không giới hạn"}
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Số học viên hiện tại</p>
-                <p className="text-sm font-semibold text-gray-700">{studentCount}</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Số học viên hiện tại
+                </p>
+                <p className="text-sm font-semibold text-gray-700">
+                  {studentCount}
+                </p>
               </div>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Lĩnh vực đào tạo</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Lĩnh vực đào tạo
+                </p>
                 <p className="text-sm font-semibold text-gray-700">
                   {selectedCourseDetail.training_field || "Chưa xác định"}
                 </p>
               </div>
               <div className="rounded-2xl border border-gray-100 bg-gray-50/80 p-4">
-                <p className="text-xs font-semibold uppercase text-gray-500">Số giờ đào tạo</p>
+                <p className="text-xs font-semibold uppercase text-gray-500">
+                  Số giờ đào tạo
+                </p>
                 <p className="text-sm font-semibold text-gray-700">
-                  {selectedCourseDetail.duration_hours ? `${selectedCourseDetail.duration_hours} giờ` : "Chưa xác định"}
+                  {selectedCourseDetail.duration_hours
+                    ? `${selectedCourseDetail.duration_hours} giờ`
+                    : "Chưa xác định"}
                 </p>
               </div>
             </div>
             <div className="rounded-2xl border border-gray-100 bg-blue-50/50 p-4">
-              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">Thống kê học viên</p>
+              <p className="text-xs font-semibold uppercase text-gray-500 mb-3">
+                Thống kê học viên
+              </p>
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-amber-500"></span>
-                  <span className="text-sm text-gray-700">Chờ duyệt: <strong>{summary.pending}</strong></span>
+                  <span className="text-sm text-gray-700">
+                    Chờ duyệt: <strong>{summary.pending}</strong>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-blue-500"></span>
-                  <span className="text-sm text-gray-700">Đang học: <strong>{summary.learning}</strong></span>
+                  <span className="text-sm text-gray-700">
+                    Đang học: <strong>{summary.learning}</strong>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <span className="text-sm text-gray-700">Hoàn thành: <strong>{summary.completed}</strong></span>
+                  <span className="text-sm text-gray-700">
+                    Hoàn thành: <strong>{summary.completed}</strong>
+                  </span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="inline-block h-2 w-2 rounded-full bg-rose-500"></span>
-                  <span className="text-sm text-gray-700">Từ chối: <strong>{summary.rejected}</strong></span>
+                  <span className="text-sm text-gray-700">
+                    Từ chối: <strong>{summary.rejected}</strong>
+                  </span>
                 </div>
               </div>
             </div>
@@ -1697,7 +1979,9 @@ const CoursesPage = () => {
                 {selectedCourseStudents.name || "Chưa đặt tên"}
               </h3>
               <p className="text-sm text-gray-500">
-                {students.length} học viên • {selectedCourseStudents.start_date || "—"} → {selectedCourseStudents.end_date || "—"}
+                {students.length} học viên •{" "}
+                {selectedCourseStudents.start_date || "—"} →{" "}
+                {selectedCourseStudents.end_date || "—"}
               </p>
             </div>
             <button
@@ -1739,7 +2023,10 @@ const CoursesPage = () => {
                 const meta = STUDENT_STATUS_META[statusKey];
                 const { email, phone } = getCandidateContacts(student);
                 const name = getCandidateName(student);
-                const candidateKey = makeCandidateKey(courseId || "course", student.candidate_id);
+                const candidateKey = makeCandidateKey(
+                  courseId || "course",
+                  student.candidate_id,
+                );
                 return (
                   <div
                     key={candidateKey}
@@ -1747,9 +2034,13 @@ const CoursesPage = () => {
                   >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div className="min-w-0 flex-1">
-                        <p className="truncate text-base font-semibold text-gray-900">{name}</p>
+                        <p className="truncate text-base font-semibold text-gray-900">
+                          {name}
+                        </p>
                       </div>
-                      <span className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}>
+                      <span
+                        className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-semibold ${meta.tone}`}
+                      >
                         {meta.label}
                       </span>
                     </div>
@@ -1763,7 +2054,12 @@ const CoursesPage = () => {
                     <div className="mt-3 flex flex-wrap gap-2">
                       <button
                         type="button"
-                        onClick={() => handleOpenCandidateDetail(selectedCourseStudents, student)}
+                        onClick={() =>
+                          handleOpenCandidateDetail(
+                            selectedCourseStudents,
+                            student,
+                          )
+                        }
                         className="rounded-lg border border-gray-200 px-3 py-1.5 text-xs font-semibold text-gray-700 transition hover:bg-gray-50"
                       >
                         Xem chi tiết
@@ -1789,8 +2085,12 @@ const CoursesPage = () => {
                 <BookOpen className="h-8 w-8 text-white" />
               </div>
               <div>
-                <h1 className="text-4xl font-bold tracking-tight text-gray-900">{title}</h1>
-                <p className="mt-1 text-base text-gray-600">Quản lý khóa học và học viên của Trung tâm</p>
+                <h1 className="text-4xl font-bold tracking-tight text-gray-900">
+                  {title}
+                </h1>
+                <p className="mt-1 text-base text-gray-600">
+                  Quản lý khóa học và học viên của Trung tâm
+                </p>
               </div>
             </header>
 

@@ -9,6 +9,7 @@ import {
   Pencil,
   Trash2,
   ChevronDown,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import ProvinceWardSelect from "@/components/ProvinceWardSelect";
@@ -105,11 +106,15 @@ const CenterList: React.FC = () => {
             </div>
             <div className="flex items-center gap-3">
               <div className="relative">
+                <Search
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+                  size={18}
+                />
                 <input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   placeholder="Tìm tên/email/số điện thoại trung tâm"
-                  className="w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 md:w-72"
+                  className="w-full rounded-lg border border-gray-200 pl-9 pr-4 py-2 text-sm focus:border-orange-500 focus:outline-none focus:ring-1 focus:ring-orange-500 md:w-72"
                 />
               </div>
               <button

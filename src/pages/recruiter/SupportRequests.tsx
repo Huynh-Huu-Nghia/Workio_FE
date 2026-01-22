@@ -1,6 +1,9 @@
 import React, { useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { useCreateSupportRequestMutation, useMySupportRequestsQuery } from "@/api/requests.api";
+import {
+  useCreateSupportRequestMutation,
+  useMySupportRequestsQuery,
+} from "@/api/requests.api";
 import { Link, useLocation } from "react-router-dom";
 import { pathtotitle } from "@/configs/pagetitle";
 import RecruiterLayout from "@/layouts/RecruiterLayout";
@@ -12,7 +15,9 @@ const RecruiterSupportRequests: React.FC = () => {
   const title = pathtotitle[location.pathname] || "Yêu cầu hỗ trợ";
   const { user } = useUser(); // 2. Lấy user từ context
 
-  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(user?.id);
+  const { data, isLoading, isError, refetch } = useMySupportRequestsQuery(
+    user?.id,
+  );
   const createMutation = useCreateSupportRequestMutation();
 
   const formatDate = (value?: string | number | Date | null) => {
@@ -55,6 +60,7 @@ const RecruiterSupportRequests: React.FC = () => {
         minute: "2-digit",
       });
     } catch (e) {
+      console.error(e);
       return "Invalid Date";
     }
   };
@@ -63,7 +69,9 @@ const RecruiterSupportRequests: React.FC = () => {
   const [titleInput, setTitleInput] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"low" | "medium" | "high">("medium");
-  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc">("created_desc");
+  const [sortBy, setSortBy] = useState<"created_desc" | "created_asc">(
+    "created_desc",
+  );
 
   const items = data?.data ?? [];
   const filtered = useMemo(() => {
@@ -73,7 +81,7 @@ const RecruiterSupportRequests: React.FC = () => {
       : items.filter(
           (it) =>
             it.title.toLowerCase().includes(q) ||
-            (it.description || "").toLowerCase().includes(q)
+            (it.description || "").toLowerCase().includes(q),
         );
 
     const sorted = [...list];
@@ -223,7 +231,10 @@ const RecruiterSupportRequests: React.FC = () => {
                 <select
                   value={sortBy}
                   onChange={(e) =>
-                    setSortBy((e.target.value as "created_desc" | "created_asc") || "created_desc")
+                    setSortBy(
+                      (e.target.value as "created_desc" | "created_asc") ||
+                        "created_desc",
+                    )
                   }
                   className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-700 focus:border-orange-500 focus:outline-none"
                 >
