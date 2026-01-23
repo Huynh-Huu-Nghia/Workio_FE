@@ -324,8 +324,9 @@ const CoursesPage = () => {
   const [processingMap, setProcessingMap] = useState<Record<string, boolean>>(
     {},
   );
-  const [studentStatusFilter, setStudentStatusFilter] = useState<StudentStatus | "all">("all");
-  const [processingMap, setProcessingMap] = useState<Record<string, boolean>>({});
+  const [studentStatusFilter, setStudentStatusFilter] = useState<
+    StudentStatus | "all"
+  >("all");
   const [removingMap, setRemovingMap] = useState<Record<string, boolean>>({});
   const [showQuickCreate, setShowQuickCreate] = useState(false);
 
@@ -670,31 +671,6 @@ const CoursesPage = () => {
       toast.error(error?.response?.data?.mes || "Không thể lưu tiến độ");
     } finally {
       toggleProcessing(courseId, student.candidate_id, false);
-    }
-  };
-
-  const handleRemoveStudent = async (
-    course: Course,
-    student: CourseCandidate,
-  ) => {
-    const courseId = getCourseId(course);
-    if (!courseId || !student.candidate_id) return;
-    toggleRemoving(courseId, student.candidate_id, true);
-    try {
-      const res = await removeStudent.mutateAsync({
-        courseId,
-        candidateId: student.candidate_id,
-      });
-      if ((res as any)?.err === 0) {
-        toast.success((res as any)?.mes || "Đã xóa học viên khỏi khóa");
-        refetch();
-      } else {
-        toast.error((res as any)?.mes || "Không thể xóa học viên");
-      }
-    } catch (error: any) {
-      toast.error(error?.response?.data?.mes || "Không thể xóa học viên");
-    } finally {
-      toggleRemoving(courseId, student.candidate_id, false);
     }
   };
 
@@ -1820,24 +1796,30 @@ const CoursesPage = () => {
     const summary = summarizeCourse(selectedCourseStudents);
     const students = getCourseCandidates(selectedCourseStudents);
     const courseId = getCourseId(selectedCourseStudents);
-    
+
     // Filter students based on selected status
-    let filteredStudents = studentStatusFilter === "all" 
-      ? students 
-      : students.filter(student => normalizeStatus(student.status) === studentStatusFilter);
-    
+    let filteredStudents =
+      studentStatusFilter === "all"
+        ? students
+        : students.filter(
+            (student) =>
+              normalizeStatus(student.status) === studentStatusFilter,
+          );
+
     // Sort students by first name (last word in full name) A-Z
     filteredStudents = [...filteredStudents].sort((a, b) => {
       const nameA = getCandidateName(a).trim();
       const nameB = getCandidateName(b).trim();
-      
+
       // Get the last word (first name) from full name
       const firstNameA = nameA.split(/\s+/).pop()?.toLowerCase() || "";
       const firstNameB = nameB.split(/\s+/).pop()?.toLowerCase() || "";
-      
-      return firstNameA.localeCompare(firstNameB, "vi", { sensitivity: "base" });
+
+      return firstNameA.localeCompare(firstNameB, "vi", {
+        sensitivity: "base",
+      });
     });
-    
+
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 p-4">
         <div className="w-full max-w-3xl rounded-3xl bg-white p-6 shadow-2xl">
@@ -1871,8 +1853,8 @@ const CoursesPage = () => {
                 onClick={() => setStudentStatusFilter(STUDENT_STATUS.PENDING)}
                 className={`rounded-2xl border p-3 transition-all cursor-pointer ${
                   studentStatusFilter === STUDENT_STATUS.PENDING
-                    ? 'border-amber-300 bg-amber-100 ring-2 ring-amber-300'
-                    : 'border-amber-100 bg-amber-50 hover:bg-amber-100'
+                    ? "border-amber-300 bg-amber-100 ring-2 ring-amber-300"
+                    : "border-amber-100 bg-amber-50 hover:bg-amber-100"
                 }`}
               >
                 <p className="text-xs text-amber-600">Chờ duyệt</p>
@@ -1883,8 +1865,8 @@ const CoursesPage = () => {
                 onClick={() => setStudentStatusFilter(STUDENT_STATUS.LEARNING)}
                 className={`rounded-2xl border p-3 transition-all cursor-pointer ${
                   studentStatusFilter === STUDENT_STATUS.LEARNING
-                    ? 'border-blue-300 bg-blue-100 ring-2 ring-blue-300'
-                    : 'border-blue-100 bg-blue-50 hover:bg-blue-100'
+                    ? "border-blue-300 bg-blue-100 ring-2 ring-blue-300"
+                    : "border-blue-100 bg-blue-50 hover:bg-blue-100"
                 }`}
               >
                 <p className="text-xs text-blue-600">Đang học</p>
@@ -1895,8 +1877,8 @@ const CoursesPage = () => {
                 onClick={() => setStudentStatusFilter(STUDENT_STATUS.COMPLETED)}
                 className={`rounded-2xl border p-3 transition-all cursor-pointer ${
                   studentStatusFilter === STUDENT_STATUS.COMPLETED
-                    ? 'border-emerald-300 bg-emerald-100 ring-2 ring-emerald-300'
-                    : 'border-emerald-100 bg-emerald-50 hover:bg-emerald-100'
+                    ? "border-emerald-300 bg-emerald-100 ring-2 ring-emerald-300"
+                    : "border-emerald-100 bg-emerald-50 hover:bg-emerald-100"
                 }`}
               >
                 <p className="text-xs text-emerald-600">Hoàn thành</p>
@@ -1907,8 +1889,8 @@ const CoursesPage = () => {
                 onClick={() => setStudentStatusFilter(STUDENT_STATUS.REJECTED)}
                 className={`rounded-2xl border p-3 transition-all cursor-pointer ${
                   studentStatusFilter === STUDENT_STATUS.REJECTED
-                    ? 'border-rose-300 bg-rose-100 ring-2 ring-rose-300'
-                    : 'border-rose-100 bg-rose-50 hover:bg-rose-100'
+                    ? "border-rose-300 bg-rose-100 ring-2 ring-rose-300"
+                    : "border-rose-100 bg-rose-50 hover:bg-rose-100"
                 }`}
               >
                 <p className="text-xs text-rose-600">Từ chối</p>
@@ -1928,7 +1910,7 @@ const CoursesPage = () => {
 
           {filteredStudents.length === 0 ? (
             <div className="mt-6 rounded-2xl border border-dashed border-gray-200 bg-gray-50 p-6 text-center text-sm text-gray-500">
-              {studentStatusFilter === "all" 
+              {studentStatusFilter === "all"
                 ? "Chưa có học viên trong khóa học này."
                 : `Không có học viên nào với trạng thái "${STUDENT_STATUS_META[studentStatusFilter]?.label}".`}
             </div>

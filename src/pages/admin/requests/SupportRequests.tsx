@@ -183,6 +183,7 @@ const SupportRequests: React.FC = () => {
         minute: "2-digit",
       });
     } catch (e) {
+      console.error("formatDate error:", e);
       return "Invalid Date";
     }
   };
@@ -194,9 +195,6 @@ const SupportRequests: React.FC = () => {
           <h1 className="text-xl font-semibold text-gray-800">
             Yêu cầu hỗ trợ
           </h1>
-          <p className="mt-1 text-sm text-gray-500">
-            Admin quản lý danh sách; các role khác có thể tạo yêu cầu.
-          </p>
         </div>
 
         <div className="grid gap-4 p-5 lg:grid-cols-3">
