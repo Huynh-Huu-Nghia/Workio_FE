@@ -30,6 +30,25 @@ const CandidateSuggestedJobs: React.FC = () => {
 
   const { resolveJobLocation } = useJobLocationResolver();
 
+  // [FIX] Thêm hàm helper để xử lý dữ liệu an toàn
+const ensureArray = (data: any): string[] => {
+  if (!data) return [];
+  if (Array.isArray(data)) return data;
+  if (typeof data === "string") {
+    // Nếu là chuỗi JSON mảng (VD: '["A", "B"]')
+    try {
+      const parsed = JSON.parse(data);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // Nếu là chuỗi phân cách dấu phẩy (VD: "A, B")
+      return data.split(",").map((item) => item.trim());
+    }
+    // Nếu là chuỗi đơn (VD: "Thưởng")
+    return [data];
+  }
+  return [];
+};
+
   // --- HÀM FORMAT LƯƠNG CHUẨN ---
   const formatCurrency = (value?: number | string | null) => {
     if (value === null || value === undefined || value === "")
@@ -49,9 +68,9 @@ const CandidateSuggestedJobs: React.FC = () => {
     // Lấy danh sách ngành nghề từ dữ liệu jobs để làm filter
     const allFields = new Set<string>();
     jobs.forEach((job: any) => {
-      if (Array.isArray(job.fields))
-        job.fields.forEach((f: string) => allFields.add(f));
-      else if (typeof job.fields === "string") allFields.add(job.fields);
+      // [FIX] Dùng ensureArray để lấy fields an toàn
+      const fieldsArr = ensureArray(job.fields);
+      fieldsArr.forEach((f) => allFields.add(f));
     });
     return Array.from(allFields);
   }, [jobs]);
@@ -212,6 +231,9 @@ const CandidateSuggestedJobs: React.FC = () => {
             ) : (
               filteredJobs.map((job: any) => {
                 const isExpanded = expandedId === job.id;
+                // Chuẩn bị dữ liệu an toàn
+                const jobFields = ensureArray(job.fields);
+                const jobBenefits = ensureArray(job.benefits); // [QUAN TRỌNG]
                 const locationInfo = resolveJobLocation(job);
                 const locationText =
                   locationInfo.label ||
@@ -339,6 +361,7 @@ const CandidateSuggestedJobs: React.FC = () => {
                       </span>
                     </div>
 
+                    {/* [FIX] Phần render chi tiết đã sử dụng jobBenefits đã xử lý */}
                     {isExpanded && (
                       <div className="mt-3 border-t border-dashed border-gray-200 pt-3 text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
                         <div className="grid gap-4 md:grid-cols-2">
@@ -354,9 +377,10 @@ const CandidateSuggestedJobs: React.FC = () => {
                             <p className="text-xs font-bold uppercase text-gray-500 mb-1">
                               Phúc lợi
                             </p>
-                            {job.benefits?.length ? (
+                            {/* Sử dụng jobBenefits thay vì job.benefits */}
+                            {jobBenefits.length > 0 ? (
                               <div className="flex flex-wrap gap-2">
-                                {job.benefits.map((b: string) => (
+                                {jobBenefits.map((b: string) => (
                                   <span
                                     key={b}
                                     className="rounded-full bg-green-50 px-2 py-1 text-xs font-semibold text-green-700 border border-green-100"
